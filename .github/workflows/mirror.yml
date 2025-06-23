@@ -1,0 +1,22 @@
+name: Mirror Repository
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  Push:
+    runs-on: ubuntu-latest
+    if: github.repository == 'CommitCrimes/BloodSky'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Mirror to Epitech repository
+        uses: pixta-dev/repository-mirroring-action@v1
+        with:
+          target_repo_url: git@github.com:EpitechMscProPromo2027/T-YEP-600-PAR_24.git
+          ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
