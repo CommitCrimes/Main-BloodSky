@@ -1,0 +1,3 @@
+-- Ce fichier est intentionnellement laissé vide
+-- Les migrations sont gérées par le système de migration dans /database/migrations/
+-- L'initialisation de la base de données se fait via les scripts de migration
