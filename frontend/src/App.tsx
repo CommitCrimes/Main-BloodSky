@@ -4,6 +4,7 @@ import AuthProvider from './components/AuthProvider';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
+import AdminDashboardPage from './pages/AdminDashboardPage';
 import PrivateRoute from './components/PrivateRoute';
 import './App.css';
 
@@ -19,6 +20,7 @@ const App = observer(() => {
           {/* Routes protégées */}
           <Route element={<PrivateRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/admin" element={<AdminDashboardPage />} />
             {/* Ajouter d'autres routes protégées ici */}
           </Route>
           

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import useAuth from '../hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 
 const LoginForm = observer(() => {
   const auth = useAuth();

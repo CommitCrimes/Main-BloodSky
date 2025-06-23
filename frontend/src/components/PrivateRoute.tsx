@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
-import useAuth from '../hooks/useAuth';
+import { useAuth } from '../hooks/useAuth';
 
 interface PrivateRouteProps {
   redirectPath?: string;
