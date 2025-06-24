@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import LoginForm from '../components/LoginForm';
 import { useAuth } from '@/hooks/useAuth';
+import SuperAdminDashboardPage from './SuperAdminDashboardPage';
 
 const LoginPage = observer(() => {
   const navigate = useNavigate();
@@ -18,6 +19,7 @@ const LoginPage = observer(() => {
     <div className="page-container">
       <div className="w-full max-w-lg px-4">
         <div className="mb-12 flex flex-col items-center">
+          <SuperAdminDashboardPage/>
           <img src="/blood-drop.svg" alt="BloodSky Logo" className="w-20 h-20 mb-6 logo-animation" />
           <h1 className="page-title">BloodSky</h1>
           <h2 className="page-subtitle">
