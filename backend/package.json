@@ -7,7 +7,7 @@
     "build": "bun build src/index.ts --outdir dist",
     "start": "bun dist/index.js",
     "migrate": "bun run src/utils/migrate.ts",
-    "generate": "drizzle-kit generate:pg",
+    "generate": "drizzle-kit generate",
     "studio": "drizzle-kit studio",
     "test": "bun test",
     "lint": "eslint src --ext .ts",
