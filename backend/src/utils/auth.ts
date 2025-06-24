@@ -17,8 +17,18 @@ export type JWTPayload = {
   email: string;
 };
 
-export const signToken = async (payload: JWTPayload): Promise<string> => {
-  return new SignJWT(payload)
+export type SignTokenPayload = {
+  userId: number | string;
+  email: string;
+};
+
+export const signToken = async (payload: SignTokenPayload): Promise<string> => {
+  const jwtPayload: JWTPayload = {
+    userId: payload.userId.toString(),
+    email: payload.email,
+  };
+  
+  return new SignJWT(jwtPayload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime(JWT_EXPIRES_IN)
