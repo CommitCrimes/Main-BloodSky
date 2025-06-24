@@ -1,0 +1,669 @@
+{
+  "id": "9317d36f-3262-44c0-9ec8-7cabc5904bac",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "5",
+  "dialect": "pg",
+  "tables": {
+    "BLOOD": {
+      "name": "BLOOD",
+      "schema": "",
+      "columns": {
+        "blood_id": {
+          "name": "blood_id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "blood_type": {
+          "name": "blood_type",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delivery_id": {
+          "name": "delivery_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "BLOOD_delivery_id_DELIVERY_delivery_id_fk": {
+          "name": "BLOOD_delivery_id_DELIVERY_delivery_id_fk",
+          "tableFrom": "BLOOD",
+          "tableTo": "DELIVERY",
+          "columnsFrom": [
+            "delivery_id"
+          ],
+          "columnsTo": [
+            "delivery_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "DELIVERY_PARTICIPATION": {
+      "name": "DELIVERY_PARTICIPATION",
+      "schema": "",
+      "columns": {
+        "delivery_id": {
+          "name": "delivery_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "DELIVERY_PARTICIPATION_delivery_id_DELIVERY_delivery_id_fk": {
+          "name": "DELIVERY_PARTICIPATION_delivery_id_DELIVERY_delivery_id_fk",
+          "tableFrom": "DELIVERY_PARTICIPATION",
+          "tableTo": "DELIVERY",
+          "columnsFrom": [
+            "delivery_id"
+          ],
+          "columnsTo": [
+            "delivery_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "DELIVERY_PARTICIPATION_user_id_USER_user_id_fk": {
+          "name": "DELIVERY_PARTICIPATION_user_id_USER_user_id_fk",
+          "tableFrom": "DELIVERY_PARTICIPATION",
+          "tableTo": "USER",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "DELIVERY_PARTICIPATION_delivery_id_user_id_pk": {
+          "name": "DELIVERY_PARTICIPATION_delivery_id_user_id_pk",
+          "columns": [
+            "delivery_id",
+            "user_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "DELIVERY": {
+      "name": "DELIVERY",
+      "schema": "",
+      "columns": {
+        "delivery_id": {
+          "name": "delivery_id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "drone_id": {
+          "name": "drone_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "blood_id": {
+          "name": "blood_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hospital_id": {
+          "name": "hospital_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "center_id": {
+          "name": "center_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dte_delivery": {
+          "name": "dte_delivery",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dte_validation": {
+          "name": "dte_validation",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delivery_status": {
+          "name": "delivery_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "delivery_urgent": {
+          "name": "delivery_urgent",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "DELIVERY_drone_id_DRONE_drone_id_fk": {
+          "name": "DELIVERY_drone_id_DRONE_drone_id_fk",
+          "tableFrom": "DELIVERY",
+          "tableTo": "DRONE",
+          "columnsFrom": [
+            "drone_id"
+          ],
+          "columnsTo": [
+            "drone_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "DELIVERY_hospital_id_HOSPITAL_hospital_id_fk": {
+          "name": "DELIVERY_hospital_id_HOSPITAL_hospital_id_fk",
+          "tableFrom": "DELIVERY",
+          "tableTo": "HOSPITAL",
+          "columnsFrom": [
+            "hospital_id"
+          ],
+          "columnsTo": [
+            "hospital_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "DELIVERY_center_id_DONATIONCENTER_center_id_fk": {
+          "name": "DELIVERY_center_id_DONATIONCENTER_center_id_fk",
+          "tableFrom": "DELIVERY",
+          "tableTo": "DONATIONCENTER",
+          "columnsFrom": [
+            "center_id"
+          ],
+          "columnsTo": [
+            "center_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "DONATIONCENTER": {
+      "name": "DONATIONCENTER",
+      "schema": "",
+      "columns": {
+        "center_id": {
+          "name": "center_id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "center_city": {
+          "name": "center_city",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "center_postal": {
+          "name": "center_postal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "center_adress": {
+          "name": "center_adress",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "center_latitude": {
+          "name": "center_latitude",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "center_longitude": {
+          "name": "center_longitude",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "DRONE": {
+      "name": "DRONE",
+      "schema": "",
+      "columns": {
+        "drone_id": {
+          "name": "drone_id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "drone_name": {
+          "name": "drone_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "center_id": {
+          "name": "center_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "drone_status": {
+          "name": "drone_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "drone_current_lat": {
+          "name": "drone_current_lat",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "drone_current_long": {
+          "name": "drone_current_long",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "drone_battery": {
+          "name": "drone_battery",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "drone_image": {
+          "name": "drone_image",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "DRONE_center_id_DONATIONCENTER_center_id_fk": {
+          "name": "DRONE_center_id_DONATIONCENTER_center_id_fk",
+          "tableFrom": "DRONE",
+          "tableTo": "DONATIONCENTER",
+          "columnsFrom": [
+            "center_id"
+          ],
+          "columnsTo": [
+            "center_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "HOSPITAL": {
+      "name": "HOSPITAL",
+      "schema": "",
+      "columns": {
+        "hospital_id": {
+          "name": "hospital_id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "hospital_name": {
+          "name": "hospital_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hospital_city": {
+          "name": "hospital_city",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hospital_postal": {
+          "name": "hospital_postal",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hospital_adress": {
+          "name": "hospital_adress",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hospital_latitude": {
+          "name": "hospital_latitude",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hospital_longtitude": {
+          "name": "hospital_longtitude",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "USER": {
+      "name": "USER",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password": {
+          "name": "password",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "user_name": {
+          "name": "user_name",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_firstname": {
+          "name": "user_firstname",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dte_create": {
+          "name": "dte_create",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        },
+        "tel_number": {
+          "name": "tel_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "user_status": {
+          "name": "user_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {}
+    },
+    "user_donation_center": {
+      "name": "user_donation_center",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "center_id": {
+          "name": "center_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "admin": {
+          "name": "admin",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "info": {
+          "name": "info",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_donation_center_user_id_USER_user_id_fk": {
+          "name": "user_donation_center_user_id_USER_user_id_fk",
+          "tableFrom": "user_donation_center",
+          "tableTo": "USER",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "user_donation_center_center_id_DONATIONCENTER_center_id_fk": {
+          "name": "user_donation_center_center_id_DONATIONCENTER_center_id_fk",
+          "tableFrom": "user_donation_center",
+          "tableTo": "DONATIONCENTER",
+          "columnsFrom": [
+            "center_id"
+          ],
+          "columnsTo": [
+            "center_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_donation_center_user_id_pk": {
+          "name": "user_donation_center_user_id_pk",
+          "columns": [
+            "user_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "user_dronist": {
+      "name": "user_dronist",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "info": {
+          "name": "info",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_dronist_user_id_USER_user_id_fk": {
+          "name": "user_dronist_user_id_USER_user_id_fk",
+          "tableFrom": "user_dronist",
+          "tableTo": "USER",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_dronist_user_id_pk": {
+          "name": "user_dronist_user_id_pk",
+          "columns": [
+            "user_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "user_hospital": {
+      "name": "user_hospital",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hospital_id": {
+          "name": "hospital_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "admin": {
+          "name": "admin",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "info": {
+          "name": "info",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_hospital_user_id_USER_user_id_fk": {
+          "name": "user_hospital_user_id_USER_user_id_fk",
+          "tableFrom": "user_hospital",
+          "tableTo": "USER",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "user_hospital_hospital_id_HOSPITAL_hospital_id_fk": {
+          "name": "user_hospital_hospital_id_HOSPITAL_hospital_id_fk",
+          "tableFrom": "user_hospital",
+          "tableTo": "HOSPITAL",
+          "columnsFrom": [
+            "hospital_id"
+          ],
+          "columnsTo": [
+            "hospital_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_hospital_user_id_pk": {
+          "name": "user_hospital_user_id_pk",
+          "columns": [
+            "user_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    },
+    "user_support_relationship_center": {
+      "name": "user_support_relationship_center",
+      "schema": "",
+      "columns": {
+        "user_id": {
+          "name": "user_id",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "info": {
+          "name": "info",
+          "type": "varchar",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "user_support_relationship_center_user_id_USER_user_id_fk": {
+          "name": "user_support_relationship_center_user_id_USER_user_id_fk",
+          "tableFrom": "user_support_relationship_center",
+          "tableTo": "USER",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "user_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "user_support_relationship_center_user_id_pk": {
+          "name": "user_support_relationship_center_user_id_pk",
+          "columns": [
+            "user_id"
+          ]
+        }
+      },
+      "uniqueConstraints": {}
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
