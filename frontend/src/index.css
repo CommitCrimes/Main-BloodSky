@@ -1,80 +1,34 @@
 /* Import Google Fonts */
+
 @import url('https://fonts.googleapis.com/css2?family=Iceland&family=Share+Tech&display=swap');
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --primary-color: #e53e3e;
+  --primary-dark: #c53030;
+  --secondary-color: #f3f4f6;
+  --text-color: #1a202c;
+  --font-iceland: 'Iceland', sans-serif;
+  --font-share-tech: 'Share Tech', sans-serif;
+}
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  background-color: #f9fafb;
+  color: var(--text-color);
+  font-family: var(--font-share-tech);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  
-  /* Make the fonts available as CSS variables */
-  --font-iceland: "Iceland", sans-serif;
-  --font-share-tech: "Share Tech", sans-serif;
+  overflow-x: hidden;
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
-}
-
-/* Utility classes for the fonts */
 .iceland-font {
   font-family: var(--font-iceland);
   font-weight: 400;
@@ -85,4 +39,51 @@ button:focus-visible {
   font-family: var(--font-share-tech);
   font-weight: 400;
   font-style: normal;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-red-600 text-white py-4 px-6 rounded-lg font-bold text-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200 disabled:bg-red-400 disabled:cursor-not-allowed w-full;
+  }
+
+  .input-field {
+    @apply w-full py-4 px-6 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-lg transition-colors duration-200;
+  }
+
+  .input-label {
+    @apply block text-gray-700 text-lg font-semibold mb-3 share-tech-font;
+  }
+
+  .auth-card {
+    @apply bg-white p-8 sm:p-10 rounded-xl shadow-xl max-w-md w-full mx-auto;
+  }
+
+  .page-container {
+    @apply min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-b from-white to-red-50 py-12 px-4 sm:px-6 lg:px-8;
+    min-height: 100vh;
+    min-width: 100vw;
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+
+  .page-title {
+    @apply text-4xl sm:text-5xl md:text-6xl font-extrabold text-center text-red-600 iceland-font mb-3;
+  }
+
+  .page-subtitle {
+    @apply text-xl sm:text-2xl md:text-3xl font-bold text-center text-gray-800 share-tech-font mb-8;
+  }
+
+  .error-message {
+    @apply mb-5 p-4 bg-red-100 text-red-700 rounded-lg border border-red-200;
+  }
+
+  .link {
+    @apply font-medium text-red-600 hover:text-red-800 transition-colors duration-200;
+  }
+
+  .form-group {
+    @apply mb-6;
+  }
 }
