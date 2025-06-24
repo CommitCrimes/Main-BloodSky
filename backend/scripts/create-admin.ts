@@ -1,7 +1,6 @@
 import { db } from '../src/utils/db';
 import { users } from '../src/schemas';
 import { eq } from 'drizzle-orm';
-import { v4 as uuidv4 } from 'uuid';
 import * as bcrypt from 'bcrypt';
 import * as readline from 'readline';
 import { stdin as input, stdout as output } from 'process';
@@ -41,7 +40,13 @@ async function createAdmin() {
     }
     
     const hashedPassword = await bcrypt.hash(password, 10);
-    const userId = uuidv4();
+    const allUsers = await db.select({ userId: users.userId })
+      .from(users)
+      .orderBy(users.userId);
+    
+    const userId = allUsers.length > 0 
+      ? Math.max(...allUsers.map(u => u.userId)) + 1 
+      : 1;
     
     await db.insert(users).values({
       userId,

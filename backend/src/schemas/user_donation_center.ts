@@ -3,7 +3,7 @@ import { users } from './user';
 import { donationCenters } from './donation_center';
 
 export const userDonationCenters = pgTable('user_donation_center', {
-  userId: varchar('user_id').references(() => users.userId),
+  userId: integer('user_id').references(() => users.userId),
   centerId: integer('center_id').references(() => donationCenters.centerId),
   admin: boolean('admin'),
   info: varchar('info'),
