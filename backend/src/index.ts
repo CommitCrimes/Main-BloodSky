@@ -1,60 +1,50 @@
 import { Hono } from 'hono';
-import { serve } from '@hono/node-server';
 import { logger } from 'hono/logger';
 import { cors } from 'hono/cors';
-import dotenv from 'dotenv';
-import { testConnection } from './utils/db';
-import { applyMigrations } from './utils/migrations';
+import { HTTPException } from 'hono/http-exception';
+import { createRouter } from './routes';
 
-// Chargement des variables d'environnement
-dotenv.config();
+// Load environment variables
+const PORT = process.env.PORT || 3000;
 
-// Initialisation de l'application Hono
 const app = new Hono();
 
-// Middlewares
-app.use(logger());
-app.use(cors());
+// Middleware
+app.use('*', logger());
+app.use('*', cors());
 
-// Routes
-app.get('/', (c) => {
-  return c.json({
-    message: 'API BloodSky en cours d\'exécution',
-    version: '1.0.0',
-  });
-});
-
-// Point de terminaison de vérification d'état
-app.get('/health', (c) => {
-  return c.json({
-    status: 'ok',
-    uptime: process.uptime(),
-  });
-});
-
-// Port du serveur
-const port = parseInt(process.env.PORT || '3000');
-
-// Connexion à la base de données et application des migrations
-const startServer = async () => {
-  try {
-    // Tester la connexion à la base de données
-    await testConnection();
-    
-    // Appliquer les migrations
-    await applyMigrations();
-    
-    // Démarrer le serveur
-    serve({
-      fetch: app.fetch,
-      port,
-    });
-    
-    console.log(`Serveur démarré sur le port ${port}`);
-  } catch (error) {
-    console.error('Échec du démarrage du serveur:', error);
-    process.exit(1);
+// Error handling
+app.onError((err, c) => {
+  if (err instanceof HTTPException) {
+    return c.json(
+      {
+        message: err.message,
+        status: err.status,
+      },
+      err.status
+    );
   }
-};
+  
+  console.error('Unhandled error:', err);
+  return c.json(
+    {
+      message: 'Internal Server Error',
+      status: 500,
+    },
+    500
+  );
+});
 
-startServer();
+// API Routes
+app.route('/api', createRouter());
+
+// Health check
+app.get('/', (c) => c.json({ status: 'ok', message: 'BloodSky API is running' }));
+
+// Start server
+console.log(`Server running on http://localhost:${PORT}`);
+
+export default {
+  fetch: app.fetch,
+  port: PORT,
+};

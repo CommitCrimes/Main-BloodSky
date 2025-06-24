@@ -13,18 +13,19 @@ Une application web moderne avec un frontend React TypeScript et un backend Hono
 
 ```bash
 cd frontend
-npm install
-npm run dev
+bun install
+bun run dev
 ```
 
 ### Backend
 
 ```bash
 cd backend
-npm install
-npm run db:start   # Démarrer la base de données PostgreSQL
-npm run db:migrate # Appliquer les migrations
-npm run dev        # Démarrer le serveur de développement
+bun install
+docker-compose up -d
+bun run generate  # Génère les fichiers de migration
+bun run migrate   # Applique les migrations à la base de données
+bun run dev        # Démarrer le serveur de développement
 ```
 
 ## Technologies Utilisées
