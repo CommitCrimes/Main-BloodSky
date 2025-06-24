@@ -29,19 +29,11 @@ bun install
 2. Configurer l'environnement :
 
 ```bash
-# Créer le fichier .env avec les variables d'environnement
-# Copier les variables depuis un collègue ou utiliser les valeurs par défaut
-touch .env
+# Copier le fichier d'exemple et créer votre fichier .env
+cp .env.example .env
 ```
 
-Ajouter dans le fichier `.env` :
-```env
-DB_HOST=localhost
-DB_PORT=5437
-DB_USER=postgres
-DB_PASSWORD=votrepassword
-DB_NAME=blood_sky
-```
+Modifier le fichier `.env` selon vos besoins (notamment le mot de passe de la base de données).
 
 3. Démarrer les conteneurs PostgreSQL et pgAdmin :
 
@@ -49,13 +41,17 @@ DB_NAME=blood_sky
 docker-compose up -d
 ```
 
-4. Appliquer les migrations existantes :
+4. Créer les tables dans la base de données :
 
 ```bash
-bun run migrate   # Applique toutes les migrations à la base de données
+# Attendre quelques secondes que PostgreSQL démarre, puis exécuter :
+PGPASSWORD=blood_sky_drone psql -h localhost -p 5437 -U postgres -d blood_sky -f database_schema.sql
+
+# Ou avec Docker :
+docker exec -i bloodsky_postgres psql -U postgres -d blood_sky < database_schema.sql
 ```
 
-5. Créer un utilisateur admin (optionnel) :
+5. Créer un utilisateur admin :
 
 ```bash
 bun run create-admin
@@ -81,23 +77,15 @@ bun run dev
 
 #### Base de données
 
-- Générer de nouvelles migrations après modification des schémas :
-
-```bash
-bun run generate
-```
-
-- Appliquer les migrations à la base de données :
-
-```bash
-bun run migrate
-```
-
 - Visualiser la base de données avec Drizzle Studio :
 
 ```bash
 bun run studio
 ```
+
+Puis ouvrir https://local.drizzle.studio dans votre navigateur.
+
+**Note importante** : Le système de migration a été supprimé. Pour modifier la structure de la base de données, modifiez directement le fichier `database_schema.sql` et réexécutez-le.
 
 #### Tests et qualité de code
 
@@ -137,7 +125,6 @@ bun run start
 
 ```
 backend/
-├── migrations/         # Fichiers de migration de base de données
 ├── src/
 │   ├── controllers/    # Gestionnaires de requêtes
 │   ├── middlewares/    # Fonctions middleware personnalisées
@@ -147,7 +134,9 @@ backend/
 │   ├── services/       # Logique métier
 │   ├── utils/          # Fonctions utilitaires
 │   └── index.ts        # Point d'entrée de l'application
+├── scripts/            # Scripts utilitaires (create-admin, etc.)
 ├── .env                # Variables d'environnement
+├── database_schema.sql # Schéma de la base de données
 ├── docker-compose.yml  # Configuration Docker
 ├── drizzle.config.ts   # Configuration Drizzle ORM
 └── package.json        # Dépendances et scripts du projet
@@ -170,37 +159,40 @@ Authorization: Bearer VOTRE_JETON_JWT
 
 ## Workflow de développement
 
-### Gestion des migrations
+### Gestion de la base de données
 
-#### Après modification des schémas
+**Important** : Le système de migration a été supprimé. La structure de la base de données est maintenant gérée via le fichier `database_schema.sql`.
+
+#### Modifier la structure de la base de données
 
 1. Modifiez les schémas dans `src/schemas/`
-2. Générez une nouvelle migration : `bun run generate`
-3. Vérifiez le fichier SQL généré dans `migrations/`
-4. Appliquez la migration : `bun run migrate`
-
-#### Après un pull avec de nouvelles migrations
-
-Si vous voyez de nouveaux fichiers dans le dossier `migrations/` après un pull :
-
-```bash
-bun run migrate   # Applique les nouvelles migrations
-```
+2. Mettez à jour le fichier `database_schema.sql` pour refléter les changements
+3. Réexécutez le fichier SQL :
+   ```bash
+   PGPASSWORD=blood_sky_drone psql -h localhost -p 5437 -U postgres -d blood_sky -f database_schema.sql
+   ```
+4. Vérifiez les changements avec Drizzle Studio : `bun run studio`
 
 ### Ajouter une nouvelle fonctionnalité
 
 1. Créez ou modifiez les schémas dans `src/schemas/`
-2. Générez les migrations : `bun run generate`
-3. Appliquez les migrations : `bun run migrate`
-4. Créez les contrôleurs dans `src/controllers/`
-5. Créez les routes dans `src/routes/`
-6. Mettez à jour la documentation OpenAPI dans `src/routes/index.ts`
-7. Testez votre fonctionnalité : `bun run test`
-8. Formatez le code : `bun run format`
+2. Mettez à jour `database_schema.sql` si nécessaire
+3. Créez les contrôleurs dans `src/controllers/`
+4. Créez les routes dans `src/routes/`
+5. Mettez à jour la documentation OpenAPI dans `src/routes/index.ts`
+6. Testez votre fonctionnalité : `bun run test`
+7. Formatez le code : `bun run format`
 
 ### Résoudre les problèmes courants
 
 - **Problèmes de base de données** : Vérifiez que les conteneurs Docker sont en cours d'exécution avec `docker ps`
-- **Erreurs de migration** : Vérifiez les schémas et assurez-vous que les types correspondent à PostgreSQL
+- **Table non trouvée** : Réexécutez le fichier `database_schema.sql`
 - **Problèmes d'authentification** : Vérifiez que le jeton JWT est correctement inclus dans les en-têtes
 - **Erreurs de configuration** : Vérifiez que le fichier `.env` contient toutes les variables nécessaires
+
+### Notes importantes sur les changements récents
+
+- Le système de migration Drizzle a été supprimé
+- Tous les IDs sont maintenant en INTEGER au lieu de VARCHAR
+- Les noms de tables sont en minuscule
+- La table des utilisateurs s'appelle maintenant `users` (et non `user`)
