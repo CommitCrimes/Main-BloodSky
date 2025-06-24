@@ -1,4 +1,6 @@
 {
+  "id": "d162a575-0b44-4246-aba1-bfbe0eb9b54a",
+  "prevId": "9317d36f-3262-44c0-9ec8-7cabc5904bac",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -30,22 +32,22 @@
         "BLOOD_delivery_id_DELIVERY_delivery_id_fk": {
           "name": "BLOOD_delivery_id_DELIVERY_delivery_id_fk",
           "tableFrom": "BLOOD",
+          "tableTo": "DELIVERY",
           "columnsFrom": [
             "delivery_id"
           ],
-          "tableTo": "DELIVERY",
           "columnsTo": [
             "delivery_id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.DELIVERY_PARTICIPATION": {
       "name": "DELIVERY_PARTICIPATION",
@@ -69,28 +71,28 @@
         "DELIVERY_PARTICIPATION_delivery_id_DELIVERY_delivery_id_fk": {
           "name": "DELIVERY_PARTICIPATION_delivery_id_DELIVERY_delivery_id_fk",
           "tableFrom": "DELIVERY_PARTICIPATION",
+          "tableTo": "DELIVERY",
           "columnsFrom": [
             "delivery_id"
           ],
-          "tableTo": "DELIVERY",
           "columnsTo": [
             "delivery_id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "DELIVERY_PARTICIPATION_user_id_USER_user_id_fk": {
           "name": "DELIVERY_PARTICIPATION_user_id_USER_user_id_fk",
           "tableFrom": "DELIVERY_PARTICIPATION",
+          "tableTo": "USER",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "USER",
           "columnsTo": [
             "user_id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -104,8 +106,8 @@
       },
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.DELIVERY": {
       "name": "DELIVERY",
@@ -171,48 +173,48 @@
         "DELIVERY_drone_id_DRONE_drone_id_fk": {
           "name": "DELIVERY_drone_id_DRONE_drone_id_fk",
           "tableFrom": "DELIVERY",
+          "tableTo": "DRONE",
           "columnsFrom": [
             "drone_id"
           ],
-          "tableTo": "DRONE",
           "columnsTo": [
             "drone_id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "DELIVERY_hospital_id_HOSPITAL_hospital_id_fk": {
           "name": "DELIVERY_hospital_id_HOSPITAL_hospital_id_fk",
           "tableFrom": "DELIVERY",
+          "tableTo": "HOSPITAL",
           "columnsFrom": [
             "hospital_id"
           ],
-          "tableTo": "HOSPITAL",
           "columnsTo": [
             "hospital_id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "DELIVERY_center_id_DONATIONCENTER_center_id_fk": {
           "name": "DELIVERY_center_id_DONATIONCENTER_center_id_fk",
           "tableFrom": "DELIVERY",
+          "tableTo": "DONATIONCENTER",
           "columnsFrom": [
             "center_id"
           ],
-          "tableTo": "DONATIONCENTER",
           "columnsTo": [
             "center_id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.DONATIONCENTER": {
       "name": "DONATIONCENTER",
@@ -260,8 +262,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.DRONE": {
       "name": "DRONE",
@@ -321,22 +323,22 @@
         "DRONE_center_id_DONATIONCENTER_center_id_fk": {
           "name": "DRONE_center_id_DONATIONCENTER_center_id_fk",
           "tableFrom": "DRONE",
+          "tableTo": "DONATIONCENTER",
           "columnsFrom": [
             "center_id"
           ],
-          "tableTo": "DONATIONCENTER",
           "columnsTo": [
             "center_id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.HOSPITAL": {
       "name": "HOSPITAL",
@@ -390,8 +392,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.USER": {
       "name": "USER",
@@ -452,8 +454,8 @@
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.user_donation_center": {
       "name": "user_donation_center",
@@ -461,7 +463,7 @@
       "columns": {
         "user_id": {
           "name": "user_id",
-          "type": "integer",
+          "type": "varchar",
           "primaryKey": false,
           "notNull": false
         },
@@ -489,28 +491,28 @@
         "user_donation_center_user_id_USER_user_id_fk": {
           "name": "user_donation_center_user_id_USER_user_id_fk",
           "tableFrom": "user_donation_center",
+          "tableTo": "USER",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "USER",
           "columnsTo": [
             "user_id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "user_donation_center_center_id_DONATIONCENTER_center_id_fk": {
           "name": "user_donation_center_center_id_DONATIONCENTER_center_id_fk",
           "tableFrom": "user_donation_center",
+          "tableTo": "DONATIONCENTER",
           "columnsFrom": [
             "center_id"
           ],
-          "tableTo": "DONATIONCENTER",
           "columnsTo": [
             "center_id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -523,8 +525,8 @@
       },
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.user_dronist": {
       "name": "user_dronist",
@@ -548,15 +550,15 @@
         "user_dronist_user_id_USER_user_id_fk": {
           "name": "user_dronist_user_id_USER_user_id_fk",
           "tableFrom": "user_dronist",
+          "tableTo": "USER",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "USER",
           "columnsTo": [
             "user_id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -569,8 +571,8 @@
       },
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.user_hospital": {
       "name": "user_hospital",
@@ -578,7 +580,7 @@
       "columns": {
         "user_id": {
           "name": "user_id",
-          "type": "integer",
+          "type": "varchar",
           "primaryKey": false,
           "notNull": false
         },
@@ -606,28 +608,28 @@
         "user_hospital_user_id_USER_user_id_fk": {
           "name": "user_hospital_user_id_USER_user_id_fk",
           "tableFrom": "user_hospital",
+          "tableTo": "USER",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "USER",
           "columnsTo": [
             "user_id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         },
         "user_hospital_hospital_id_HOSPITAL_hospital_id_fk": {
           "name": "user_hospital_hospital_id_HOSPITAL_hospital_id_fk",
           "tableFrom": "user_hospital",
+          "tableTo": "HOSPITAL",
           "columnsFrom": [
             "hospital_id"
           ],
-          "tableTo": "HOSPITAL",
           "columnsTo": [
             "hospital_id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -640,8 +642,8 @@
       },
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
     "public.user_support_relationship_center": {
       "name": "user_support_relationship_center",
@@ -665,15 +667,15 @@
         "user_support_relationship_center_user_id_USER_user_id_fk": {
           "name": "user_support_relationship_center_user_id_USER_user_id_fk",
           "tableFrom": "user_support_relationship_center",
+          "tableTo": "USER",
           "columnsFrom": [
             "user_id"
           ],
-          "tableTo": "USER",
           "columnsTo": [
             "user_id"
           ],
-          "onUpdate": "no action",
-          "onDelete": "no action"
+          "onDelete": "no action",
+          "onUpdate": "no action"
         }
       },
       "compositePrimaryKeys": {
@@ -686,21 +688,19 @@
       },
       "uniqueConstraints": {},
       "policies": {},
-      "isRLSEnabled": false,
-      "checkConstraints": {}
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
   "enums": {},
   "schemas": {},
-  "_meta": {
-    "schemas": {},
-    "tables": {},
-    "columns": {}
-  },
-  "id": "9317d36f-3262-44c0-9ec8-7cabc5904bac",
-  "prevId": "00000000-0000-0000-0000-000000000000",
   "sequences": {},
+  "roles": {},
   "policies": {},
   "views": {},
-  "roles": {}
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
 }

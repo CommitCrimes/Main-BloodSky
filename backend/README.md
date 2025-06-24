@@ -29,7 +29,18 @@ bun install
 2. Configurer l'environnement :
 
 ```bash
-cp .env.example .env
+# Créer le fichier .env avec les variables d'environnement
+# Copier les variables depuis un collègue ou utiliser les valeurs par défaut
+touch .env
+```
+
+Ajouter dans le fichier `.env` :
+```env
+DB_HOST=localhost
+DB_PORT=5437
+DB_USER=postgres
+DB_PASSWORD=votrepassword
+DB_NAME=blood_sky
 ```
 
 3. Démarrer les conteneurs PostgreSQL et pgAdmin :
@@ -38,14 +49,19 @@ cp .env.example .env
 docker-compose up -d
 ```
 
-4. Générer et appliquer les migrations :
+4. Appliquer les migrations existantes :
 
 ```bash
-bun run generate  # Génère les fichiers de migration
-bun run migrate   # Applique les migrations à la base de données
+bun run migrate   # Applique toutes les migrations à la base de données
 ```
 
-5. Démarrer le serveur de développement :
+5. Créer un utilisateur admin (optionnel) :
+
+```bash
+bun run create-admin
+```
+
+6. Démarrer le serveur de développement :
 
 ```bash
 bun run dev
@@ -154,19 +170,37 @@ Authorization: Bearer VOTRE_JETON_JWT
 
 ## Workflow de développement
 
+### Gestion des migrations
+
+#### Après modification des schémas
+
+1. Modifiez les schémas dans `src/schemas/`
+2. Générez une nouvelle migration : `bun run generate`
+3. Vérifiez le fichier SQL généré dans `migrations/`
+4. Appliquez la migration : `bun run migrate`
+
+#### Après un pull avec de nouvelles migrations
+
+Si vous voyez de nouveaux fichiers dans le dossier `migrations/` après un pull :
+
+```bash
+bun run migrate   # Applique les nouvelles migrations
+```
+
 ### Ajouter une nouvelle fonctionnalité
 
 1. Créez ou modifiez les schémas dans `src/schemas/`
 2. Générez les migrations : `bun run generate`
-3. Créez les contrôleurs dans `src/controllers/`
-4. Créez les routes dans `src/routes/`
-5. Mettez à jour la documentation OpenAPI dans `src/routes/index.ts`
-6. Testez votre fonctionnalité : `bun run test`
-7. Formatez le code : `bun run format`
-8. Appliquez les migrations : `bun run migrate`
+3. Appliquez les migrations : `bun run migrate`
+4. Créez les contrôleurs dans `src/controllers/`
+5. Créez les routes dans `src/routes/`
+6. Mettez à jour la documentation OpenAPI dans `src/routes/index.ts`
+7. Testez votre fonctionnalité : `bun run test`
+8. Formatez le code : `bun run format`
 
 ### Résoudre les problèmes courants
 
 - **Problèmes de base de données** : Vérifiez que les conteneurs Docker sont en cours d'exécution avec `docker ps`
 - **Erreurs de migration** : Vérifiez les schémas et assurez-vous que les types correspondent à PostgreSQL
 - **Problèmes d'authentification** : Vérifiez que le jeton JWT est correctement inclus dans les en-têtes
+- **Erreurs de configuration** : Vérifiez que le fichier `.env` contient toutes les variables nécessaires
