@@ -1,180 +1,172 @@
-# API Backend BloodSky
+# BloodSky Backend
 
-API Backend pour le projet BloodSky utilisant Hono, TypeScript et PostgreSQL.
+API Backend pour le système de livraison de sang par drone BloodSky.
 
-## Prérequis
+## Technologies
 
-- Docker et Docker Compose
-- Node.js
-- npm ou yarn
+- **Runtime**: [Bun](https://bun.sh/)
+- **Framework**: [Hono](https://hono.dev/)
+- **Base de données**: PostgreSQL
+- **ORM**: [Drizzle ORM](https://orm.drizzle.team/)
+- **Documentation API**: Swagger UI
+- **Authentification**: JWT
 
-## Installation et configuration pour les nouveaux développeurs
+## Démarrage
 
-Pour les nouveaux membres de l'équipe rejoignant le projet, voici la procédure complète d'installation (à faire une seule fois) :
+### Prérequis
+
+- [Bun](https://bun.sh/) (>=1.0.0)
+- [Docker](https://www.docker.com/) et Docker Compose
+
+### Première installation après un clone
+
+1. Installer les dépendances :
 
 ```bash
-# 1. Cloner le projet
-git clone [URL_DU_REPO]
-cd Main-BloodSky
+bun install
+```
 
-# 2. Installer les dépendances backend (une seule fois)
-cd backend
-npm install
+2. Configurer l'environnement :
 
-# 3. Copier le fichier d'environnement (une seule fois)
+```bash
 cp .env.example .env
-
-# 4. Démarrer la base de données
-npm run db:start
-
-# 5. Appliquer les migrations initiales
-npm run db:migrate
-
-# 6. Démarrer le serveur de développement
-npm run dev
-
-# 7. Dans un autre terminal, installer et démarrer le frontend (une seule fois pour l'installation)
-cd ../frontend
-npm install
-npm run dev
 ```
 
-## Développement quotidien
-
-Une fois le projet configuré, voici le workflow habituel de développement (à chaque session de travail) :
+3. Démarrer les conteneurs PostgreSQL et pgAdmin :
 
 ```bash
-# 1. Démarrer la base de données (au début de votre session de travail)
-cd backend
-npm run db:start
-
-# 2. Appliquer les nouvelles migrations (uniquement après un pull qui contient de nouvelles migrations)
-npm run db:migrate
-
-# 3. Démarrer le serveur de développement backend
-npm run dev
-
-# 4. Dans un autre terminal, démarrer le frontend
-cd ../frontend
-npm run dev
+docker-compose up -d
 ```
 
-## Informations sur la Base de Données
-
-### Démarrage et arrêt de la base de données
+4. Générer et appliquer les migrations :
 
 ```bash
-# Démarrer la base de données
-npm run db:start
-
-# Arrêter la base de données
-npm run db:stop
+bun run generate  # Génère les fichiers de migration
+bun run migrate   # Applique les migrations à la base de données
 ```
 
-Cela lancera :
-- Base de données PostgreSQL sur le port 5437
-- PgAdmin4 sur le port 5050 (accessible à http://localhost:5050)
-
-### Accès à PgAdmin
-
-1. Ouvrir http://localhost:5050
-2. Se connecter avec :
-   - Email : admin@bloodsky.com
-   - Mot de passe : mdp....
-
-3. Ajouter un nouveau serveur :
-   - Nom : BloodSky Local
-   - Hôte : postgres (ou localhost si connexion en dehors de Docker)
-   - Port : 5432 (interne) ou 5437 (externe)
-   - Base de données de maintenance : postgres
-   - Nom d'utilisateur : postgres
-   - Mot de passe : mdp....
-
-### Informations de Connexion à la Base de Données
-
-- Base de données : blood_sky
-- Utilisateur : postgres
-- Mot de passe : mdp....
-- Port : 5437
-
-## Système de Migrations
-
-Le projet utilise un système de migration pour gérer les évolutions du schéma de la base de données.
-
-### Exécuter les migrations
+5. Démarrer le serveur de développement :
 
 ```bash
-# Appliquer les migrations non encore exécutées
-npm run db:migrate
+bun run dev
 ```
 
-### Création d'une Nouvelle Migration
+L'API sera disponible à l'adresse http://localhost:3000 et la documentation Swagger à l'adresse http://localhost:3000/api/swagger.
 
-Pour créer une nouvelle migration, suivez ces étapes :
+### Commandes quotidiennes
 
-1. Créez un nouveau fichier dans le dossier `/database/migrations/` avec un nom au format `XXX_description.sql` (où XXX est un numéro séquentiel)
-2. Ajoutez votre code SQL dans ce fichier
-3. Exécutez `npm run db:migrate` pour appliquer la migration
+#### Développement
 
-Exemple de nouvelle migration (`003_add_user_roles.sql`) :
+- Démarrer le serveur de développement avec rechargement à chaud :
 
-```sql
--- Migration: 003_add_user_roles
--- Description: Ajoute une colonne rôle aux utilisateurs
-
-ALTER TABLE "user" ADD COLUMN IF NOT EXISTS role VARCHAR(50) DEFAULT 'user';
-
--- Utiliser des blocs DO pour les opérations conditionnelles
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_user_role') THEN
-    CREATE INDEX idx_user_role ON "user"(role);
-  END IF;
-END
-$$;
-```
-
-### Notes importantes sur les migrations
-
-- La commande `db:start` démarre simplement les conteneurs Docker, elle peut être exécutée plusieurs fois sans problème
-- La commande `db:migrate` n'applique que les migrations qui N'ONT PAS ENCORE été exécutées
-- Après un `git pull`, pensez à exécuter `npm run db:migrate` si d'autres développeurs ont ajouté des migrations
-
-### Règles pour maintenir l'intégrité des migrations
-
-1. **Ne jamais modifier une migration existante** qui a déjà été commitée ou partagée
-   - Si vous trouvez une erreur, créez une nouvelle migration pour la corriger
-
-2. **Toujours rendre les migrations idempotentes**
-   - Utilisez `IF NOT EXISTS`, `IF EXISTS`, et des blocs `DO $$`
-   - Assurez-vous qu'elle peut être exécutée plusieurs fois sans erreur
-
-3. **Coordonnez avec votre équipe**
-   - Prévenez les autres quand vous ajoutez une migration
-   - Évitez de créer des migrations avec le même numéro (ex: deux personnes créant "002_...")
-
-4. **Pour les rétractions ou changements majeurs**
-   - Créez une migration de "rollback" plutôt que de supprimer une migration existante
-
-## Commandes Utiles pour la Base de Données
-
-### Visualiser les Tables
 ```bash
-# Se connecter à la base de données
-docker exec -it blood_sky_db psql -U postgres -d blood_sky
-
-# Lister toutes les tables
-\dt
-
-# Examiner la structure d'une table
-\d+ "user"
+bun run dev
 ```
 
-### Sauvegarde et Restauration
+#### Base de données
+
+- Générer de nouvelles migrations après modification des schémas :
+
 ```bash
-# Sauvegarde
-docker exec -it blood_sky_db pg_dump -U postgres -d blood_sky > backup.sql
-
-# Restauration
-cat backup.sql | docker exec -i blood_sky_db psql -U postgres -d blood_sky
+bun run generate
 ```
+
+- Appliquer les migrations à la base de données :
+
+```bash
+bun run migrate
+```
+
+- Visualiser la base de données avec Drizzle Studio :
+
+```bash
+bun run studio
+```
+
+#### Tests et qualité de code
+
+- Exécuter les tests :
+
+```bash
+bun run test
+```
+
+- Linter le code :
+
+```bash
+bun run lint
+```
+
+- Formater le code :
+
+```bash
+bun run format
+```
+
+#### Production
+
+- Construire l'application pour la production :
+
+```bash
+bun run build
+```
+
+- Démarrer le serveur de production :
+
+```bash
+bun run start
+```
+
+## Structure du projet
+
+```
+backend/
+├── migrations/         # Fichiers de migration de base de données
+├── src/
+│   ├── controllers/    # Gestionnaires de requêtes
+│   ├── middlewares/    # Fonctions middleware personnalisées
+│   ├── models/         # Modèles de données
+│   ├── routes/         # Routes API
+│   ├── schemas/        # Définitions des schémas de base de données
+│   ├── services/       # Logique métier
+│   ├── utils/          # Fonctions utilitaires
+│   └── index.ts        # Point d'entrée de l'application
+├── .env                # Variables d'environnement
+├── docker-compose.yml  # Configuration Docker
+├── drizzle.config.ts   # Configuration Drizzle ORM
+└── package.json        # Dépendances et scripts du projet
+```
+
+## Documentation API
+
+La documentation de l'API est disponible à l'adresse `/api/swagger` lorsque l'application est en cours d'exécution.
+
+## Authentification
+
+L'API utilise des jetons JWT pour l'authentification. Pour accéder aux endpoints protégés :
+
+1. Inscrivez un nouvel utilisateur ou connectez-vous avec des identifiants existants
+2. Incluez le jeton JWT dans l'en-tête Authorization de vos requêtes :
+
+```
+Authorization: Bearer VOTRE_JETON_JWT
+```
+
+## Workflow de développement
+
+### Ajouter une nouvelle fonctionnalité
+
+1. Créez ou modifiez les schémas dans `src/schemas/`
+2. Générez les migrations : `bun run generate`
+3. Créez les contrôleurs dans `src/controllers/`
+4. Créez les routes dans `src/routes/`
+5. Mettez à jour la documentation OpenAPI dans `src/routes/index.ts`
+6. Testez votre fonctionnalité : `bun run test`
+7. Formatez le code : `bun run format`
+8. Appliquez les migrations : `bun run migrate`
+
+### Résoudre les problèmes courants
+
+- **Problèmes de base de données** : Vérifiez que les conteneurs Docker sont en cours d'exécution avec `docker ps`
+- **Erreurs de migration** : Vérifiez les schémas et assurez-vous que les types correspondent à PostgreSQL
+- **Problèmes d'authentification** : Vérifiez que le jeton JWT est correctement inclus dans les en-têtes
