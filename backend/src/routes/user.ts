@@ -4,6 +4,7 @@ import { userDonationCenters } from "../schemas/user_donation_center";
 import { userDronists } from "../schemas/user_dronist";
 import { userSupportCenters } from "../schemas/user_support_center";
 import { userHospitals } from "../schemas/user_hospital";
+import { deliveryParticipations } from "../schemas/delivery_participation";
 import { db } from "../utils/db";
 import { eq, and } from "drizzle-orm";
 
@@ -126,6 +127,19 @@ userRouter.get("/hospital/:hospitalId/admins", async (c) => {
   return c.json(data);
 });
 
+// GET delivery participations by user ID
+userRouter.get("/:id/deliveries", async (c) => {
+  const userId = Number(c.req.param("id"));
+  if (isNaN(userId)) return c.text("Invalid user ID", 400);
+
+  const participations = await db
+    .select()
+    .from(deliveryParticipations)
+    .where(eq(deliveryParticipations.userId, userId));
+
+  return c.json(participations);
+});
+
 //_______________POST______________//
 
 // POST create user
@@ -244,7 +258,6 @@ userRouter.put("/:id", async (c) => {
 
   return c.json(updatedUser[0]);
 });
-
 
 // PUT update user then user in donation center
 userRouter.put("/donation-center/:id", async (c) => {
