@@ -7,6 +7,6 @@ export const users = pgTable('users', {
   userName: varchar('user_name'),
   userFirstname: varchar('user_firstname'),
   dteCreate: timestamp('dte_create').defaultNow(),
-  telNumber: integer('tel_number'),
+  telNumber: varchar('tel_number'),
   userStatus: text('user_status'), // suspended or active
 });
