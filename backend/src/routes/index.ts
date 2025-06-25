@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { authRouter } from './auth.routes';
+import { deliveryRouter } from './delivery';
 import { swaggerUI } from '@hono/swagger-ui';
 import { createRoute, z } from '@hono/zod-openapi';
 
@@ -97,6 +98,7 @@ export const createRouter = () => {
 
   // Routes publiques
   api.route('/auth', authRouter);
+  api.route('/deliveries', deliveryRouter);
   
 
   // Swagger documentation
