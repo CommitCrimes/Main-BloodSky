@@ -1,11 +1,11 @@
-import { pgTable, varchar, integer } from 'drizzle-orm/pg-core';
+import { pgTable, varchar, integer, decimal } from 'drizzle-orm/pg-core';
 
-export const hospitals = pgTable('HOSPITAL', {
-  hospitalId: varchar('hospital_id').primaryKey(),
+export const hospitals = pgTable('hospital', {
+  hospitalId: integer('hospital_id').primaryKey(),
   hospitalName: varchar('hospital_name'),
   hospitalCity: varchar('hospital_city'),
   hospitalPostal: integer('hospital_postal'),
   hospitalAdress: varchar('hospital_adress'),
-  hospitalLatitude: integer('hospital_latitude'),
-  hospitalLongitude: integer('hospital_longtitude'),
+  hospitalLatitude: decimal('hospital_latitude', { precision: 15, scale: 10 }),
+  hospitalLongitude: decimal('hospital_longitude', { precision: 15, scale: 10 }),
 });
