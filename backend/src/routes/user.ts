@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { users } from "../schemas/user";
-import { userDonationCenters } from "../schemas/user_donation_center";
+import { userDonationCenter } from "../schemas/user_donation_center";
 import { userDronists } from "../schemas/user_dronist";
 import { userSupportCenters } from "../schemas/user_support_center";
-import { userHospitals } from "../schemas/user_hospital";
+import { userHospital } from "../schemas/user_hospital";
 import { deliveryParticipations } from "../schemas/delivery_participation";
 import { db } from "../utils/db";
 import { eq, and } from "drizzle-orm";
@@ -20,7 +20,7 @@ userRouter.get("/", async (c) => {
 
 // GET all users in donation centers
 userRouter.get("/donation-  ", async (c) => {
-  const data = await db.select().from(userDonationCenters);
+  const data = await db.select().from(userDonationCenter);
   return c.json(data);
 });
 
@@ -38,7 +38,7 @@ userRouter.get("/support-center", async (c) => {
 
 // GET all users in hospitals
 userRouter.get("/hospital", async (c) => {
-  const data = await db.select().from(userHospitals);
+  const data = await db.select().from(userHospital);
   return c.json(data);
 });
 
@@ -75,8 +75,8 @@ userRouter.get("/donation-center/:centerId", async (c) => {
   if (isNaN(centerId)) return c.text("Invalid center ID", 400);
   const data = await db
     .select()
-    .from(userDonationCenters)
-    .where(eq(userDonationCenters.centerId, centerId));
+    .from(userDonationCenter)
+    .where(eq(userDonationCenter.centerId, centerId));
   if (data.length === 0) return c.notFound();
   return c.json(data);
 });
@@ -87,8 +87,8 @@ userRouter.get("/hospital/:hospitalId", async (c) => {
   if (isNaN(hospitalId)) return c.text("Invalid hospital ID", 400);
   const data = await db
     .select()
-    .from(userHospitals)
-    .where(eq(userHospitals.hospitalId, hospitalId));
+    .from(userHospital)
+    .where(eq(userHospital.hospitalId, hospitalId));
   if (data.length === 0) return c.notFound();
   return c.json(data);
 });
@@ -99,11 +99,11 @@ userRouter.get("/donation-center/:centerId/admins", async (c) => {
   if (isNaN(centerId)) return c.text("Invalid center ID", 400);
   const data = await db
     .select()
-    .from(userDonationCenters)
+    .from(userDonationCenter)
     .where(
       and(
-        eq(userDonationCenters.centerId, centerId),
-        eq(userDonationCenters.admin, true)
+        eq(userDonationCenter.centerId, centerId),
+        eq(userDonationCenter.admin, true)
       )
     );
   if (data.length === 0) return c.notFound();
@@ -116,11 +116,11 @@ userRouter.get("/hospital/:hospitalId/admins", async (c) => {
   if (isNaN(hospitalId)) return c.text("Invalid hospital ID", 400);
   const data = await db
     .select()
-    .from(userHospitals)
+    .from(userHospital)
     .where(
       and(
-        eq(userHospitals.hospitalId, hospitalId),
-        eq(userHospitals.admin, true)
+        eq(userHospital.hospitalId, hospitalId),
+        eq(userHospital.admin, true)
       )
     );
   if (data.length === 0) return c.notFound();
@@ -172,7 +172,7 @@ userRouter.post("/donation-center", async (c) => {
   const [newUser] = await db.insert(users).values(user).returning();
 
   // Insert user in donation center
-  await db.insert(userDonationCenters).values({
+  await db.insert(userDonationCenter).values({
     userId: newUser.userId,
     centerId,
     admin,
@@ -191,7 +191,7 @@ userRouter.post("/hospital", async (c) => {
   const [newUser] = await db.insert(users).values(user).returning();
 
   // Insert user in hospital
-  await db.insert(userHospitals).values({
+  await db.insert(userHospital).values({
     userId: newUser.userId,
     hospitalId,
     admin,
@@ -271,9 +271,9 @@ userRouter.put("/donation-center/:id", async (c) => {
 
   // Update user in donation center
   await db
-    .update(userDonationCenters)
+    .update(userDonationCenter)
     .set({ centerId, admin, info })
-    .where(eq(userDonationCenters.userId, id));
+    .where(eq(userDonationCenter.userId, id));
 
   return c.text("User and donation center updated");
 });
@@ -290,9 +290,9 @@ userRouter.put("/hospital/:id", async (c) => {
 
   // Update user in hospital
   await db
-    .update(userHospitals)
+    .update(userHospital)
     .set({ hospitalId, admin, info })
-    .where(eq(userHospitals.userId, id));
+    .where(eq(userHospital.userId, id));
 
   return c.text("User and hospital updated");
 });
@@ -344,11 +344,11 @@ userRouter.delete("/:id", async (c) => {
 
   // Delete user from all related tables
   await db
-    .delete(userDonationCenters)
-    .where(eq(userDonationCenters.userId, id));
+    .delete(userDonationCenter)
+    .where(eq(userDonationCenter.userId, id));
   await db.delete(userDronists).where(eq(userDronists.userId, id));
   await db.delete(userSupportCenters).where(eq(userSupportCenters.userId, id));
-  await db.delete(userHospitals).where(eq(userHospitals.userId, id));
+  await db.delete(userHospital).where(eq(userHospital.userId, id));
 
   // Finally delete the user
   await db.delete(users).where(eq(users.userId, id));

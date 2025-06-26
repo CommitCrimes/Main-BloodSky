@@ -290,7 +290,7 @@ export const createRouter = () => {
         }
       },
     },
-  };
+  }));
 
   // Routes publiques
   api.route('/auth', authRouter);
