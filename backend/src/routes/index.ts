@@ -1,9 +1,13 @@
 import { Hono } from 'hono';
 import { authRouter } from './auth.routes';
 import { deliveryRouter } from './delivery';
+<<<<<<< 6-créer-les-routes-crud-de-la-table-hospital
+import { hospitalRouter } from './hospital';
+=======
 import { donationCenterRouter } from './donation_center';
 import { userRouter } from './user';
 import { entitiesRouter } from './entities.routes';
+>>>>>>> All-crud
 import { swaggerUI } from '@hono/swagger-ui';
 
 export const createRouter = () => {
@@ -292,9 +296,16 @@ export const createRouter = () => {
   // Routes publiques
   api.route('/auth', authRouter);
   api.route('/deliveries', deliveryRouter);
+<<<<<<< 6-créer-les-routes-crud-de-la-table-hospital
+  api.route('/hospitals', hospitalRouter);
+
+  // Swagger documentation
+  api.get('/docs', (c) => c.json(openApiJson));
+=======
   api.route('/donation-centers', donationCenterRouter);
   api.route('/users', userRouter);
   
+>>>>>>> All-crud
   api.get('/swagger', swaggerUI({ url: '/api/docs' }));
   
   return api;
