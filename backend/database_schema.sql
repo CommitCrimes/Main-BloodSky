@@ -16,14 +16,19 @@ DROP TABLE IF EXISTS "user" CASCADE;
 
 -- User table
 CREATE TABLE users (
-    user_id INTEGER PRIMARY KEY,
+    user_id SERIAL PRIMARY KEY,
     email VARCHAR NOT NULL,
     password VARCHAR NOT NULL,
     user_name VARCHAR,
     user_firstname VARCHAR,
     dte_create TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     tel_number INTEGER,
-    user_status TEXT
+    user_status TEXT,
+    temp_password_token VARCHAR,
+    temp_password_expires TIMESTAMP,
+    url_used BOOLEAN DEFAULT FALSE,
+    reset_password_token VARCHAR,
+    reset_password_expires TIMESTAMP
 );
 
 -- Donation Center table
@@ -32,8 +37,8 @@ CREATE TABLE donationcenter (
     center_city VARCHAR,
     center_postal INTEGER,
     center_adress VARCHAR,
-    center_latitude INTEGER,
-    center_longitude INTEGER
+    center_latitude DECIMAL(10,8),
+    center_longitude DECIMAL(11,8)
 );
 
 -- Hospital table
@@ -43,8 +48,8 @@ CREATE TABLE hospital (
     hospital_city VARCHAR,
     hospital_postal INTEGER,
     hospital_adress VARCHAR,
-    hospital_latitude INTEGER,
-    hospital_longtitude INTEGER
+    hospital_latitude DECIMAL(10,8),
+    hospital_longitude DECIMAL(11,8)
 );
 
 -- Drone table
