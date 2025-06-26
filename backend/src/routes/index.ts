@@ -1,5 +1,11 @@
 import { Hono } from 'hono';
 import { authRouter } from './auth.routes';
+import { deliveryRouter } from './delivery';
+import { bloodRouter } from './blood';
+import { droneRouter } from './drone';
+import { hospitalRouter } from './hospital';
+import { donationCenterRouter } from './donation_center';
+import { userRouter } from './user';
 import { entitiesRouter } from './entities.routes';
 import { swaggerUI } from '@hono/swagger-ui';
 
@@ -283,49 +289,18 @@ export const createRouter = () => {
           }
         }
       },
-      '/donation-centers': {
-        get: {
-          summary: 'Get all donation centers',
-          tags: ['Entities'],
-          responses: {
-            '200': {
-              description: 'List of donation centers',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'array',
-                    items: { $ref: '#/components/schemas/DonationCenter' }
-                  }
-                }
-              }
-            },
-            '500': { description: 'Internal server error' }
-          }
-        }
-      },
-      '/hospitals': {
-        get: {
-          summary: 'Get all hospitals',
-          tags: ['Entities'],
-          responses: {
-            '200': {
-              description: 'List of hospitals',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'array',
-                    items: { $ref: '#/components/schemas/Hospital' }
-                  }
-                }
-              }
-            },
-            '500': { description: 'Internal server error' }
-          }
-        }
-      }
-    }
+    },
   }));
-  
+
+  // Routes publiques
+  api.route('/auth', authRouter);
+  api.route('/deliveries', deliveryRouter);
+  api.route('/blood', bloodRouter);
+  api.route('/drones', droneRouter);
+  api.route('/hospitals', hospitalRouter);
+  api.route('/donation-centers', donationCenterRouter);
+  api.route('/users', userRouter);
+
   api.get('/swagger', swaggerUI({ url: '/api/docs' }));
   
   return api;
