@@ -1,7 +1,11 @@
 import { Hono } from 'hono';
 import { authRouter } from './auth.routes';
 import { deliveryRouter } from './delivery';
+<<<<<<< 4-créer-les-routes-crud-de-la-table-user
+import { userRouter } from './user';
+=======
 import { entitiesRouter } from './entities.routes';
+>>>>>>> All-crud
 import { swaggerUI } from '@hono/swagger-ui';
 
 export const createRouter = () => {
@@ -290,6 +294,7 @@ export const createRouter = () => {
   // Routes publiques
   api.route('/auth', authRouter);
   api.route('/deliveries', deliveryRouter);
+  api.route('/users', userRouter);
   
   api.get('/swagger', swaggerUI({ url: '/api/docs' }));
   
