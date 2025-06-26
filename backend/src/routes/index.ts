@@ -1,12 +1,16 @@
 import { Hono } from 'hono';
 import { authRouter } from './auth.routes';
 import { deliveryRouter } from './delivery';
+<<<<<<< 7-créer-les-routes-crud-de-la-table-drone
+import { droneRouter } from './drone';
+=======
 <<<<<<< 6-créer-les-routes-crud-de-la-table-hospital
 import { hospitalRouter } from './hospital';
 =======
 import { donationCenterRouter } from './donation_center';
 import { userRouter } from './user';
 import { entitiesRouter } from './entities.routes';
+>>>>>>> All-crud
 >>>>>>> All-crud
 import { swaggerUI } from '@hono/swagger-ui';
 
@@ -296,8 +300,13 @@ export const createRouter = () => {
   // Routes publiques
   api.route('/auth', authRouter);
   api.route('/deliveries', deliveryRouter);
+<<<<<<< 7-créer-les-routes-crud-de-la-table-drone
+  api.route('/drones', droneRouter);
+  
+=======
 <<<<<<< 6-créer-les-routes-crud-de-la-table-hospital
   api.route('/hospitals', hospitalRouter);
+>>>>>>> All-crud
 
   // Swagger documentation
   api.get('/docs', (c) => c.json(openApiJson));
