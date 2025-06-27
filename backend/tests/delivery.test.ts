@@ -16,7 +16,7 @@ function request(method: string, route:string, path: string, body?: any) {
 test("CRUD delivery", async () => {
     // 1. Récupérer toutes les livraisons pour déterminer l'ID max
     console.log("[TEST] GET all deliveries");
-    const resAll = await request("GET", "deliveries", "/")
+    const resAll = await request("GET", "deliveries", "/");
     const all = await resAll.json();
     const maxId = all.reduce(
       (max: number, d: any) => Math.max(max, d.deliveryId),
@@ -190,7 +190,7 @@ test("CRUD delivery", async () => {
     expect(resCreateBloodSample.status).toBe(201);
     console.log("[TEST] Created blood sample");
 
-    // 13. POST: Créer une livraison (enfin)
+    // 13. POST: Créer une livraison
     console.log("[TEST] POST create delivery");
     const deliveryData = {
         deliveryId,
