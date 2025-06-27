@@ -12,7 +12,7 @@ function request(method: string, route:string, path: string, body?: any) {
 }
 
 
-test("CRUD blood sample (with GET by type and deliveryId if available)", async () => {
+test("CRUD blood sample", async () => {
   // 1. GET all blood samples to determine max ID
   console.log("[TEST] GET all blood samples");
   const resAll = await request("GET", "blood", "/");
