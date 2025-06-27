@@ -12,7 +12,7 @@ function request(method: string, route:string, path: string, body?: any) {
 }
 
 
-test("CRUD blood sample (with GET by type and deliveryId if available)", async () => {
+test("CRUD blood sample", async () => {
   // 1. GET all blood samples to determine max ID
   console.log("[TEST] GET all blood samples");
   const resAll = await request("GET", "blood", "/");
@@ -179,4 +179,28 @@ test("CRUD blood sample (with GET by type and deliveryId if available)", async (
   console.log("[TEST] GET blood sample after deletion (should be 404)");
   const resAfterDelete = await request("GET", "blood", `/${bloodId}`);
   expect(resAfterDelete.status).toBe(404);
+
+  // 17. DELETE: Supprimer la livraison
+  console.log("[TEST] DELETE delivery");
+  const resDeleteDelivery = await request("DELETE", "deliveries", `/${deliveryId}`);
+  expect(resDeleteDelivery.status).toBe(200);
+
+  // 18. DELETE: Supprimer le drone
+  console.log("[TEST] DELETE test drone");
+  const resDeleteDrone = await request("DELETE", "drones", `/${droneId}`);
+  expect(resDeleteDrone.status).toBe(200);
+
+  // 19. DELETE: Supprimer le donation center
+  console.log("[TEST] DELETE donation center");
+  const resDeleteDonationCenter = await request("DELETE", "donation-centers", `/${centerId}`);
+  expect(resDeleteDonationCenter.status).toBe(200);
+
+  // 20. DELETE: Supprimer l'hospital
+  console.log("[TEST] DELETE hospital");
+  const resDeleteHospital = await request("DELETE", "hospitals", `/${hospitalId}`);
+  expect(resDeleteHospital.status).toBe(200);
+
+  console.log("[TEST] All resources successfully deleted");
+
+  console.log("[TEST] CRUD blood test completed successfully");
 });
