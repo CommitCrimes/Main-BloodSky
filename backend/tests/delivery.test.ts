@@ -117,7 +117,7 @@ test("CRUD delivery", async () => {
             userStatus: "active"
         },
         centerId,
-        admin: false,   
+        admin: false,
         info: "info du test de l'user donation center"
     };
     const resCreateUserDonationCenter = await request ("POST", "users", "/donation-center", userDonationCenterData);
@@ -228,7 +228,7 @@ test("CRUD delivery", async () => {
         deliveryId,
         userId: userIdDonationCenter
     };
-    const resAddParticipantDonationCenter = await request("POST", "deliveries/participation", "/", participationDataDonationCenter);
+    const resAddParticipantDonationCenter = await request("POST", "deliveries", "/participation", participationDataDonationCenter);
     expect(resAddParticipantDonationCenter.status).toBe(201);
     const addedParticipantDonationCenter = await resAddParticipantDonationCenter.text();
     console.log("[TEST] Added participant from donation center:", addedParticipantDonationCenter);
@@ -236,7 +236,7 @@ test("CRUD delivery", async () => {
         deliveryId,
         userId: userIdHospital
     };
-    const resAddParticipantHospital = await request("POST", "deliveries/participation", "/", participationDataHospital);
+    const resAddParticipantHospital = await request("POST", "deliveries", "/participation", participationDataHospital);
     expect(resAddParticipantHospital.status).toBe(201);
     const addedParticipantHospital = await resAddParticipantHospital.text();
     console.log("[TEST] Added participant from hospital:", addedParticipantHospital);
@@ -244,7 +244,7 @@ test("CRUD delivery", async () => {
         deliveryId,
         userId: userIdDrone
     };
-    const resAddParticipantDronist = await request("POST", "deliveries/participation", "/", participationDataDronist);
+    const resAddParticipantDronist = await request("POST", "deliveries", "/participation", participationDataDronist);
     expect(resAddParticipantDronist.status).toBe(201);
     const addedParticipantDronist = await resAddParticipantDronist.text();
     console.log("[TEST] Added participant from dronist:", addedParticipantDronist);
