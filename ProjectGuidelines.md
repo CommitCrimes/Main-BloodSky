@@ -2,6 +2,14 @@
 
 To ensure efficient collaboration and clean project organization, please follow the rules below when contributing to this project.
 
+## Rules
+### 📊 Excel Tracking is Mandatory
+All tasks **must be recorded in the Excel tracking file**. Make sure to fill in **all necessary information**, including the **nature of the task**, the **estimated time**, and any **comments or context** that may be useful for tracking and planning. This helps us stay aligned, monitor progress, and report effectively.
+
+### 🚦 One Issue per Person Rule
+To maintain clarity and avoid clutter, **each contributor can only have one open issue at a time**. This ensures better focus, improves communication, and prevents overlapping work. Once your current issue is marked as "Done", you can move on to the next task.
+
+
 ## 🔧 Workflow
 
 1. **Start with a Craft**
@@ -29,3 +37,4 @@ To ensure efficient collaboration and clean project organization, please follow 
 6. **Merging `dev` into `main`**
    - Only **Bellinna Uong** is allowed to merge `dev` into `main`.
    - Please **wait for her confirmation** before taking any action related to `main`.
+
