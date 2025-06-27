@@ -23,7 +23,7 @@ test("CRUD delivery", async () => {
     );
     const deliveryId = maxId + 1;
 
-    // 2. Récupérer tous les drones pour déterminer l'ID max (objecif final : get by drone ID)
+    // 2. Récupérer tous les drones pour déterminer l'ID max
     console.log("[TEST] GET all drones");
     const resDrones = await request("GET", "drones", "/");
     const drones = await resDrones.json();
@@ -33,7 +33,7 @@ test("CRUD delivery", async () => {
     );
     const droneId = maxDroneId + 1;
 
-    // 3. Récupérer tous les users pour déterminer l'ID max (objectif final: attribuer des users a une livraison)
+    // 3. Récupérer tous les users pour déterminer l'ID max
     console.log("[TEST] GET all users");
     const resUsers = await request("GET", "users", "/");
     const users = await resUsers.json();
@@ -45,7 +45,7 @@ test("CRUD delivery", async () => {
     const userIdHospital = maxUserId + 2;
     const userIdDrone = maxUserId + 3;
     
-    // 4. Récupérer tous les donation center pour déterminer l'ID max (objectif final : attribuer un user vers user_donation_center)
+    // 4. Récupérer tous les donation center pour déterminer l'ID max
     console.log("[TEST] GET all donation centers");
     const resDonationCenters = await request("GET", "donation-centers", "/");
     const donationCenters = await resDonationCenters.json();
@@ -55,7 +55,7 @@ test("CRUD delivery", async () => {
     );
     const donationCenterId = maxDonationCenterId + 1;
 
-    // 5. Récupérer tous les hospitaux pour déterminer l'ID max (objectif final : attribuer un user vers user_hospital)
+    // 5. Récupérer tous les hospitaux pour déterminer l'ID max
     console.log("[TEST] GET all hospitals");
     const resHospitals = await request("GET", "hospitals", "/");
     const hospitals = await resHospitals.json();
@@ -64,6 +64,16 @@ test("CRUD delivery", async () => {
         0
     );
     const hospitalId = maxHospitalId + 1;
+
+    // 6. Récupérer toutes les blood pour déterminer l'ID max
+    console.log("[TEST] GET all blood");
+    const resBlood = await request("GET", "blood", "/");
+    const blood = await resBlood.json();
+    const maxBloodId = blood.reduce(
+        (max: number, d: any) => Math.max(max, d.bloodId),
+        0
+    );
+    const bloodId = maxBloodId + 1;
 
     // 6. POST: Créer un nouvel donation center de test
     console.log("[TEST] POST create new donation center");
@@ -97,7 +107,7 @@ test("CRUD delivery", async () => {
     console.log("[TEST] Created hospital:", createdHospital);
 
     // 8. POST: Créer un user de donation center
-    console.log("[TEST] POST create user to donation center");
+    console.log("[TEST] POST create donation center user");
     const userDonationCenterData = {
         user:{
             userIdDonationCenter,
@@ -115,10 +125,10 @@ test("CRUD delivery", async () => {
     const resCreateUserDonationCenter = await request ("POST", "users", "/donation-center", userDonationCenterData);
     expect(resCreateUserDonationCenter.status).toBe(201);
     const createdUserDonationCenter = await resCreateUserDonationCenter.json();
-    console.log("[TEST] Created user for donation center:", createdUserDonationCenter);
+    console.log("[TEST] Created donation center user:", createdUserDonationCenter);
 
     // 9. POST: Créer un user de hospital
-    console.log("[TEST] POST create user to hospital");
+    console.log("[TEST] POST create hospital user");
     const userHospitalData = {
         user:{
             userIdHospital,
@@ -136,6 +146,41 @@ test("CRUD delivery", async () => {
     const resCreateUserHospital = await request("POST", "users", "/hospital", userHospitalData);
     expect(resCreateUserHospital.status).toBe(201);
     const createdUserHospital = await resCreateUserHospital.json();
-    console.log("[TEST] Created user for hospital:", createdUserHospital);
+    console.log("[TEST] Created hospital user:", createdUserHospital);
 
+    // 10. POST: Créer un user de dronist
+    console.log("[TEST] POST create dronist user");
+    const userDronistData = {
+        user:{
+            userIdDrone,
+            email: "dronist90UYZHA9Z8DHA9Z8OAIHEAZ08EGAIZEA79CGSUAG0D9G8AZDIZAGD@bloodsky.fr",
+            password: await bcrypt.hash("Test", 10),
+            userName: "drone",
+            userFirstname: "histe",
+            telNumber: null,
+            userStatus: "active"
+        },
+        info: "info du test de l'user droniste"
+    };
+    const resCreateUserDronist = await request("POST", "users", "/dronist", userDronistData);
+    expect(resCreateUserDronist.status).toBe(201);
+    const createdUserDronist = await resCreateUserDronist.json();
+    console.log("[TEST] Created dronist user:", createdUserDronist);
+
+    // 11. POST: Créer un drone
+    console.log("[TEST] POST create drone");
+    const droneData = {
+        droneId,
+        droneName: "unaryTestDrone",
+        donationCenterId,
+        droneStatus: null,
+        droneCurrentLat: null,
+        droneCurrentLong: null,
+        droneBattery: null,
+        droneImage: null
+    };
+    const resCreateDrone = await request("POST", "drones", "/", droneData);
+    expect(resCreateDrone.status).toBe(201);
+    const createdDrone = await resCreateDrone.json();
+    console.log("[TEST] Created drone:", createdDrone);
 });
