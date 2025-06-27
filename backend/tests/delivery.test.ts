@@ -1,6 +1,5 @@
 import { test, expect } from "bun:test";
 import * as bcrypt from 'bcrypt';
-import exp from "constants";
 
 // Utilitaire pour effectuer des requêtes basiques
 function request(method: string, route:string, path: string, body?: any) {
