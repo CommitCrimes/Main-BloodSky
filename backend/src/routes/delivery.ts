@@ -31,16 +31,29 @@ deliveryRouter.get("/:id", async (c) => {
   return c.json({ ...delivery, participants });
 });
 
-// GET by drone ID
+// GET by drone ID (and include participants for each delivery)
 deliveryRouter.get("/drone/:droneId", async (c) => {
   const droneId = Number(c.req.param("droneId"));
   if (isNaN(droneId)) return c.text("Invalid drone ID", 400);
-  const data = await db
+
+  const deliveriesData = await db
     .select()
     .from(deliveries)
     .where(eq(deliveries.droneId, droneId));
-  if (data.length === 0) return c.notFound();
-  return c.json(data);
+  if (deliveriesData.length === 0) return c.notFound();
+
+  // For each delivery, fetch participants
+  const deliveriesWithParticipants = await Promise.all(
+    deliveriesData.map(async (delivery) => {
+      const participants = await db
+        .select()
+        .from(deliveryParticipations)
+        .where(eq(deliveryParticipations.deliveryId, delivery.deliveryId));
+      return { ...delivery, participants };
+    })
+  );
+
+  return c.json(deliveriesWithParticipants);
 });
 
 // POST create delivery
