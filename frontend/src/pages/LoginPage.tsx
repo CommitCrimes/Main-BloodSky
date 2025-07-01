@@ -10,7 +10,7 @@ const LoginPage = observer(() => {
 
   useEffect(() => {
     if (auth.isAuthenticated) {
-      navigate('/dashboard');
+      navigate('/home');
     }
   }, [auth.isAuthenticated, navigate]);
 
