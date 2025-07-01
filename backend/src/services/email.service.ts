@@ -2,12 +2,12 @@ import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
 const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST,
-  port: parseInt(process.env.EMAIL_PORT || '587'),
-  secure: process.env.EMAIL_SECURE === 'true',
+  host: 'mail.gandi.net',
+  port: 465,
+  secure: true,
   auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
+    user: 'admin@bloodsky.fr',
+    pass: process.env.EMAIL_PASSWORD,
   },
 });
 
@@ -25,10 +25,11 @@ export const sendInvitationEmail = async (
   tempPassword: string,
   userName?: string
 ): Promise<void> => {
-  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/update-password?token=${token}&temp=${tempPassword}`;
+  try {
+  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5174'}/update-password?token=${token}&temp=${tempPassword}`;
   
   const mailOptions = {
-    from: process.env.EMAIL_USER,
+    from: 'admin@bloodsky.fr',
     to: email,
     subject: 'Invitation BloodSky - Première connexion',
     html: `
@@ -70,4 +71,8 @@ export const sendInvitationEmail = async (
   };
 
   await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi de l\'email:', error);
+    throw new Error('Impossible d\'envoyer l\'email d\'invitation');
+  }
 };
