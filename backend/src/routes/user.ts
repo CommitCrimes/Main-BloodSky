@@ -7,6 +7,7 @@ import { userHospital } from "../schemas/user_hospital";
 import { deliveryParticipations } from "../schemas/delivery_participation";
 import { db } from "../utils/db";
 import { eq, and } from "drizzle-orm";
+import { getUserRole } from "../controllers/user.controller";
 
 export const userRouter = new Hono();
 
@@ -19,7 +20,7 @@ userRouter.get("/", async (c) => {
 });
 
 // GET all users in donation centers
-userRouter.get("/donation-  ", async (c) => {
+userRouter.get("/donation-center", async (c) => {
   const data = await db.select().from(userDonationCenter);
   return c.json(data);
 });
@@ -139,6 +140,9 @@ userRouter.get("/:id/deliveries", async (c) => {
 
   return c.json(participations);
 });
+
+// GET user role
+userRouter.get("/role", getUserRole);
 
 //_______________POST______________//
 

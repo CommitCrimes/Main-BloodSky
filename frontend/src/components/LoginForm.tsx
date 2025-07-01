@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
+import { Box, TextField, Button, Alert, CircularProgress } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import { useAuth } from '@/hooks/useAuth';
 
 const LoginForm = observer(() => {
   const auth = useAuth();
+  const theme = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -13,65 +16,92 @@ const LoginForm = observer(() => {
   };
 
   return (
-    <div className="auth-card transform transition-all duration-300 hover:shadow-2xl">
+    <Box>
       {auth.error && (
-        <div className="error-message">
+        <Alert severity="error" sx={{ mb: 2 }}>
           {auth.error}
-        </div>
+        </Alert>
       )}
       
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label className="input-label" htmlFor="email">
-            Email
-          </label>
-          <input
+      <Box component="form" onSubmit={handleSubmit}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          <TextField
             id="email"
             type="email"
+            label="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="input-field"
             required
+            fullWidth
             placeholder="your-email@example.com"
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': {
+                  borderColor: theme.palette.primary.main,
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: theme.palette.primary.main,
+                },
+              },
+              '& .MuiInputLabel-root.Mui-focused': {
+                color: theme.palette.primary.main,
+              },
+            }}
           />
-        </div>
-        
-        <div className="form-group">
-          <label className="input-label" htmlFor="password">
-            Password
-          </label>
-          <input
+          
+          <TextField
             id="password"
             type="password"
+            label="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="input-field"
             required
+            fullWidth
             placeholder="Your password"
+            sx={{
+              '& .MuiOutlinedInput-root': {
+                '&:hover fieldset': {
+                  borderColor: theme.palette.primary.main,
+                },
+                '&.Mui-focused fieldset': {
+                  borderColor: theme.palette.primary.main,
+                },
+              },
+              '& .MuiInputLabel-root.Mui-focused': {
+                color: theme.palette.primary.main,
+              },
+            }}
           />
-        </div>
+        </Box>
 
-        <div className="mt-8">
-          <button
-            type="submit"
-            disabled={auth.isLoading}
-            className="btn-primary"
-          >
-            {auth.isLoading ? (
-              <div className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Logging in...
-              </div>
-            ) : (
-              'Sign In'
-            )}
-          </button>
-        </div>
-      </form>
-    </div>
+        <Button
+          type="submit"
+          disabled={auth.isLoading}
+          fullWidth
+          variant="contained"
+          sx={{
+            mt: 3,
+            py: 1.5,
+            backgroundColor: theme.palette.primary.main,
+            '&:hover': {
+              backgroundColor: theme.palette.primary.dark || '#0066CC',
+            },
+            '&:disabled': {
+              backgroundColor: '#cccccc',
+            },
+          }}
+        >
+          {auth.isLoading ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <CircularProgress size={20} color="inherit" />
+              Logging in...
+            </Box>
+          ) : (
+            'Sign In'
+          )}
+        </Button>
+      </Box>
+    </Box>
   );
 });
 
