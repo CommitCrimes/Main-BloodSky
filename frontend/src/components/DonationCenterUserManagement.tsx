@@ -22,7 +22,13 @@ import {
   MenuItem,
   Chip,
   Alert,
-  Snackbar
+  Snackbar,
+  Card,
+  CardContent,
+  CardActions,
+  useMediaQuery,
+  useTheme,
+  Divider
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -68,6 +74,8 @@ const DonationCenterUserManagement: React.FC<DonationCenterUserManagementProps> 
     info: ''
   });
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const loadUsers = useCallback(async () => {
     try {
@@ -184,78 +192,176 @@ const DonationCenterUserManagement: React.FC<DonationCenterUserManagementProps> 
   };
 
   if (loading) {
-    return <Box>Chargement...</Box>;
+    return (
+      <Box sx={{ 
+        p: { xs: 2, md: 3 },
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '200px'
+      }}>
+        <Typography>Chargement...</Typography>
+      </Box>
+    );
   }
 
+  const renderMobileCard = (user: DonationCenterUser) => (
+    <Card key={user.userId} sx={{ mb: 2 }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+          <Box>
+            <Typography variant="h6" component="div">
+              {user.userName} {user.userFirstname}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {user.email}
+            </Typography>
+          </Box>
+          <Chip 
+            label={user.userStatus} 
+            color={getStatusColor(user.userStatus)}
+            size="small"
+          />
+        </Box>
+        
+        <Divider sx={{ my: 2 }} />
+        
+        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+          <Box sx={{ flex: 1, mr: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              Téléphone
+            </Typography>
+            <Typography variant="body2">
+              {user.telNumber || '-'}
+            </Typography>
+          </Box>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Date de création
+            </Typography>
+            <Typography variant="body2">
+              {new Date(user.dteCreate).toLocaleDateString()}
+            </Typography>
+          </Box>
+        </Box>
+        
+        {user.info && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="body2" color="text.secondary">
+              Informations
+            </Typography>
+            <Typography variant="body2">
+              {user.info}
+            </Typography>
+          </Box>
+        )}
+      </CardContent>
+      <CardActions sx={{ justifyContent: 'flex-end' }}>
+        <IconButton onClick={() => openEditDialogForUser(user)} size="small">
+          <EditIcon />
+        </IconButton>
+        <IconButton onClick={() => handleDelete(user)} size="small" color="error">
+          <DeleteIcon />
+        </IconButton>
+      </CardActions>
+    </Card>
+  );
+
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
+    <Box sx={{ p: { xs: 2, md: 3 } }}>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: { xs: 'column', sm: 'row' },
+        justifyContent: 'space-between', 
+        alignItems: { xs: 'stretch', sm: 'center' }, 
+        mb: 3,
+        gap: { xs: 2, sm: 0 }
+      }}>
+        <Typography variant="h4" component="h1" sx={{ fontSize: { xs: '1.5rem', md: '2rem' } }}>
           Gestion des Utilisateurs
         </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => setOpenInviteDialog(true)}
+          fullWidth={isMobile}
         >
-          Inviter un utilisateur
+          {isMobile ? 'Inviter' : 'Inviter un utilisateur'}
         </Button>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Nom</TableCell>
-              <TableCell>Prénom</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Téléphone</TableCell>
-              <TableCell>Statut</TableCell>
-              <TableCell>Date de création</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {users.map((user) => (
-              <TableRow key={user.userId}>
-                <TableCell>{user.userName}</TableCell>
-                <TableCell>{user.userFirstname}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.telNumber || '-'}</TableCell>
-                <TableCell>
-                  <Chip 
-                    label={user.userStatus} 
-                    color={getStatusColor(user.userStatus)}
-                    size="small"
-                  />
-                </TableCell>
-                <TableCell>{new Date(user.dteCreate).toLocaleDateString()}</TableCell>
-                <TableCell>
-                  <IconButton onClick={() => openEditDialogForUser(user)} size="small">
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(user)} size="small" color="error">
-                    <DeleteIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
-            {users.length === 0 && (
+      {isMobile ? (
+        <Box>
+          {users.length === 0 ? (
+            <Paper sx={{ p: 3, textAlign: 'center' }}>
+              <Typography>Aucun utilisateur trouvé</Typography>
+            </Paper>
+          ) : (
+            users.map(renderMobileCard)
+          )}
+        </Box>
+      ) : (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
               <TableRow>
-                <TableCell colSpan={7} align="center">
-                  Aucun utilisateur trouvé
-                </TableCell>
+                <TableCell>Nom</TableCell>
+                <TableCell>Prénom</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Téléphone</TableCell>
+                <TableCell>Statut</TableCell>
+                <TableCell>Date de création</TableCell>
+                <TableCell>Actions</TableCell>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+            </TableHead>
+            <TableBody>
+              {users.map((user) => (
+                <TableRow key={user.userId}>
+                  <TableCell>{user.userName}</TableCell>
+                  <TableCell>{user.userFirstname}</TableCell>
+                  <TableCell>{user.email}</TableCell>
+                  <TableCell>{user.telNumber || '-'}</TableCell>
+                  <TableCell>
+                    <Chip 
+                      label={user.userStatus} 
+                      color={getStatusColor(user.userStatus)}
+                      size="small"
+                    />
+                  </TableCell>
+                  <TableCell>{new Date(user.dteCreate).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <IconButton onClick={() => openEditDialogForUser(user)} size="small">
+                      <EditIcon />
+                    </IconButton>
+                    <IconButton onClick={() => handleDelete(user)} size="small" color="error">
+                      <DeleteIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {users.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} align="center">
+                    Aucun utilisateur trouvé
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       {/* ajout */}
-      <Dialog open={openInviteDialog} onClose={() => setOpenInviteDialog(false)} maxWidth="sm" fullWidth>
+      <Dialog 
+        open={openInviteDialog} 
+        onClose={() => setOpenInviteDialog(false)} 
+        maxWidth="sm" 
+        fullWidth
+        fullScreen={isMobile}
+      >
         <DialogTitle>Inviter un nouvel utilisateur</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+        <DialogContent sx={{ p: { xs: 2, md: 3 } }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, md: 2 }, mt: 1 }}>
             <TextField
               label="Email"
               type="email"
@@ -308,10 +414,16 @@ const DonationCenterUserManagement: React.FC<DonationCenterUserManagementProps> 
       </Dialog>
 
       {/* edit*/}
-      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)} maxWidth="sm" fullWidth>
+      <Dialog 
+        open={openEditDialog} 
+        onClose={() => setOpenEditDialog(false)} 
+        maxWidth="sm" 
+        fullWidth
+        fullScreen={isMobile}
+      >
         <DialogTitle>Modifier l'utilisateur</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+        <DialogContent sx={{ p: { xs: 2, md: 3 } }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.5, md: 2 }, mt: 1 }}>
             <TextField
               label="Nom"
               value={editForm.userName}
