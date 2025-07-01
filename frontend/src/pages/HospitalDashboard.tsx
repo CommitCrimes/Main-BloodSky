@@ -34,6 +34,7 @@ import L from 'leaflet';
 import logoImage from '@/assets/logo.png';
 import coeurImage from '@/assets/coeur_dashboard.png';
 import theme from '@/theme/theme';
+import HospitalUserManagement from '@/components/HospitalUserManagement';
 
 // Fix for default markers in react-leaflet
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
@@ -114,7 +115,7 @@ const HospitalDashboard = () => {
 
   const renderDashboardContent = () => (
     <Box sx={{ 
-      backgroundColor: '#e3f8fe', 
+      backgroundColor: 'background.default', 
       minHeight: '100vh', 
       p: 3,
       position: 'relative'
@@ -134,7 +135,7 @@ const HospitalDashboard = () => {
         <Typography 
           variant="h6" 
           sx={{ 
-            color: '#5C7F9B', 
+            color: 'text.primary', 
             fontFamily: 'Share Tech, monospace' 
           }}
         >
@@ -164,7 +165,7 @@ const HospitalDashboard = () => {
               onClick={handleHistoryClick}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6" sx={{ fontFamily: 'Share Tech, monospace', color: '#5C7F9B' }}>
+                <Typography variant="h6" sx={{ fontFamily: 'Share Tech, monospace', color: 'text.primary' }}>
                   Livraisons
                 </Typography>
                 <HistoryOutlined sx={{ color: '#008EFF' }} />
@@ -338,7 +339,7 @@ const HospitalDashboard = () => {
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6" sx={{ fontFamily: 'Share Tech, monospace', color: '#5C7F9B' }}>
+                <Typography variant="h6" sx={{ fontFamily: 'Share Tech, monospace', color: 'text.primary' }}>
                   Localisation
                 </Typography>
                 <LocationOnOutlined sx={{ color: '#10b981' }} />
@@ -382,7 +383,7 @@ const HospitalDashboard = () => {
               onClick={handleNotificationsClick}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6" sx={{ fontFamily: 'Share Tech, monospace', color: '#5C7F9B' }}>
+                <Typography variant="h6" sx={{ fontFamily: 'Share Tech, monospace', color: 'text.primary' }}>
                   Notifications récentes
                 </Typography>
                 <NotificationsOutlined sx={{ color: '#008EFF' }} />
@@ -432,7 +433,7 @@ const HospitalDashboard = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ display: 'flex', backgroundColor: '#e3f8fe', minHeight: '100vh' }}>
+      <Box sx={{ display: 'flex', backgroundColor: 'background.default', minHeight: '100vh' }}>
         {/* Sidebar */}
         <Drawer
           variant="permanent"
@@ -477,7 +478,7 @@ const HospitalDashboard = () => {
                   },
                 }}
               >
-                <ListItemIcon sx={{ color: '#5C7F9B', minWidth: 40 }}>
+                <ListItemIcon sx={{ color: 'text.primary', minWidth: 40 }}>
                   {item.icon}
                   {item.hasNotification && (
                     <Badge
@@ -499,7 +500,7 @@ const HospitalDashboard = () => {
                         lineHeight: '100%',
                         letterSpacing: '-4%',
                         textAlign: 'center',
-                        color: activeView === item.id ? '#008EFF' : '#5C7F9B'
+                        color: activeView === item.id ? 'primary.main' : 'text.primary'
                       }
                     }
                   }}
@@ -515,8 +516,8 @@ const HospitalDashboard = () => {
               startIcon={<LogoutOutlined />}
               onClick={handleLogout}
               sx={{
-                color: '#5C7F9B',
-                borderColor: '#5C7F9B',
+                color: 'text.primary',
+                borderColor: 'text.primary',
                 fontFamily: 'Share Tech, monospace',
                 fontWeight: 400,
                 fontSize: '16px',
@@ -525,7 +526,7 @@ const HospitalDashboard = () => {
                 textAlign: 'center',
                 '&:hover': {
                   backgroundColor: 'rgba(92, 127, 155, 0.1)',
-                  borderColor: '#5C7F9B',
+                  borderColor: 'text.primary',
                 },
               }}
             >
@@ -536,14 +537,15 @@ const HospitalDashboard = () => {
 
         {/* Contenu principal */}
         <Box sx={{ flexGrow: 1 }}>
-          {activeView === 'users' && auth.user?.role?.admin ? (
-            <Box sx={{ backgroundColor: '#e3f8fe', p: 3, minHeight: '100vh' }}>
+          {activeView === 'users' && auth.user?.role?.admin && auth.user?.role?.hospitalId ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              <HospitalUserManagement hospitalId={auth.user.role.hospitalId} />
             </Box>
           ) : activeView === 'dashboard' ? (
             renderDashboardContent()
           ) : (
             <Box sx={{ 
-              backgroundColor: '#e3f8fe', 
+              backgroundColor: 'background.default', 
               minHeight: '100vh', 
               p: 3,
               display: 'flex',

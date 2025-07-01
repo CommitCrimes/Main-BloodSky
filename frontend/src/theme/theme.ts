@@ -10,7 +10,7 @@ export const theme = createTheme({
     },
     background: {
       default: '#dfecf0', // Fond dashboard
-      paper: '#FBBDBE', // Fond cards
+      paper: 'rgba(255, 255, 255, 0.8)', // Fond cards
     },
     text: {
       primary: '#5C7F9B', // Texte onglets
@@ -68,7 +68,11 @@ export const theme = createTheme({
     MuiPaper: {
       styleOverrides: {
         root: {
-          backgroundColor: '#FBBDBE',
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: '20px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)',
         },
       },
     },
@@ -87,6 +91,55 @@ export const theme = createTheme({
       styleOverrides: {
         root: {
           fontFamily: 'Share Tech, monospace',
+        },
+        contained: {
+          backgroundColor: '#008EFF',
+          color: '#ffffff',
+          '&:hover': {
+            backgroundColor: '#0066cc',
+          },
+        },
+      },
+    },
+    MuiTableContainer: {
+      styleOverrides: {
+        root: {
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255, 255, 255, 0.2)',
+          borderRadius: '20px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)',
+        },
+      },
+    },
+    MuiTableHead: {
+      styleOverrides: {
+        root: {
+          '& .MuiTableCell-head': {
+            backgroundColor: 'rgba(92, 127, 155, 0.1)',
+            color: '#5C7F9B',
+            fontFamily: 'Share Tech, monospace',
+            fontWeight: 600,
+          },
+        },
+      },
+    },
+    MuiTableCell: {
+      styleOverrides: {
+        root: {
+          fontFamily: 'Share Tech, monospace',
+          borderBottom: '1px solid rgba(92, 127, 155, 0.1)',
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(15px)',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          borderRadius: '20px',
+          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.15)',
         },
       },
     },
