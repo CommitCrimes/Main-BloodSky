@@ -9,6 +9,7 @@ import { userRouter } from './user';
 import { entitiesRouter } from './entities.routes';
 import { superAdminRouter } from './superadmin.routes';
 import { hospitalAdminRouter } from './hospital-admin.routes';
+import { donationCenterAdminRouter } from './donation-center-admin.routes';
 import { swaggerUI } from '@hono/swagger-ui';
 
 export const createRouter = () => {
@@ -672,6 +673,9 @@ export const createRouter = () => {
     
     // Routes admin hôpital
     api.route('/hospital-admin', hospitalAdminRouter);
+    
+    // Routes admin centre de donation
+    api.route('/donation-center-admin', donationCenterAdminRouter);
 
   api.get('/swagger', swaggerUI({ url: '/api/docs' }));
   
