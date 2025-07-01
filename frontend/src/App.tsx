@@ -7,6 +7,8 @@ import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import PrivateRoute from './components/PrivateRoute';
+import SearchBar from './components/SearchBar';
+import SuperAdminDashboardPage from './pages/SuperAdminDashboardPage';
 import './App.css';
 
 const App = observer(() => {
@@ -18,6 +20,7 @@ const App = observer(() => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/update-password" element={<UpdatePasswordPage />} />
+          <Route path="/search" element={<SuperAdminDashboardPage/>}></Route>
           
           {/* Routes protégées */}
           <Route element={<PrivateRoute />}>
