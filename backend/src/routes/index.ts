@@ -1,18 +1,17 @@
 import { Hono } from 'hono';
 import { authRouter } from './auth.routes';
+import { deliveryRouter } from './delivery';
+import { bloodRouter } from './blood';
+import { droneRouter } from './drone';
+import { hospitalRouter } from './hospital';
+import { donationCenterRouter } from './donation_center';
+import { userRouter } from './user';
 import { entitiesRouter } from './entities.routes';
 import { superAdminRouter } from './superadmin.routes';
 import { swaggerUI } from '@hono/swagger-ui';
 
 export const createRouter = () => {
   const api = new Hono();
-
-  // Routes publiques
-  api.route('/auth', authRouter);
-  api.route('/', entitiesRouter);
-  
-  // Routes super admin
-  api.route('/superadmin', superAdminRouter);
 
   // Documentation Swagger complète
   api.get('/docs', (c) => c.json({
@@ -655,8 +654,22 @@ export const createRouter = () => {
         }
       }
     }
+    },
   }));
-  
+
+    // Routes publiques
+    api.route('/', entitiesRouter);
+    api.route('/auth', authRouter);
+    api.route('/deliveries', deliveryRouter);
+    api.route('/blood', bloodRouter);
+    api.route('/drones', droneRouter);
+    api.route('/hospitals', hospitalRouter);
+    api.route('/donation-centers', donationCenterRouter);
+    api.route('/users', userRouter);
+
+    // Routes super admin
+    api.route('/superadmin', superAdminRouter);
+
   api.get('/swagger', swaggerUI({ url: '/api/docs' }));
   
   return api;
