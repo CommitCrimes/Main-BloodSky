@@ -654,7 +654,6 @@ export const createRouter = () => {
         }
       }
     }
-    },
   }));
 
     // Routes publiques
