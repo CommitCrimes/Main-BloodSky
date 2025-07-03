@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { db } from '../utils/db';
-import { donationCenters, hospitals, userHospital , userDonationCenter , deliveries} from '../schemas';
+import { donationCenters, hospitals, userHospital , userDonationCenter , deliveries , users} from '../schemas';
 import { eq } from 'drizzle-orm';
 
 //-----------------------------------------Location-----------------------------------------
@@ -38,7 +38,8 @@ export const getUsersHospital = async (c: Context) => {
 
 export const getUsersDonationCenter = async (c: Context) => {
   try {
-    const usersDonationCenterData = await db.select().from(userDonationCenter).leftJoin(users, eq(userDonationCenter.userId, users.userId) );
+    const usersDonationCenterData = await db.select({userDonationCenter: userDonationCenter,
+    user: users} ).from(userDonationCenter).leftJoin(users, eq(userDonationCenter.userId, users.userId) );
     return c.json(usersDonationCenterData);
   } catch (error) {
     console.error('Erreur lors de la récupération des users du centre de donation:', error);
