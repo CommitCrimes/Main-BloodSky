@@ -171,11 +171,8 @@ export const inviteUser = async (c: Context) => {
       urlUsed: false,
     }).returning();
     
-    // Envoyer l'email d'invitation (simulationnnnn)
-    console.log('📧 Simulation d\'envoi d\'email:');
-    console.log(`À: ${email}`);
-    console.log(`Token: ${token}`);
-    console.log(`Mot de passe temporaire: ${tempPassword}`);
+    // Envoyer l'email d'invitation
+    await sendInvitationEmail(email, token, tempPassword, userName);
     
     return c.json({ 
       message: 'Invitation envoyée avec succès',
@@ -284,12 +281,9 @@ export const inviteAdmin = async (c: Context) => {
       });
     }
     
-    // Envoyer l'email d'invitation simulationnnnn
+    // Envoyer l'email d'invitation
     const entityLabel = entityType === 'donation_center' ? 'centre de donation' : 'hôpital';
-    console.log('📧 Simulation d\'envoi d\'email:');
-    console.log(`À: ${email}`);
-    console.log(`Token: ${token}`);
-    console.log(`Mot de passe temporaire: ${tempPassword}`);
+    await sendInvitationEmail(email, token, tempPassword, userName);
     
     return c.json({ 
       message: `Invitation envoyée avec succès pour devenir administrateur du ${entityLabel}`,

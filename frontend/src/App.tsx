@@ -1,14 +1,18 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import AuthProvider from './components/AuthProvider';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import HospitalDashboard from './pages/HospitalDashboard';
+import DonationCenterDashboard from './pages/DonationCenterDashboard';
 import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import PrivateRoute from './components/PrivateRoute';
 import SearchBar from './components/SearchBar';
 import SuperAdminDashboardPage from './pages/SuperAdminDashboardPage';
+import RoleBasedRedirect from './components/RoleBasedRedirect';
+import RoleProtectedRoute from './components/RoleProtectedRoute';
 import './App.css';
 
 const App = observer(() => {
@@ -16,6 +20,9 @@ const App = observer(() => {
     <AuthProvider>
       <Router>
         <Routes>
+          {/* Page d'accueil publique - redirige vers login */}
+          <Route path="/" element={<LoginPage />} />
+          
           {/* Routes publiques */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -25,12 +32,22 @@ const App = observer(() => {
           {/* Routes protégées */}
           <Route element={<PrivateRoute />}>
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/admin" element={<AdminDashboardPage />} />
-            {/* Ajouter d'autres routes protégées ici */}
+            {/* Route de redirection basée sur le rôle pour utilisateurs connectés */}
+            <Route path="/home" element={<RoleBasedRedirect />} />
           </Route>
           
-          {/* Redirection */}
-          <Route path="/" element={<Navigate to="/login" />} />
+          {/* Routes protégées par rôle */}
+          <Route element={<RoleProtectedRoute allowedRoles={['super_admin']} />}>
+            <Route path="/admin" element={<AdminDashboardPage />} />
+          </Route>
+          
+          <Route element={<RoleProtectedRoute allowedRoles={['hospital_admin']} />}>
+            <Route path="/hospital" element={<HospitalDashboard />} />
+          </Route>
+          
+          <Route element={<RoleProtectedRoute allowedRoles={['donation_center_admin']} />}>
+            <Route path="/donation-center" element={<DonationCenterDashboard />} />
+          </Route>
         </Routes>
       </Router>
     </AuthProvider>
