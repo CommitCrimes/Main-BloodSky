@@ -10,7 +10,10 @@ const SearchBar = () => {
   const [filteredResults, setFilteredResults] = useState([]);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
-  const [selectedItem , setSelectedItem] = useState<any>(null);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [modalEdit, setModalEdit] = useState(false)
 
   useEffect(() => {
     refreshData("/donation-centers"); // chargement initial
@@ -62,17 +65,17 @@ const SearchBar = () => {
     const filtered = allData.filter((item: any) => {
       if (categories === "centre") {
         return item.centerCity?.toLowerCase().includes(term) ||
-               item.centerAdress?.toLowerCase().includes(term) ||
-               item.centerPostal?.toString().includes(term);
+          item.centerAdress?.toLowerCase().includes(term) ||
+          item.centerPostal?.toString().includes(term);
       }
       if (categories === "utilisateur") {
         return item.user?.firstname?.toLowerCase().includes(term) ||
-               item.user?.lastname?.toLowerCase().includes(term) ||
-               item.user?.email?.toLowerCase().includes(term);
+          item.user?.lastname?.toLowerCase().includes(term) ||
+          item.user?.email?.toLowerCase().includes(term);
       }
       if (categories === "livraison") {
         return item.bloodId?.toString().includes(term) ||
-               item.deliveryStatus?.toLowerCase().includes(term);
+          item.deliveryStatus?.toLowerCase().includes(term);
       }
       return false;
     });
@@ -80,6 +83,25 @@ const SearchBar = () => {
     if (filtered.length === 0) setError('Aucun résultat trouvé.');
     setFilteredResults(filtered);
   };
+
+  const editInfo = (e, item) => {
+    e.stopPropagation();
+    setModalEdit(true);
+    setSelectedItem(item);
+    console.log(item);
+    for(let i=0; i < selectedItem.length; i++){
+     //add one input avec ses infos      
+  }
+  }
+
+  const deleteInfo = () => {
+    //requete delete avec un id et un champs (pour savoir dans quel table supp)
+  }
+
+  let formulaire = selectedItem.map((champ) => {
+    console.log(champ);
+
+  })
 
   return (
     <div className="page-container relative">
@@ -91,8 +113,8 @@ const SearchBar = () => {
           </h1>
           <p className="text-center text-gray-600 share-tech-font mb-8">
             {categories === "utilisateur" ? "Entrez un nom ou prénom" :
-             categories === "centre" ? "Entrez une ville, un code postal ou une adresse" :
-             "Entrez un ID ou un statut de livraison"}
+              categories === "centre" ? "Entrez une ville, un code postal ou une adresse" :
+                "Entrez un ID ou un statut de livraison"}
           </p>
         </div>
 
@@ -145,9 +167,9 @@ const SearchBar = () => {
         {filteredResults.length > 0 && (
           <div className="mt-8 space-y-4">
             {filteredResults.map((item: any, index: number) => (
-              <div key={index} 
-              onClick={() => {setSelectedItem(item) ; setModalOpen(true)}}
-              className="p-4 border rounded-xl shadow-sm bg-white hover:shadow-md transition-all">
+              <div key={index}
+                onClick={() => { setSelectedItem(item); setModalOpen(true) }}
+                className="relative p-4 border rounded-xl shadow-sm bg-white hover:shadow-md transition-all">
                 {categories === "utilisateur" && (
                   <>
                     <h3 className="text-lg font-semibold text-red-700">
@@ -167,10 +189,17 @@ const SearchBar = () => {
                     <h3 className="text-lg font-semibold text-red-700">Livraison #{item.deliveryId}</h3>
                     <p className="text-sm text-gray-500">Status : {item.deliveryStatus}</p>
                     <p className='text-sm text-red-600'>
-                      Date : {new Date(item.dteDelivery).getDate()} / {new Date(item.dteDelivery).getMonth()} / {new Date(item.dteDelivery).getFullYear()}
-                      </p>
+                      Date : {new Date(selectedItem.dteDelivery).toLocaleDateString()}</p>
                   </>
                 )}
+                <div className='absolute -top-4 right-0 flex gap-2'>
+                  <div className='bg-gray-400 p-1 rounded-xl'>
+                    <button className='text-white' onClick={(e) => { editInfo(e, item) }}>Edit</button> {/* ON click modal en mode edition*/}
+                  </div>
+                  <div className='bg-red-950 p-1 rounded-xl'>
+                    <button className='text-white' onClick={() => { setShowConfirm(true) }}>Supp</button> {/* ON click confirmation de la supp + supp si oui*/}
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -190,36 +219,58 @@ const SearchBar = () => {
         </button>
       </div>
 
-{/* Modal */}
+      {/* Modal Edition d'information (creation & edition) */}
+      <Modal isOpen={modalEdit} onClose={() => setModalEdit(false)}>
+        {isEditing ? <>
+
+        </> : 
+        <></>}
+      </Modal>
+
+      {/* Modal suppression d'information*/}
+      <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)}>
+        <p>Etes vous sur de vouloir supprimer ces informations</p>
+        <button type="button" onClick={() => deleteInfo()}>Oui</button>
+        <button type="button" onClick={() => setShowConfirm(false)}>Non</button>
+      </Modal>
+
+      {/* Modal lecture d'information*/}
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
-  {selectedItem && (
-    <div>
-      {categories === "utilisateur" && (
-        <>
-          <h2 className="text-xl font-semibold text-red-700">
-            {selectedItem.user?.userFirstname} {selectedItem.user?.userName}
-          </h2>
-          <p>Email : {selectedItem.user?.email}</p>
-        </>
-      )}
-      {categories === "centre" && (
-        <>
-          <h2 className="text-xl font-semibold text-red-700">{selectedItem.centerAdress}</h2>
-          <p>{selectedItem.centerCity}, {selectedItem.centerPostal}</p>
-        </>
-      )}
-      {categories === "livraison" && (
-        <>
-          <h2 className="text-xl font-semibold text-red-700">Livraison #{selectedItem.deliveryId}</h2>
-          <p>Status : {selectedItem.deliveryStatus}</p>
-          <p>
-            Date : {new Date(selectedItem.dteDelivery).toLocaleDateString()}
-          </p>
-        </>
-      )}
-    </div>
-  )}
-</Modal>
+        {selectedItem && (
+          <div className='relative'>
+            {categories === "utilisateur" && (
+              <>
+                <p className='absolute bg-red-500 p-2 text-white rounded-xl -left-10 -top-10'>Id du user : {selectedItem.user?.userId}</p>
+                <h2 className="text-xl font-semibold text-red-700">
+                  {selectedItem.user?.userFirstname} {selectedItem.user?.userName}
+                </h2>
+                <p>Email : {selectedItem.user?.email}</p>
+                <p>Role : {selectedItem.user?.admin == true ? <>Admin</> : <>User</>}</p>
+                <p>Tel : {selectedItem.user?.telNumber}</p>
+                <p>Date de creation : {new Date(selectedItem.user?.dteCreate).toLocaleDateString()}</p>
+                <p>Status du user : {selectedItem.user?.userStatus}</p>
+
+              </>
+            )}
+            {categories === "centre" && (
+              <>
+                <p className='absolute bg-red-500 p-2 text-white rounded-xl -left-10 -top-10'>Id du centre : {selectedItem.centerId}</p>
+                <h2 className="text-xl font-semibold text-red-700">{selectedItem.centerAdress}</h2>
+                <p>{selectedItem.centerCity}, {selectedItem.centerPostal}</p>
+              </>
+            )}
+            {categories === "livraison" && (
+              <>
+                <h2 className="text-xl font-semibold text-red-700">Livraison #{selectedItem.deliveryId}</h2>
+                <p>Status : {selectedItem.deliveryStatus}</p>
+                <p>
+                  Date : {new Date(selectedItem.dteDelivery).toLocaleDateString()}
+                </p>
+              </>
+            )}
+          </div>
+        )}
+      </Modal>
 
     </div>
   );

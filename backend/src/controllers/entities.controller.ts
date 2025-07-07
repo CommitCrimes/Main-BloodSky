@@ -47,9 +47,20 @@ export const getUsersDonationCenter = async (c: Context) => {
   }
 };
 
+//---------------------------------Livraisons------------------------------------
+
 export const getDelivery = async (c: Context) => {
   try {
     const deliveryData = await db.select().from(deliveries);
+    return c.json(deliveryData);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des livraisons:', error);
+    throw new HTTPException(500, { message: 'Échec de la récupération des livraisons' });
+  }
+};
+export const editDelivery = async (c: Context) => {
+  try {
+    const deliveryData = await db.update(users).set({}).where(eq(users.userId, ID));
     return c.json(deliveryData);
   } catch (error) {
     console.error('Erreur lors de la récupération des livraisons:', error);
