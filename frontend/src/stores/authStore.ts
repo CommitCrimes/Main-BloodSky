@@ -42,7 +42,10 @@ class AuthStore {
               this.user.role = { type: 'super_admin' };
               console.log('Super admin détecté par email lors de l\'initialisation:', this.user.email);
             } else {
-              const role = await userProfileApi.getUserRole();
+              const role = await userProfileApi.getUserRole({
+                userId: this.user.userId,
+                email: this.user.email
+              });
               this.user.role = role;
             }
             localStorage.setItem('user', JSON.stringify(this.user));
