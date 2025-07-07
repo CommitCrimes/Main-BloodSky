@@ -15,9 +15,9 @@ const LoginForm = observer(() => {
   return (
     <div className="w-full max-w-md animate-slide-up">
       <div className="backdrop-blur-sm bg-card/80 glow-border rounded-2xl shadow-lg">
-        <div className="text-center space-y-4 p-8 pb-4">
-          <img src="/src/assets/logo.png" alt="BloodSky Logo" className="mx-auto w-20 h-20 mb-2" />
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent font-['Iceland',cursive]">
+        <div className="text-center space-y-4 p-4 pb-4">
+          <img src="/src/assets/logo.png" alt="BloodSky Logo" className="mx-auto w-20 h-20 mb-1" />
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-red-600 to-orange-400 bg-clip-text text-transparent font-['Iceland',cursive]">
             BloodSky
           </h1>
           <h2 className="text-lg text-muted-foreground font-['Share_Tech',monospace]">
@@ -61,7 +61,7 @@ const LoginForm = observer(() => {
           <button
             type="submit"
             disabled={auth.isLoading}
-            className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold py-2.5 rounded-md transition-all duration-300 hover:shadow-lg hover:shadow-primary/25 disabled:bg-gray-400"
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-md transition-all duration-300 hover:shadow-lg hover:shadow-blue-400/25 disabled:bg-gray-400"
           >
             {auth.isLoading ? (
               <span className="flex items-center justify-center gap-2">
@@ -77,7 +77,7 @@ const LoginForm = observer(() => {
           </button>
         </form>
       </div>
-      <div className="mt-8 text-center text-xs text-muted-foreground">
+      <div className="mt-12 text-center text-xs text-muted-foreground">
         <p>© 2024 BloodSky • Accès réservé</p>
         <p className="mt-1">Plateforme de gestion du sang</p>
       </div>

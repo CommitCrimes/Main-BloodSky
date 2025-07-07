@@ -23,17 +23,17 @@
 
 @layer utilities {
   .glow-border {
-    border: 1px solid hsl(195 100% 50% / 0.3);
-    box-shadow: 0 0 10px hsl(195 100% 50% / 0.1);
-    transition: all 0.3s ease;
+    border: 2.5px solid hsl(195 100% 50% / 0.4);
+    box-shadow: 0 0 10px hsl(195 100% 50% / 0.12);
+    transition: all 0.3s cubic-bezier(.4,2,.6,1);
   }
   .glow-border:hover {
-    border-color: hsl(195 100% 50% / 0.6);
-    box-shadow: 0 0 20px hsl(195 100% 50% / 0.2);
+    border-color: hsl(195 100% 50% / 0.9);
+    box-shadow: 0 0 32px 4px hsl(195 100% 50% / 0.25);
   }
   .glow-border:focus-within {
     border-color: hsl(195 100% 50%);
-    box-shadow: 0 0 25px hsl(195 100% 50% / 0.3);
+    box-shadow: 0 0 40px 6px hsl(195 100% 50% / 0.35);
   }
   .cyber-grid {
     background-image: 
