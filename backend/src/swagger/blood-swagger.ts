@@ -1,5 +1,3 @@
-// blood-swagger.ts
-
 export const bloodSwagger: Record<string, any> = {
   paths: {
     "/blood": {
