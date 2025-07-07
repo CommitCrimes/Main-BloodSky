@@ -1,6 +1,6 @@
 // blood-swagger.ts
 
-export const bloodSwagger: { paths: Record<string, any> } = {
+export const bloodSwagger: Record<string, any> = {
   paths: {
     "/blood": {
       get: {
@@ -9,6 +9,25 @@ export const bloodSwagger: { paths: Record<string, any> } = {
         responses: {
           "200": {
             description: "List of blood samples",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  example: [
+                    {
+                      bloodId: 1,
+                      bloodType: "O+",
+                      deliveryId: 42,
+                    },
+                    {
+                      bloodId: 2,
+                      bloodType: "A-",
+                      deliveryId: 51,
+                    },
+                  ],
+                },
+              },
+            },
           },
         },
       },
@@ -19,19 +38,27 @@ export const bloodSwagger: { paths: Record<string, any> } = {
           required: true,
           content: {
             "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  bloodType: { type: "string" },
-                  deliveryId: { type: "integer" },
-                },
-                required: ["bloodType", "deliveryId"],
+              example: {
+                bloodId: 1,
+                bloodType: "O+",
+                deliveryId: 42,
               },
             },
           },
         },
         responses: {
-          "201": { description: "Blood sample created" },
+          "201": {
+            description: "Blood sample created",
+            content: {
+              "application/json": {
+                example: {
+                  bloodId: 1,
+                  bloodType: "O+",
+                  deliveryId: 42,
+                },
+              },
+            },
+          },
           "400": { description: "Invalid input" },
         },
       },
@@ -46,10 +73,22 @@ export const bloodSwagger: { paths: Record<string, any> } = {
             in: "path",
             required: true,
             schema: { type: "integer" },
+            example: 1,
           },
         ],
         responses: {
-          "200": { description: "Blood sample found" },
+          "200": {
+            description: "Blood sample found",
+            content: {
+              "application/json": {
+                example: {
+                  id: 1,
+                  bloodType: "O+",
+                  deliveryId: 42,
+                },
+              },
+            },
+          },
           "404": { description: "Not found" },
         },
       },
@@ -62,25 +101,33 @@ export const bloodSwagger: { paths: Record<string, any> } = {
             in: "path",
             required: true,
             schema: { type: "integer" },
+            example: 1,
           },
         ],
         requestBody: {
           required: true,
           content: {
             "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  bloodType: { type: "string" },
-                  deliveryId: { type: "integer" },
-                },
-                required: ["bloodType", "deliveryId"],
+              example: {
+                bloodType: "A-",
+                deliveryId: 44,
               },
             },
           },
         },
         responses: {
-          "200": { description: "Blood sample updated" },
+          "200": {
+            description: "Blood sample updated",
+            content: {
+              "application/json": {
+                example: {
+                  id: 1,
+                  bloodType: "A-",
+                  deliveryId: 44,
+                },
+              },
+            },
+          },
           "400": { description: "Invalid input" },
           "404": { description: "Not found" },
         },
@@ -94,10 +141,26 @@ export const bloodSwagger: { paths: Record<string, any> } = {
             in: "path",
             required: true,
             schema: { type: "integer" },
+            example: 1,
           },
         ],
         responses: {
-          "200": { description: "Blood sample deleted" },
+          "200": {
+            description: "Blood sample deleted",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Blood sample deleted successfully",
+                    },
+                  },
+                },
+              },
+            },
+          },
           "404": { description: "Not found" },
         },
       },
@@ -112,10 +175,24 @@ export const bloodSwagger: { paths: Record<string, any> } = {
             in: "path",
             required: true,
             schema: { type: "integer" },
+            example: 42,
           },
         ],
         responses: {
-          "200": { description: "List of blood samples for delivery" },
+          "200": {
+            description: "List of blood samples for delivery",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  example: [
+                    { id: 1, bloodType: "O+", deliveryId: 42 },
+                    { id: 2, bloodType: "A-", deliveryId: 42 },
+                  ],
+                },
+              },
+            },
+          },
           "404": { description: "Not found" },
         },
       },
@@ -130,10 +207,24 @@ export const bloodSwagger: { paths: Record<string, any> } = {
             in: "path",
             required: true,
             schema: { type: "string" },
+            example: "O+",
           },
         ],
         responses: {
-          "200": { description: "List of blood samples for type" },
+          "200": {
+            description: "List of blood samples for type",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  example: [
+                    { id: 1, bloodType: "O+", deliveryId: 42 },
+                    { id: 3, bloodType: "O+", deliveryId: 45 },
+                  ],
+                },
+              },
+            },
+          },
           "404": { description: "Not found" },
         },
       },
