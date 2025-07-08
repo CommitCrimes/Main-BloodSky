@@ -18,7 +18,11 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  Snackbar
+  Snackbar,
+  Paper,
+  Stack,
+  Fade,
+  Zoom
 } from '@mui/material';
 import { 
   Person, 
@@ -29,7 +33,13 @@ import {
   Lock,
   Visibility,
   VisibilityOff,
-  Close 
+  Close,
+  LocationOn,
+  CalendarToday,
+  Edit,
+  Save,
+  Cancel,
+  VpnKey
 } from '@mui/icons-material';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
@@ -281,24 +291,72 @@ const ProfileManagement: React.FC = observer(() => {
   const { profile } = profileStore;
 
   return (
-    <Box p={3}>
-      <Typography 
-        variant="h1" 
-        gutterBottom 
-        sx={{ 
-          color: '#981A0E', 
-          fontSize: { xs: '1.8rem', sm: '2.2rem', md: '3rem' },
-          fontFamily: 'Iceland, cursive',
-          mb: 1 
-        }}
-      >
-        Mon Profil
-      </Typography>
+    <Box 
+      sx={{ 
+        minHeight: '100vh',
+        background: 'linear-gradient(135deg, #e3f8fe 0%, #f0f9ff 100%)',
+        p: { xs: 2, md: 4 }
+      }}
+    >
+      <Fade in timeout={800}>
+        <Paper
+          elevation={0}
+          sx={{
+            background: 'rgba(255, 255, 255, 0.7)',
+            backdropFilter: 'blur(20px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            borderRadius: '24px',
+            p: { xs: 3, md: 4 },
+            mb: 4,
+            textAlign: 'center',
+            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
+          }}
+        >
+          <Typography 
+            variant="h1" 
+            sx={{ 
+              color: '#981A0E', 
+              fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem' },
+              fontFamily: 'Iceland, cursive',
+              mb: 1,
+              background: 'linear-gradient(45deg, #981A0E, #C41E3A)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}
+          >
+            Mon Profil
+          </Typography>
+          <Typography 
+            variant="subtitle1"
+            sx={{ 
+              color: '#5C7F9B', 
+              fontFamily: 'Share Tech, monospace',
+              opacity: 0.8,
+              fontSize: { xs: '0.9rem', md: '1.1rem' }
+            }}
+          >
+            Gérez vos informations personnelles et préférences
+          </Typography>
+        </Paper>
+      </Fade>
 
       {profileStore.error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => profileStore.clearError()}>
-          {profileStore.error}
-        </Alert>
+        <Zoom in timeout={600}>
+          <Alert 
+            severity="error" 
+            sx={{ 
+              mb: 3,
+              borderRadius: '16px',
+              '& .MuiAlert-message': {
+                fontFamily: 'Share Tech, monospace'
+              }
+            }} 
+            onClose={() => profileStore.clearError()}
+          >
+            {profileStore.error}
+          </Alert>
+        </Zoom>
       )}
 
       <Box 
@@ -308,396 +366,719 @@ const ProfileManagement: React.FC = observer(() => {
           gap: 3 
         }}
       >
-        {/* Infos perso */}
-        <Box sx={{ flex: { md: 2 } }}>
-          <Card>
-            <CardContent>
-              <Box display="flex" alignItems="center" mb={3}>
-                <Avatar sx={{ bgcolor: '#981A0E', mr: 2, width: 56, height: 56 }}>
-                  <Person fontSize="large" />
-                </Avatar>
-                <Box>
-                  <Typography 
-                    variant="h6"
-                    sx={{ fontFamily: 'Share Tech, monospace' }}
+        <Box sx={{ flex: { lg: 2 } }}>
+          <Fade in timeout={1000}>
+            <Card 
+              elevation={0}
+              sx={{
+                background: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                borderRadius: '24px',
+                overflow: 'hidden'
+              }}
+            >
+              <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                <Stack direction="row" spacing={3} alignItems="center" mb={4}>
+                  <Avatar 
+                    sx={{ 
+                      background: 'linear-gradient(45deg, #981A0E, #C41E3A)',
+                      width: { xs: 64, md: 80 }, 
+                      height: { xs: 64, md: 80 },
+                      boxShadow: '0 8px 24px rgba(152, 26, 14, 0.3)',
+                      fontFamily: 'Share Tech, monospace',
+                      fontSize: { xs: '1.5rem', md: '2rem' },
+                      fontWeight: 'bold'
+                    }}
                   >
-                    {profile.userFirstname} {profile.userName}
+                    {profile.userFirstname?.charAt(0).toUpperCase()}{profile.userName?.charAt(0).toUpperCase()}
+                  </Avatar>
+                  
+                  <Box sx={{ flex: 1 }}>
+                    <Typography 
+                      variant="h4"
+                      sx={{ 
+                        fontFamily: 'Share Tech, monospace',
+                        color: '#2D3748',
+                        fontWeight: 600,
+                        mb: 1
+                      }}
+                    >
+                      {profile.userFirstname} {profile.userName}
+                    </Typography>
+                    <Stack direction="row" spacing={1} flexWrap="wrap">
+                      <Chip
+                        label={getRoleDisplayName(profile.role?.type)}
+                        color={getRoleColor(profile.role?.type)}
+                        size="medium"
+                        icon={<AdminPanelSettings />}
+                        sx={{ 
+                          fontFamily: 'Share Tech, monospace',
+                          borderRadius: '12px',
+                          fontWeight: 500
+                        }}
+                      />
+                    </Stack>
+                  </Box>
+                </Stack>
+
+                <Divider sx={{ mb: 4, opacity: 0.3 }} />
+
+                <Box sx={{ mb: 4 }}>
+                  <Typography 
+                    variant="h6" 
+                    sx={{ 
+                      fontFamily: 'Share Tech, monospace',
+                      color: '#2D3748',
+                      mb: 3,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1
+                    }}
+                  >
+                    <Person sx={{ color: '#008EFF' }} />
+                    Informations personnelles
                   </Typography>
-                  <Chip
-                    label={getRoleDisplayName(profile.role?.type)}
-                    color={getRoleColor(profile.role?.type)}
-                    size="small"
-                    icon={<AdminPanelSettings />}
-                    sx={{ fontFamily: 'Share Tech, monospace' }}
-                  />
-                </Box>
-              </Box>
-
-              <Divider sx={{ mb: 3 }} />
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <Box 
-                  sx={{ 
-                    display: 'flex', 
-                    flexDirection: { xs: 'column', sm: 'row' }, 
-                    gap: 3 
-                  }}
-                >
-                  <TextField
-                    fullWidth
-                    label="Prénom"
-                    value={formData.userFirstname}
-                    onChange={handleInputChange('userFirstname')}
-                    disabled={!isEditing}
-                    slotProps={{
-                      input: {
-                        startAdornment: <Person sx={{ mr: 1, color: 'action.active' }} />,
-                        readOnly: !isEditing
-                      },
-                      inputLabel: {
-                        sx: { fontFamily: 'Share Tech, monospace' }
-                      }
-                    }}
-                    sx={{
-                      '& .MuiInputBase-input': {
-                        fontFamily: 'Share Tech, monospace'
-                      }
-                    }}
-                  />
-                  <TextField
-                    fullWidth
-                    label="Nom"
-                    value={formData.userName}
-                    onChange={handleInputChange('userName')}
-                    disabled={!isEditing}
-                    slotProps={{
-                      input: {
-                        startAdornment: <Person sx={{ mr: 1, color: 'action.active' }} />,
-                        readOnly: !isEditing
-                      },
-                      inputLabel: {
-                        sx: { fontFamily: 'Share Tech, monospace' }
-                      }
-                    }}
-                    sx={{
-                      '& .MuiInputBase-input': {
-                        fontFamily: 'Share Tech, monospace'
-                      }
-                    }}
-                  />
-                </Box>
-
-                <Box 
-                  sx={{ 
-                    display: 'flex', 
-                    flexDirection: { xs: 'column', sm: 'row' }, 
-                    gap: 3 
-                  }}
-                >
-                  <TextField
-                    fullWidth
-                    label="Email"
-                    value={profile.email}
-                    disabled
-                    slotProps={{
-                      input: {
-                        startAdornment: <Email sx={{ mr: 1, color: 'action.active' }} />,
-                        readOnly: true
-                      },
-                      inputLabel: {
-                        sx: { fontFamily: 'Share Tech, monospace' }
-                      }
-                    }}
-                    sx={{
-                      '& .MuiInputBase-input': {
-                        fontFamily: 'Share Tech, monospace'
-                      }
-                    }}
-                  />
-                  <TextField
-                    fullWidth
-                    label="Téléphone"
-                    type="tel"
-                    value={formData.telNumber || ''}
-                    onChange={handleInputChange('telNumber')}
-                    disabled={!isEditing}
-                    slotProps={{
-                      input: {
-                        startAdornment: <Phone sx={{ mr: 1, color: 'action.active' }} />,
-                        readOnly: !isEditing
-                      },
-                      inputLabel: {
-                        sx: { fontFamily: 'Share Tech, monospace' }
-                      }
-                    }}
-                    sx={{
-                      '& .MuiInputBase-input': {
-                        fontFamily: 'Share Tech, monospace'
-                      }
-                    }}
-                  />
-                </Box>
-
-                {profile.role?.info !== undefined && (
-                  <TextField
-                    fullWidth
-                    label="Informations supplémentaires"
-                    multiline
-                    rows={3}
-                    value={formData.info}
-                    onChange={handleInputChange('info')}
-                    disabled={!isEditing}
-                    slotProps={{
-                      input: {
-                        startAdornment: <Business sx={{ mr: 1, color: 'action.active' }} />,
-                        readOnly: !isEditing
-                      },
-                      inputLabel: {
-                        sx: { fontFamily: 'Share Tech, monospace' }
-                      }
-                    }}
-                    sx={{
-                      '& .MuiInputBase-input': {
-                        fontFamily: 'Share Tech, monospace'
-                      }
-                    }}
-                  />
-                )}
-              </Box>
-
-              <Box mt={3} display="flex" gap={2} flexWrap="wrap">
-                {!isEditing ? (
-                  <>
-                    <Button
-                      variant="contained"
-                      onClick={() => setIsEditing(true)}
-                      sx={{ 
-                        bgcolor: '#008EFF',
-                        '&:hover': { bgcolor: '#0066cc' },
-                        fontFamily: 'Share Tech, monospace'
+                  
+                  <Stack spacing={3}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 3
                       }}
                     >
-                      Modifier le profil
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={() => setShowPasswordDialog(true)}
-                      startIcon={<Lock />}
-                      sx={{ 
-                        color: '#008EFF',
-                        borderColor: '#008EFF',
-                        '&:hover': { borderColor: '#0066cc', color: '#0066cc' },
-                        fontFamily: 'Share Tech, monospace'
+                      <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 48%' } }}>
+                        <TextField
+                          fullWidth
+                          label="Prénom"
+                          value={formData.userFirstname}
+                          onChange={handleInputChange('userFirstname')}
+                          disabled={!isEditing}
+                          variant="outlined"
+                          slotProps={{
+                            input: {
+                              startAdornment: <Person sx={{ mr: 1, color: 'action.active' }} />,
+                              readOnly: !isEditing,
+                              sx: {
+                                borderRadius: '12px',
+                                backgroundColor: isEditing ? 'rgba(0, 142, 255, 0.05)' : 'rgba(0,0,0,0.02)'
+                              }
+                            },
+                            inputLabel: {
+                              sx: { fontFamily: 'Share Tech, monospace' }
+                            }
+                          }}
+                          sx={{
+                            '& .MuiInputBase-input': {
+                              fontFamily: 'Share Tech, monospace'
+                            },
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: '12px',
+                              transition: 'all 0.2s ease-in-out'
+                            }
+                          }}
+                        />
+                      </Box>
+                      <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 48%' } }}>
+                        <TextField
+                          fullWidth
+                          label="Nom"
+                          value={formData.userName}
+                          onChange={handleInputChange('userName')}
+                          disabled={!isEditing}
+                          variant="outlined"
+                          slotProps={{
+                            input: {
+                              startAdornment: <Person sx={{ mr: 1, color: 'action.active' }} />,
+                              readOnly: !isEditing,
+                              sx: {
+                                borderRadius: '12px',
+                                backgroundColor: isEditing ? 'rgba(0, 142, 255, 0.05)' : 'rgba(0,0,0,0.02)'
+                              }
+                            },
+                            inputLabel: {
+                              sx: { fontFamily: 'Share Tech, monospace' }
+                            }
+                          }}
+                          sx={{
+                            '& .MuiInputBase-input': {
+                              fontFamily: 'Share Tech, monospace'
+                            },
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: '12px',
+                              transition: 'all 0.2s ease-in-out'
+                            }
+                          }}
+                        />
+                      </Box>
+                    </Box>
+
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 3
                       }}
                     >
-                      Changer le mot de passe
-                    </Button>
-                  </>
-                ) : (
-                  <>
-                    <Button
-                      variant="contained"
-                      onClick={handleSubmit}
-                      disabled={profileStore.isUpdating}
-                      sx={{ 
-                        bgcolor: '#008EFF',
-                        '&:hover': { bgcolor: '#0066cc' },
-                        fontFamily: 'Share Tech, monospace'
-                      }}
-                    >
-                      {profileStore.isUpdating ? <CircularProgress size={20} /> : 'Enregistrer'}
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={handleCancel}
-                      disabled={profileStore.isUpdating}
-                      sx={{ fontFamily: 'Share Tech, monospace' }}
-                    >
-                      Annuler
-                    </Button>
-                  </>
-                )}
-              </Box>
-            </CardContent>
-          </Card>
+                      <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 48%' } }}>
+                        <TextField
+                          fullWidth
+                          label="Email"
+                          value={profile.email}
+                          disabled
+                          variant="outlined"
+                          slotProps={{
+                            input: {
+                              startAdornment: <Email sx={{ mr: 1, color: 'action.active' }} />,
+                              readOnly: true,
+                              sx: {
+                                borderRadius: '12px',
+                                backgroundColor: 'rgba(0,0,0,0.02)'
+                              }
+                            },
+                            inputLabel: {
+                              sx: { fontFamily: 'Share Tech, monospace' }
+                            }
+                          }}
+                          sx={{
+                            '& .MuiInputBase-input': {
+                              fontFamily: 'Share Tech, monospace'
+                            },
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: '12px'
+                            }
+                          }}
+                        />
+                      </Box>
+                      <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 48%' } }}>
+                        <TextField
+                          fullWidth
+                          label="Téléphone"
+                          type="tel"
+                          value={formData.telNumber || ''}
+                          onChange={handleInputChange('telNumber')}
+                          disabled={!isEditing}
+                          variant="outlined"
+                          slotProps={{
+                            input: {
+                              startAdornment: <Phone sx={{ mr: 1, color: 'action.active' }} />,
+                              readOnly: !isEditing,
+                              sx: {
+                                borderRadius: '12px',
+                                backgroundColor: isEditing ? 'rgba(0, 142, 255, 0.05)' : 'rgba(0,0,0,0.02)'
+                              }
+                            },
+                            inputLabel: {
+                              sx: { fontFamily: 'Share Tech, monospace' }
+                            }
+                          }}
+                          sx={{
+                            '& .MuiInputBase-input': {
+                              fontFamily: 'Share Tech, monospace'
+                            },
+                            '& .MuiOutlinedInput-root': {
+                              borderRadius: '12px',
+                              transition: 'all 0.2s ease-in-out'
+                            }
+                          }}
+                        />
+                      </Box>
+                    </Box>
+
+                    {profile.role?.info !== undefined && (
+                      <TextField
+                        fullWidth
+                        label="Informations supplémentaires"
+                        multiline
+                        rows={3}
+                        value={formData.info}
+                        onChange={handleInputChange('info')}
+                        disabled={!isEditing}
+                        variant="outlined"
+                        slotProps={{
+                          input: {
+                            startAdornment: <Business sx={{ mr: 1, color: 'action.active', alignSelf: 'flex-start', mt: 1 }} />,
+                            readOnly: !isEditing,
+                            sx: {
+                              borderRadius: '12px',
+                              backgroundColor: isEditing ? 'rgba(0, 142, 255, 0.05)' : 'rgba(0,0,0,0.02)'
+                            }
+                          },
+                          inputLabel: {
+                            sx: { fontFamily: 'Share Tech, monospace' }
+                          }
+                        }}
+                        sx={{
+                          '& .MuiInputBase-input': {
+                            fontFamily: 'Share Tech, monospace'
+                          },
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '12px',
+                            transition: 'all 0.2s ease-in-out'
+                          }
+                        }}
+                      />
+                    )}
+                  </Stack>
+                </Box>
+
+                <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 4 }}>
+                  {!isEditing ? (
+                    <>
+                      <Button
+                        variant="contained"
+                        startIcon={<Edit />}
+                        onClick={() => setIsEditing(true)}
+                        sx={{ 
+                          bgcolor: '#008EFF',
+                          '&:hover': { 
+                            bgcolor: '#0066cc',
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 8px 25px rgba(0, 142, 255, 0.3)'
+                          },
+                          fontFamily: 'Share Tech, monospace',
+                          borderRadius: '12px',
+                          px: 3,
+                          py: 1.5,
+                          transition: 'all 0.2s ease-in-out',
+                          textTransform: 'none',
+                          fontSize: '1rem'
+                        }}
+                      >
+                        Modifier le profil
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        startIcon={<VpnKey />}
+                        onClick={() => setShowPasswordDialog(true)}
+                        sx={{ 
+                          color: '#008EFF',
+                          borderColor: '#008EFF',
+                          '&:hover': { 
+                            borderColor: '#0066cc', 
+                            color: '#0066cc',
+                            backgroundColor: 'rgba(0, 142, 255, 0.05)',
+                            transform: 'translateY(-2px)'
+                          },
+                          fontFamily: 'Share Tech, monospace',
+                          borderRadius: '12px',
+                          px: 3,
+                          py: 1.5,
+                          transition: 'all 0.2s ease-in-out',
+                          textTransform: 'none',
+                          fontSize: '1rem'
+                        }}
+                      >
+                        Changer le mot de passe
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <Button
+                        variant="outlined"
+                        startIcon={<Cancel />}
+                        onClick={handleCancel}
+                        disabled={profileStore.isUpdating}
+                        sx={{ 
+                          fontFamily: 'Share Tech, monospace',
+                          borderRadius: '12px',
+                          px: 3,
+                          py: 1.5,
+                          textTransform: 'none',
+                          color: '#6B7280',
+                          borderColor: '#D1D5DB',
+                          '&:hover': {
+                            borderColor: '#9CA3AF',
+                            backgroundColor: 'rgba(107, 114, 128, 0.05)'
+                          }
+                        }}
+                      >
+                        Annuler
+                      </Button>
+                      <Button
+                        variant="contained"
+                        startIcon={profileStore.isUpdating ? <CircularProgress size={16} color="inherit" /> : <Save />}
+                        onClick={handleSubmit}
+                        disabled={profileStore.isUpdating}
+                        sx={{ 
+                          bgcolor: '#10b981',
+                          '&:hover': { 
+                            bgcolor: '#059669',
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 8px 25px rgba(16, 185, 129, 0.3)'
+                          },
+                          fontFamily: 'Share Tech, monospace',
+                          borderRadius: '12px',
+                          px: 3,
+                          py: 1.5,
+                          transition: 'all 0.2s ease-in-out',
+                          textTransform: 'none',
+                          fontSize: '1rem'
+                        }}
+                      >
+                        {profileStore.isUpdating ? 'Enregistrement...' : 'Enregistrer'}
+                      </Button>
+                    </>
+                  )}
+                </Stack>
+              </CardContent>
+            </Card>
+          </Fade>
         </Box>
 
         {/* info du compte */}
-        <Box sx={{ flex: { md: 1 } }}>
-          <Card>
-            <CardContent>
-              <Typography 
-                variant="h6" 
-                gutterBottom
-                sx={{ fontFamily: 'Share Tech, monospace' }}
+        <Box sx={{ flex: { lg: 1 } }}>
+          <Stack spacing={3}>
+            <Fade in timeout={1200}>
+              <Card 
+                elevation={0}
+                sx={{
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.4)',
+                  borderRadius: '24px',
+                  overflow: 'hidden'
+                }}
               >
-                Informations du compte
-              </Typography>
-              <Divider sx={{ mb: 2 }} />
-              
-
-              {profile.dteCreate && (
-                <Box mb={2}>
+                <CardContent sx={{ p: { xs: 3, md: 4 } }}>
                   <Typography 
-                    variant="body2" 
-                    color="textSecondary"
-                    sx={{ fontFamily: 'Share Tech, monospace' }}
+                    variant="h6" 
+                    sx={{ 
+                      fontFamily: 'Share Tech, monospace',
+                      color: '#2D3748',
+                      mb: 3,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1
+                    }}
                   >
-                    Membre depuis
-                  </Typography>
-                  <Typography 
-                    variant="body2"
-                    sx={{ fontFamily: 'Share Tech, monospace' }}
-                  >
-                    {new Date(profile.dteCreate).toLocaleDateString('fr-FR')}
-                  </Typography>
-                </Box>
-              )}
-
-              {profile.role?.hospitalName && (
-                <Box mb={2}>
-                  <Typography 
-                    variant="body2" 
-                    color="textSecondary"
-                    sx={{ fontFamily: 'Share Tech, monospace' }}
-                  >
-                    Hôpital
-                  </Typography>
-                  <Typography 
-                    variant="body2"
-                    sx={{ fontFamily: 'Share Tech, monospace' }}
-                  >
-                    {profile.role.hospitalName}
-                  </Typography>
-                </Box>
-              )}
-
-              {profile.role?.centerName && (
-                <Box mb={2}>
-                  <Typography 
-                    variant="body2" 
-                    color="textSecondary"
-                    sx={{ fontFamily: 'Share Tech, monospace' }}
-                  >
-                    Centre de Don
-                  </Typography>
-                  <Typography 
-                    variant="body2"
-                    sx={{ fontFamily: 'Share Tech, monospace' }}
-                  >
-                    {profile.role.centerName}
-                  </Typography>
-                </Box>
-              )}
-
-              {/* seulement adminnnn */}
-              {profile.role?.admin && (
-                <Box mb={2}>
-                  <Typography 
-                    variant="body2" 
-                    color="textSecondary"
-                    sx={{ fontFamily: 'Share Tech, monospace', mb: 1 }}
-                  >
-                    Coordonnées {profile.role.type === 'hospital_admin' ? 'de l\'hôpital' : 'du centre'}
+                    <CalendarToday sx={{ color: '#008EFF' }} />
+                    Informations du compte
                   </Typography>
                   
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Box sx={{ display: 'flex', gap: 2 }}>
-                      <TextField
-                        label="Latitude"
-                        value={coordinatesData.latitude}
-                        onChange={handleCoordinatesChange('latitude')}
-                        disabled={!isEditingCoordinates}
-                        fullWidth
-                        size="small"
-                        type="number"
-                        placeholder="Ex: 47.2383569"
-                        slotProps={{
-                          input: {
-                            step: "any"
-                          } as any,
-                          inputLabel: {
-                            sx: { fontFamily: 'Share Tech, monospace' }
-                          }
-                        }}
-                        sx={{
-                          '& .MuiInputBase-input': {
-                            fontFamily: 'Share Tech, monospace'
-                          }
-                        }}
-                      />
-                      <TextField
-                        label="Longitude"
-                        value={coordinatesData.longitude}
-                        onChange={handleCoordinatesChange('longitude')}
-                        disabled={!isEditingCoordinates}
-                        fullWidth
-                        size="small"
-                        type="number"
-                        placeholder="Ex: -1.5603531"
-                        slotProps={{
-                          input: {
-                            step: "any"
-                          } as any,
-                          inputLabel: {
-                            sx: { fontFamily: 'Share Tech, monospace' }
-                          }
-                        }}
-                        sx={{
-                          '& .MuiInputBase-input': {
-                            fontFamily: 'Share Tech, monospace'
-                          }
-                        }}
-                      />
-                    </Box>
-                    
-                    <Box sx={{ display: 'flex', gap: 1 }}>
-                      {!isEditingCoordinates ? (
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => setIsEditingCoordinates(true)}
+                  <Stack spacing={3}>
+              
+
+                    {profile.dteCreate && (
+                      <Box>
+                        <Typography 
+                          variant="body2" 
+                          color="textSecondary"
                           sx={{ 
-                            color: '#008EFF',
-                            borderColor: '#008EFF',
-                            '&:hover': { borderColor: '#0066cc', color: '#0066cc' },
-                            fontFamily: 'Share Tech, monospace'
+                            fontFamily: 'Share Tech, monospace',
+                            mb: 0.5,
+                            fontSize: '0.85rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
                           }}
                         >
-                          Modifier coordonnées
-                        </Button>
-                      ) : (
-                        <>
-                          <Button
-                            size="small"
-                            variant="contained"
-                            onClick={handleCoordinatesSubmit}
-                            disabled={profileStore.isUpdatingCoordinates}
+                          Membre depuis
+                        </Typography>
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: 2,
+                            backgroundColor: 'rgba(0, 142, 255, 0.05)',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(0, 142, 255, 0.1)',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+                          }}
+                        >
+                          <Typography 
+                            variant="body1"
                             sx={{ 
-                              bgcolor: '#008EFF',
-                              '&:hover': { bgcolor: '#0066cc' },
-                              fontFamily: 'Share Tech, monospace'
+                              fontFamily: 'Share Tech, monospace',
+                              color: '#2D3748',
+                              fontWeight: 500
                             }}
                           >
-                            {profileStore.isUpdatingCoordinates ? <CircularProgress size={16} /> : 'Enregistrer'}
-                          </Button>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={handleCancelCoordinates}
-                            disabled={profileStore.isUpdatingCoordinates}
-                            sx={{ fontFamily: 'Share Tech, monospace' }}
+                            {new Date(profile.dteCreate).toLocaleDateString('fr-FR', {
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </Typography>
+                        </Paper>
+                      </Box>
+                    )}
+
+                    {profile.role?.hospitalName && (
+                      <Box>
+                        <Typography 
+                          variant="body2" 
+                          color="textSecondary"
+                          sx={{ 
+                            fontFamily: 'Share Tech, monospace',
+                            mb: 0.5,
+                            fontSize: '0.85rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                          }}
+                        >
+                          Hôpital
+                        </Typography>
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: 2,
+                            backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(16, 185, 129, 0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+                          }}
+                        >
+                          <Business sx={{ color: '#10b981', fontSize: 20 }} />
+                          <Typography 
+                            variant="body1"
+                            sx={{ 
+                              fontFamily: 'Share Tech, monospace',
+                              color: '#2D3748',
+                              fontWeight: 500
+                            }}
                           >
-                            Annuler
+                            {profile.role.hospitalName}
+                          </Typography>
+                        </Paper>
+                      </Box>
+                    )}
+
+                    {profile.role?.centerName && (
+                      <Box>
+                        <Typography 
+                          variant="body2" 
+                          color="textSecondary"
+                          sx={{ 
+                            fontFamily: 'Share Tech, monospace',
+                            mb: 0.5,
+                            fontSize: '0.85rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.5px'
+                          }}
+                        >
+                          Centre de Don
+                        </Typography>
+                        <Paper
+                          elevation={0}
+                          sx={{
+                            p: 2,
+                            backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                            borderRadius: '12px',
+                            border: '1px solid rgba(16, 185, 129, 0.1)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.05)'
+                          }}
+                        >
+                          <Business sx={{ color: '#10b981', fontSize: 20 }} />
+                          <Typography 
+                            variant="body1"
+                            sx={{ 
+                              fontFamily: 'Share Tech, monospace',
+                              color: '#2D3748',
+                              fontWeight: 500
+                            }}
+                          >
+                            {profile.role.centerName}
+                          </Typography>
+                        </Paper>
+                      </Box>
+                    )}
+
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Fade>
+
+            {profile.role?.admin && (
+              <Fade in timeout={1400}>
+                <Card 
+                  elevation={0}
+                  sx={{
+                    background: 'rgba(255, 255, 255, 0.9)',
+                    backdropFilter: 'blur(20px)',
+                    border: '1px solid rgba(255, 255, 255, 0.4)',
+                    borderRadius: '24px',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <CardContent sx={{ p: { xs: 3, md: 4 } }}>
+                    <Typography 
+                      variant="h6" 
+                      sx={{ 
+                        fontFamily: 'Share Tech, monospace',
+                        color: '#2D3748',
+                        mb: 3,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1
+                      }}
+                    >
+                      <LocationOn sx={{ color: '#008EFF' }} />
+                      Coordonnées {profile.role.type === 'hospital_admin' ? 'de l\'hôpital' : 'du centre'}
+                    </Typography>
+                    
+                    <Stack spacing={3}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: 2
+                        }}
+                      >
+                        <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 48%' } }}>
+                          <TextField
+                            label="Latitude"
+                            value={coordinatesData.latitude}
+                            onChange={handleCoordinatesChange('latitude')}
+                            disabled={!isEditingCoordinates}
+                            fullWidth
+                            type="number"
+                            placeholder="Ex: 47.2383569"
+                            variant="outlined"
+                            slotProps={{
+                              input: {
+                                step: "any",
+                                startAdornment: <LocationOn sx={{ mr: 1, color: 'action.active' }} />,
+                                sx: {
+                                  borderRadius: '12px',
+                                  backgroundColor: isEditingCoordinates ? 'rgba(0, 142, 255, 0.05)' : 'rgba(0,0,0,0.02)'
+                                }
+                              } as any,
+                              inputLabel: {
+                                sx: { fontFamily: 'Share Tech, monospace' }
+                              }
+                            }}
+                            sx={{
+                              '& .MuiInputBase-input': {
+                                fontFamily: 'Share Tech, monospace'
+                              },
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: '12px',
+                                transition: 'all 0.2s ease-in-out'
+                              }
+                            }}
+                          />
+                        </Box>
+                        <Box sx={{ flex: { xs: '1 1 100%', sm: '1 1 48%' } }}>
+                          <TextField
+                            label="Longitude"
+                            value={coordinatesData.longitude}
+                            onChange={handleCoordinatesChange('longitude')}
+                            disabled={!isEditingCoordinates}
+                            fullWidth
+                            type="number"
+                            placeholder="Ex: -1.5603531"
+                            variant="outlined"
+                            slotProps={{
+                              input: {
+                                step: "any",
+                                startAdornment: <LocationOn sx={{ mr: 1, color: 'action.active' }} />,
+                                sx: {
+                                  borderRadius: '12px',
+                                  backgroundColor: isEditingCoordinates ? 'rgba(0, 142, 255, 0.05)' : 'rgba(0,0,0,0.02)'
+                                }
+                              } as any,
+                              inputLabel: {
+                                sx: { fontFamily: 'Share Tech, monospace' }
+                              }
+                            }}
+                            sx={{
+                              '& .MuiInputBase-input': {
+                                fontFamily: 'Share Tech, monospace'
+                              },
+                              '& .MuiOutlinedInput-root': {
+                                borderRadius: '12px',
+                                transition: 'all 0.2s ease-in-out'
+                              }
+                            }}
+                          />
+                        </Box>
+                      </Box>
+                      
+                      <Stack direction="row" spacing={2} justifyContent="flex-end">
+                        {!isEditingCoordinates ? (
+                          <Button
+                            variant="outlined"
+                            startIcon={<Edit />}
+                            onClick={() => setIsEditingCoordinates(true)}
+                            sx={{ 
+                              color: '#008EFF',
+                              borderColor: '#008EFF',
+                              '&:hover': { 
+                                borderColor: '#0066cc', 
+                                color: '#0066cc',
+                                backgroundColor: 'rgba(0, 142, 255, 0.05)',
+                                transform: 'translateY(-2px)'
+                              },
+                              fontFamily: 'Share Tech, monospace',
+                              borderRadius: '12px',
+                              px: 3,
+                              py: 1,
+                              transition: 'all 0.2s ease-in-out',
+                              textTransform: 'none'
+                            }}
+                          >
+                            Modifier coordonnées
                           </Button>
-                        </>
-                      )}
-                    </Box>
-                  </Box>
-                </Box>
-              )}
-            </CardContent>
-          </Card>
+                        ) : (
+                          <>
+                            <Button
+                              variant="outlined"
+                              startIcon={<Cancel />}
+                              onClick={handleCancelCoordinates}
+                              disabled={profileStore.isUpdatingCoordinates}
+                              sx={{ 
+                                fontFamily: 'Share Tech, monospace',
+                                borderRadius: '12px',
+                                px: 3,
+                                py: 1,
+                                textTransform: 'none',
+                                color: '#6B7280',
+                                borderColor: '#D1D5DB',
+                                '&:hover': {
+                                  borderColor: '#9CA3AF',
+                                  backgroundColor: 'rgba(107, 114, 128, 0.05)'
+                                }
+                              }}
+                            >
+                              Annuler
+                            </Button>
+                            <Button
+                              variant="contained"
+                              startIcon={profileStore.isUpdatingCoordinates ? <CircularProgress size={16} color="inherit" /> : <Save />}
+                              onClick={handleCoordinatesSubmit}
+                              disabled={profileStore.isUpdatingCoordinates}
+                              sx={{ 
+                                bgcolor: '#10b981',
+                                '&:hover': { 
+                                  bgcolor: '#059669',
+                                  transform: 'translateY(-2px)',
+                                  boxShadow: '0 8px 25px rgba(16, 185, 129, 0.3)'
+                                },
+                                fontFamily: 'Share Tech, monospace',
+                                borderRadius: '12px',
+                                px: 3,
+                                py: 1,
+                                transition: 'all 0.2s ease-in-out',
+                                textTransform: 'none'
+                              }}
+                            >
+                              {profileStore.isUpdatingCoordinates ? 'Enregistrement...' : 'Enregistrer'}
+                            </Button>
+                          </>
+                        )}
+                      </Stack>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Fade>
+            )}
+          </Stack>
         </Box>
       </Box>
 
@@ -708,23 +1089,50 @@ const ProfileManagement: React.FC = observer(() => {
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle sx={{ fontFamily: 'Share Tech, monospace' }}>
+        <DialogTitle 
+          sx={{ 
+            fontFamily: 'Share Tech, monospace',
+            background: 'linear-gradient(45deg, #008EFF, #0066cc)',
+            color: 'white',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}
+        >
+          <VpnKey />
           Changer le mot de passe
           <IconButton
             onClick={handleCancelPassword}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
+            sx={{ 
+              position: 'absolute', 
+              right: 8, 
+              top: 8,
+              color: 'white',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.1)'
+              }
+            }}
           >
             <Close />
           </IconButton>
         </DialogTitle>
         <form onSubmit={handlePasswordSubmit}>
-          <DialogContent>
+          <DialogContent sx={{ p: 4 }}>
             {profileStore.error && (
-              <Alert severity="error" sx={{ mb: 2 }}>
+              <Alert 
+                severity="error" 
+                sx={{ 
+                  mb: 3,
+                  borderRadius: '12px',
+                  '& .MuiAlert-message': {
+                    fontFamily: 'Share Tech, monospace'
+                  }
+                }}
+              >
                 {profileStore.error}
               </Alert>
             )}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+            <Stack spacing={3} sx={{ mt: 1 }}>
               <TextField
                 fullWidth
                 label="Mot de passe actuel"
@@ -732,16 +1140,23 @@ const ProfileManagement: React.FC = observer(() => {
                 value={passwordData.currentPassword}
                 onChange={handlePasswordChange('currentPassword')}
                 required
+                variant="outlined"
                 slotProps={{
                   input: {
+                    startAdornment: <Lock sx={{ mr: 1, color: 'action.active' }} />,
                     endAdornment: (
                       <IconButton
                         onClick={() => togglePasswordVisibility('current')}
                         edge="end"
+                        sx={{ color: '#008EFF' }}
                       >
                         {showPasswords.current ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
-                    )
+                    ),
+                    sx: {
+                      borderRadius: '12px',
+                      backgroundColor: 'rgba(0, 142, 255, 0.02)'
+                    }
                   },
                   inputLabel: {
                     sx: { fontFamily: 'Share Tech, monospace' }
@@ -750,6 +1165,9 @@ const ProfileManagement: React.FC = observer(() => {
                 sx={{
                   '& .MuiInputBase-input': {
                     fontFamily: 'Share Tech, monospace'
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px'
                   }
                 }}
               />
@@ -762,16 +1180,23 @@ const ProfileManagement: React.FC = observer(() => {
                 required
                 error={!!passwordErrors.newPassword}
                 helperText={passwordErrors.newPassword || "Au moins 8 caractères, 1 majuscule et 1 chiffre"}
+                variant="outlined"
                 slotProps={{
                   input: {
+                    startAdornment: <VpnKey sx={{ mr: 1, color: 'action.active' }} />,
                     endAdornment: (
                       <IconButton
                         onClick={() => togglePasswordVisibility('new')}
                         edge="end"
+                        sx={{ color: '#008EFF' }}
                       >
                         {showPasswords.new ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
-                    )
+                    ),
+                    sx: {
+                      borderRadius: '12px',
+                      backgroundColor: 'rgba(0, 142, 255, 0.02)'
+                    }
                   },
                   inputLabel: {
                     sx: { fontFamily: 'Share Tech, monospace' }
@@ -783,6 +1208,9 @@ const ProfileManagement: React.FC = observer(() => {
                 sx={{
                   '& .MuiInputBase-input': {
                     fontFamily: 'Share Tech, monospace'
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px'
                   }
                 }}
               />
@@ -795,16 +1223,23 @@ const ProfileManagement: React.FC = observer(() => {
                 required
                 error={!!passwordErrors.match}
                 helperText={passwordErrors.match}
+                variant="outlined"
                 slotProps={{
                   input: {
+                    startAdornment: <VpnKey sx={{ mr: 1, color: 'action.active' }} />,
                     endAdornment: (
                       <IconButton
                         onClick={() => togglePasswordVisibility('confirm')}
                         edge="end"
+                        sx={{ color: '#008EFF' }}
                       >
                         {showPasswords.confirm ? <VisibilityOff /> : <Visibility />}
                       </IconButton>
-                    )
+                    ),
+                    sx: {
+                      borderRadius: '12px',
+                      backgroundColor: 'rgba(0, 142, 255, 0.02)'
+                    }
                   },
                   inputLabel: {
                     sx: { fontFamily: 'Share Tech, monospace' }
@@ -816,16 +1251,28 @@ const ProfileManagement: React.FC = observer(() => {
                 sx={{
                   '& .MuiInputBase-input': {
                     fontFamily: 'Share Tech, monospace'
+                  },
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: '12px'
                   }
                 }}
               />
-            </Box>
+            </Stack>
           </DialogContent>
-          <DialogActions sx={{ p: 3 }}>
+          <DialogActions sx={{ p: 3, gap: 2 }}>
             <Button 
               onClick={handleCancelPassword}
               disabled={profileStore.isChangingPassword}
-              sx={{ fontFamily: 'Share Tech, monospace' }}
+              variant="outlined"
+              sx={{ 
+                fontFamily: 'Share Tech, monospace',
+                borderRadius: '12px',
+                px: 3,
+                py: 1.5,
+                textTransform: 'none',
+                color: '#6B7280',
+                borderColor: '#D1D5DB'
+              }}
             >
               Annuler
             </Button>
@@ -833,13 +1280,23 @@ const ProfileManagement: React.FC = observer(() => {
               type="submit"
               variant="contained"
               disabled={profileStore.isChangingPassword || !isPasswordFormValid()}
+              startIcon={profileStore.isChangingPassword ? <CircularProgress size={16} color="inherit" /> : <Save />}
               sx={{ 
                 bgcolor: '#008EFF',
-                '&:hover': { bgcolor: '#0066cc' },
-                fontFamily: 'Share Tech, monospace'
+                '&:hover': { 
+                  bgcolor: '#0066cc',
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 8px 25px rgba(0, 142, 255, 0.3)'
+                },
+                fontFamily: 'Share Tech, monospace',
+                borderRadius: '12px',
+                px: 3,
+                py: 1.5,
+                transition: 'all 0.2s ease-in-out',
+                textTransform: 'none'
               }}
             >
-              {profileStore.isChangingPassword ? <CircularProgress size={20} /> : 'Changer'}
+              {profileStore.isChangingPassword ? 'Modification...' : 'Changer le mot de passe'}
             </Button>
           </DialogActions>
         </form>
@@ -855,10 +1312,17 @@ const ProfileManagement: React.FC = observer(() => {
         <Alert 
           onClose={() => setSuccessMessage('')} 
           severity="success"
+          variant="filled"
           sx={{ 
             width: '100%',
+            borderRadius: '12px',
+            boxShadow: '0 8px 32px rgba(16, 185, 129, 0.3)',
             '& .MuiAlert-message': {
-              fontFamily: 'Share Tech, monospace'
+              fontFamily: 'Share Tech, monospace',
+              fontWeight: 500
+            },
+            '& .MuiAlert-icon': {
+              fontSize: '1.5rem'
             }
           }}
         >
