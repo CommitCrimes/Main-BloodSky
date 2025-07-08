@@ -12,6 +12,7 @@ import { hospitalAdminRouter } from './hospital-admin.routes';
 import { donationCenterAdminRouter } from './donation-center-admin.routes';
 import { profileRouter } from './profile.routes';
 import { swaggerUI } from '@hono/swagger-ui';
+import { userSwagger } from '@/swagger/user-swagger';
 
 export const createRouter = () => {
   const api = new Hono();
@@ -655,7 +656,8 @@ export const createRouter = () => {
             '403': { description: 'Super admin access required' }
           }
         }
-      }
+      },
+      ...userSwagger.paths
     }
   }));
 
