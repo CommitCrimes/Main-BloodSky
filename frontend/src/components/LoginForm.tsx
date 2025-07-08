@@ -1,12 +1,9 @@
 import { useState } from 'react';
 import { observer } from 'mobx-react-lite';
-import { Box, TextField, Button, Alert, CircularProgress } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
 import { useAuth } from '@/hooks/useAuth';
 
 const LoginForm = observer(() => {
   const auth = useAuth();
-  const theme = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -16,92 +13,75 @@ const LoginForm = observer(() => {
   };
 
   return (
-    <Box>
-      {auth.error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {auth.error}
-        </Alert>
-      )}
-      
-      <Box component="form" onSubmit={handleSubmit}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-          <TextField
-            id="email"
-            type="email"
-            label="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            fullWidth
-            placeholder="your-email@example.com"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '&:hover fieldset': {
-                  borderColor: theme.palette.primary.main,
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: theme.palette.primary.main,
-                },
-              },
-              '& .MuiInputLabel-root.Mui-focused': {
-                color: theme.palette.primary.main,
-              },
-            }}
-          />
-          
-          <TextField
-            id="password"
-            type="password"
-            label="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            fullWidth
-            placeholder="Your password"
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                '&:hover fieldset': {
-                  borderColor: theme.palette.primary.main,
-                },
-                '&.Mui-focused fieldset': {
-                  borderColor: theme.palette.primary.main,
-                },
-              },
-              '& .MuiInputLabel-root.Mui-focused': {
-                color: theme.palette.primary.main,
-              },
-            }}
-          />
-        </Box>
-
-        <Button
-          type="submit"
-          disabled={auth.isLoading}
-          fullWidth
-          variant="contained"
-          sx={{
-            mt: 3,
-            py: 1.5,
-            backgroundColor: theme.palette.primary.main,
-            '&:hover': {
-              backgroundColor: theme.palette.primary.dark || '#0066CC',
-            },
-            '&:disabled': {
-              backgroundColor: '#cccccc',
-            },
-          }}
-        >
-          {auth.isLoading ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CircularProgress size={20} color="inherit" />
-              Logging in...
-            </Box>
-          ) : (
-            'Sign In'
+    <div className="w-full max-w-md animate-slide-up">
+      <div className="backdrop-blur-sm bg-card/80 glow-border rounded-2xl shadow-lg">
+        <div className="text-center space-y-4 p-4 pb-4">
+          <img src="/src/assets/logo.png" alt="BloodSky Logo" className="mx-auto w-20 h-20 mb-1" />
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-red-600 to-orange-400 bg-clip-text text-transparent font-['Iceland',cursive]">
+            BloodSky
+          </h1>
+          <h2 className="text-lg text-muted-foreground font-['Share_Tech',monospace]">
+            Connectez-vous à votre compte
+          </h2>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-6 px-8 pb-8">
+          {auth.error && (
+            <div className="mb-2 text-red-500 bg-red-100 border border-red-300 rounded px-3 py-2 text-sm">
+              {auth.error}
+            </div>
           )}
-        </Button>
-      </Box>
-    </Box>
+          <div className="space-y-2">
+            <label htmlFor="email" className="text-sm font-medium text-foreground">
+              Email
+            </label>
+            <input
+              id="email"
+              type="email"
+              placeholder="votre-email@exemple.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="pl-3 py-2 w-full rounded-md bg-background/50 text-foreground placeholder:text-muted-foreground glow-border focus:outline-none focus:ring-2 focus:ring-primary transition"
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="password" className="text-sm font-medium text-foreground">
+              Mot de passe
+            </label>
+            <input
+              id="password"
+              type="password"
+              placeholder="Votre mot de passe"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="pl-3 py-2 w-full rounded-md bg-background/50 text-foreground placeholder:text-muted-foreground glow-border focus:outline-none focus:ring-2 focus:ring-primary transition"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={auth.isLoading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-md transition-all duration-300 hover:shadow-lg hover:shadow-blue-400/25 disabled:bg-gray-400"
+          >
+            {auth.isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                </svg>
+                Connexion...
+              </span>
+            ) : (
+              'Se connecter'
+            )}
+          </button>
+        </form>
+      </div>
+      <div className="mt-12 text-center text-xs text-muted-foreground">
+        <p>© 2024 BloodSky • Accès réservé</p>
+        <p className="mt-1">Plateforme de gestion du sang</p>
+      </div>
+    </div>
   );
 });
 

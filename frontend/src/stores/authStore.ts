@@ -116,6 +116,11 @@ class AuthStore {
     this.error = message;
   }
 
+  setUser(user: UserWithRole) {
+    this.user = user;
+    localStorage.setItem('user', JSON.stringify(user));
+  }
+
   async register(userData: RegisterRequest) {
     this.isLoading = true;
     this.error = null;
