@@ -211,25 +211,33 @@ h1 {
     background: var(--cream-white);
 }
 
-.section4-title {
-    text-align: center;
-    font-size: 3rem;
-    font-family: 'Iceland', sans-serif;
-    color: var(--dark-red);
-    margin-bottom: 3rem;
-}
-
 .section4-content-blur {
+    position: relative;
     background: var(--color-blue);
-    border-radius: 2.5rem;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1.5px solid rgba(255,255,255,0.25);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(30px);
     padding: 3rem 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
-    margin-bottom: 2rem;
+    width: 100vw;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    box-shadow: 0 0 60px 30px var(--color-blue);
+    overflow: hidden;
+    border-radius: 0;
+}
+.section4-content-blur::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    box-shadow: 0 0 80px 40px var(--color-blue);
+    z-index: 0;
+}
+.section4-content-blur > * {
+    position: relative;
+    z-index: 1;
 }
 
 .section4-features {
@@ -240,7 +248,7 @@ h1 {
 }
 
 .section4-feature-card {
-    background: rgba(255,255,255,0.85);
+    background: rgba(155,155,155,0.85);
     border-radius: 1.5rem;
     box-shadow: 0 4px 24px rgba(178,45,45,0.13), 0 1.5px 8px rgba(0,0,0,0.07);
     padding: 2.5rem 2rem 1.5rem 2rem;
@@ -263,19 +271,27 @@ h1 {
 }
 
 .section4-feature-text {
-    font-size: 1.25rem;
-    color: var(--dark-red);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3em;
+    color: var(--black);
     text-align: center;
-    font-family: 'Pathway Extreme', sans-serif;
-    font-weight: 600;
+    font-family: 'Share Tech', sans-serif;
+    font-weight: 500;
 }
-@media (max-width: 900px) {
-    .section4-features {
-        flex-direction: column;
-        gap: 2rem;
-        align-items: center;
-    }
-    .section4-content-blur {
-        padding: 2rem 0.5rem;
-    }
+
+.section4-features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2.5rem 2.5rem;
+    max-width: 1100px;
+    justify-items: center; /* <-- centre les colonnes */
 }
+
+.section4-feature-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
