@@ -14,6 +14,7 @@ import { profileRouter } from './profile.routes';
 import { swaggerUI } from '@hono/swagger-ui';
 import { bloodSwagger } from '@/swagger/blood-swagger';
 import { userSwagger } from '@/swagger/user-swagger';
+import { hospitalSwagger } from '@/swagger/hospital-swagger';
 
 export const createRouter = () => {
   const api = new Hono();
@@ -659,7 +660,8 @@ export const createRouter = () => {
         }
       },
       ...bloodSwagger.paths,
-      ...userSwagger.paths
+      ...userSwagger.paths,
+      ...hospitalSwagger.paths
     }
   }));
 
