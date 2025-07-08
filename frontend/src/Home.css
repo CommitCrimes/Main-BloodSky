@@ -1,4 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Iceland&family=Share+Tech&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pathway+Extreme:ital,opsz,wght@0,8..144,100..900;1,8..144,100..900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -14,6 +15,14 @@
         --light-red : #CE1313;
         --dark-red : #B22D2D;
     }
+}
+
+h1 {
+    text-align: center;
+    font-size: 72px;
+    font-family: 'Iceland', sans-serif;
+    margin-bottom: 2.5rem;
+    color: var(--dark-red);
 }
 
 .section1 {
@@ -96,15 +105,7 @@
 }
 
 .section2-custom {
-    padding: 4rem 2rem;
-}
-
-.section2-title {
-    text-align: center;
-    font-size: 3rem;
-    font-family: 'Iceland', sans-serif;
-    margin-bottom: 3rem;
-    color: var(--dark-red);
+    padding: 1rem 2rem;
 }
 
 .section2-content {
@@ -112,7 +113,7 @@
     flex-direction: row;
     justify-content: center;
     align-items: flex-start;
-    gap: 4rem;
+    gap: 0rem;
     max-width: 1200px;
     margin: 0 auto;
 }
@@ -121,7 +122,6 @@
     flex: 1 1 0;
     display: flex;
     flex-direction: column;
-    align-items: flex-start;
 }
 
 .section2-left {
@@ -129,42 +129,41 @@
 }
 
 .section2-right {
-    align-items: center;
     justify-content: flex-start;
+    align-items: flex-end;
+
+}
+
+.section2-title {
+    line-height: 1.05;
 }
 
 .section2-text-top {
-    font-size: 1.5rem;
+    font-size: 27px;
     margin-bottom: 2rem;
     color: var(--grey);
+    text-align: left;
+    font-family: "Pathway Extreme", sans-serif;
+    line-height: 1.4;
 }
 
+
 .section2-img-left {
-    width: 220px;
-    margin-bottom: 1.5rem;
-    border-radius: 1.5rem;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    width: 320px;
+    margin-bottom: 1rem;
+    margin-left: 20%;
 }
 
 .section2-text-bottom {
-    font-size: 1.2rem;
-    color: var(--black);
+    font-size: 27px;
+    color: var(--grey);
     margin-top: 1rem;
+    text-align: right;
+    font-family: "Pathway Extreme", sans-serif;
+    line-height: 1.4;
 }
 
 .section2-img-right {
-    width: 320px;
-    max-width: 100%;
-    border-radius: 2rem;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.10);
-}
+    max-width: 77%;
 
-@media (max-width: 900px) {
-    .section2-content {
-        flex-direction: column;
-        gap: 2rem;
-    }
-    .section2-left, .section2-right {
-        align-items: center;
-    }
 }

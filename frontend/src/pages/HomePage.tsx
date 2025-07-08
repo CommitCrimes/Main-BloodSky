@@ -19,21 +19,24 @@ const Section1 = () => (
 );
 const Section2 = () => (
   <section className="section2 section2-custom">
-    <h1 className="section2-title">L’avenir de la logistique médicale,
-        c’est maintenant. </h1>
-    <div className="section2-content">
+      <h1 className="section2-title">L’avenir de la logistique médicale,<br/>
+          c’est maintenant. </h1>
+      <div className="section2-content">
       {/* Colonne gauche */}
       <div className="section2-left">
-        <div className="section2-text-top">BloodSky révolutionne la livraison médicale en transportant des poches de sang par drone, rapidement et en toute sécurité.
-        </div>
-        <img src={bloodHomeImg} alt="Blood Home" className="section2-img-left" />
+          <div className="section2-text-top">BloodSky révolutionne la livraison médicale <br/>
+              en transportant des poches de sang par drone,
+              rapidement et en toute sécurité.
+          </div>
+          <img src={bloodHomeImg} alt="Blood Home" className="section2-img-left" />
       </div>
       {/* Colonne droite */}
         <div className="section2-right">
             <img src={medicalHomeImg} alt="Medical Home" className="section2-img-right"/>
-            <div className="section2-text-bottom">Destinée aux centres de santé et aux maisons de sang, notre
-                technologie sauve des vies en réduisant le temps d’attente et en garantissant la fraîcheur des
-                transfusions.
+            <div className="section2-text-bottom">Destinée aux centres de santé et aux <br/>
+                maisons de sang, notre technologie sauve <br/>
+                des vies en réduisant le temps d’attente et <br/> en garantissant la fraîcheur
+                des transfusions.
             </div>
 
         </div>
