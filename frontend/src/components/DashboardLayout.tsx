@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect, type ReactNode } from 'react';
 import {
   Typography,
@@ -18,6 +19,7 @@ import {
   IconButton,
   AppBar,
   Toolbar,
+  CircularProgress,
 } from '@mui/material';
 import {
   NotificationsOutlined,
@@ -30,6 +32,7 @@ import {
   ContactSupportOutlined,
   GroupOutlined,
   MenuOutlined,
+  NotificationsNone,
 } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -39,6 +42,9 @@ import logoImage from '@/assets/logo.png';
 import theme from '@/theme/theme';
 import { useAuth } from '@/hooks/useAuth';
 import authStore from '@/stores/authStore';
+import { NotificationStore } from '@/stores/NotificationStore';
+import NotificationManagement from './NotificationManagement';
+import { dashboardApi } from '@/api/dashboard';
 
 // Fix for default markers in react-leaflet
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
@@ -80,12 +86,58 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
     return localStorage.getItem('bloodsky-active-view') || 'dashboard';
   });
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notificationStore] = useState(() => new NotificationStore());
   
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
+
+  const [deliveryStats, setDeliveryStats] = useState<any[]>([]);
+  const [statusStats, setStatusStats] = useState<any[]>([]);
+  const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('bloodsky-active-view', activeView);
   }, [activeView]);
+
+  useEffect(() => {
+    const loadDashboardData = async () => {
+      setIsLoadingStats(true);
+      try {
+        await notificationStore.fetchNotifications(5);
+        setRecentNotifications(notificationStore.notifications.slice(0, 5));
+
+        try {
+          const stats = await dashboardApi.getDeliveryStats();
+          setDeliveryStats(stats.deliveryData);
+          setStatusStats(stats.statusStats);
+        } catch (statsError) {
+          console.error('Erreur lors du chargement des statistiques:', statsError);
+          setDeliveryStats([
+            { name: 'Lun', livraisons: 0, echecs: 0 },
+            { name: 'Mar', livraisons: 0, echecs: 0 },
+            { name: 'Mer', livraisons: 0, echecs: 0 },
+            { name: 'Jeu', livraisons: 0, echecs: 0 },
+            { name: 'Ven', livraisons: 0, echecs: 0 },
+            { name: 'Sam', livraisons: 0, echecs: 0 },
+            { name: 'Dim', livraisons: 0, echecs: 0 },
+          ]);
+          setStatusStats([]);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des données du dashboard:', error);
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
+
+    loadDashboardData();
+
+    const interval = setInterval(() => {
+      notificationStore.refreshUnreadCount();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [notificationStore]);
 
   // Détermine le libellé selon le type d'utilisateur
   const getDeliveryLabel = () => {
@@ -97,38 +149,62 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
 
   const defaultMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <DashboardOutlined /> },
+    { id: 'notifications', label: 'Notifications', icon: <NotificationsOutlined />, hasNotification: notificationStore.unreadCount > 0 },
     { id: 'historique', label: 'Historique', icon: <HistoryOutlined /> },
     { id: 'profil', label: 'Mon profil', icon: <AccountCircleOutlined /> },
-    { id: 'notifications', label: 'Notifications', icon: <NotificationsOutlined />, hasNotification: true },
-    { id: 'livraison', label: getDeliveryLabel(), icon: <LocalShippingOutlined /> },
+    // Onglet livraison uniquement pour les hôpitaux
+    ...(!auth.user?.role?.centerId ? [{ id: 'livraison', label: getDeliveryLabel(), icon: <LocalShippingOutlined /> }] : []),
     { id: 'contact', label: 'Contact', icon: <ContactSupportOutlined /> },
     ...(auth.user?.role?.admin ? [{ id: 'users', label: 'Gestion des utilisateurs', icon: <GroupOutlined /> }] : []),
   ];
 
   const menuItems = config.menuItems || defaultMenuItems;
 
-  // Données par défaut pour les graphiques
-  const deliveryData = [
-    { name: 'Lun', livraisons: 4, echecs: 1 },
-    { name: 'Mar', livraisons: 6, echecs: 0 },
-    { name: 'Mer', livraisons: 8, echecs: 2 },
-    { name: 'Jeu', livraisons: 5, echecs: 1 },
-    { name: 'Ven', livraisons: 7, echecs: 0 },
-    { name: 'Sam', livraisons: 3, echecs: 1 },
-    { name: 'Dim', livraisons: 2, echecs: 0 },
-  ];
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    
+    if (diffInHours < 1) {
+      const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+      return diffInMinutes <= 1 ? 'À l\'instant' : `${diffInMinutes}min`;
+    } else if (diffInHours < 24) {
+      return `${diffInHours}h`;
+    } else {
+      const diffInDays = Math.floor(diffInHours / 24);
+      return `${diffInDays}j`;
+    }
+  };
 
-  const statusData = [
-    { name: 'Réussies', value: 45, color: '#10b981' },
-    { name: 'En attente', value: 30, color: '#f59e0b' },
-    { name: 'Échecs', value: 8, color: '#ef4444' },
-  ];
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'urgent':
+        return '#ef4444';
+      case 'high':
+        return '#f59e0b';
+      case 'medium':
+        return '#3b82f6';
+      case 'low':
+        return '#6b7280';
+      default:
+        return '#6b7280';
+    }
+  };
 
-  const recentNotifications = [
-    { id: 1, message: 'Livraison urgente O- programmée', time: '10min', priority: 'high' },
-    { id: 2, message: 'Stock A+ faible', time: '1h', priority: 'medium' },
-    { id: 3, message: 'Nouvelle livraison confirmée', time: '2h', priority: 'low' },
-  ];
+  const getPriorityLabel = (priority: string) => {
+    switch (priority) {
+      case 'urgent':
+        return 'Urgent';
+      case 'high':
+        return 'Élevée';
+      case 'medium':
+        return 'Moyenne';
+      case 'low':
+        return 'Faible';
+      default:
+        return 'Inconnu';
+    }
+  };
 
   const handleMenuClick = (itemId: string) => {
     if (itemId === 'deconnexion') {
@@ -220,21 +296,45 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                 <HistoryOutlined sx={{ color: '#008EFF' }} />
               </Box>
               <Box sx={{ height: { xs: '150px', md: '200px' }, width: '100%' }}>
-                <ResponsiveContainer width="110%" height="100%" style={{ marginLeft: '-45px' }}>
-                  <LineChart data={deliveryData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Line 
-                      type="monotone" 
-                      dataKey="livraisons" 
-                      stroke="#008EFF" 
-                      strokeWidth={3}
-                      name="Livraisons"
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
+                {isLoadingStats ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <CircularProgress />
+                  </Box>
+                ) : deliveryStats.length === 0 || deliveryStats.every(d => d.livraisons === 0) ? (
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    height: '100%',
+                    textAlign: 'center'
+                  }}>
+                    <HistoryOutlined sx={{ fontSize: 48, color: 'rgba(92, 127, 155, 0.5)', mb: 1 }} />
+                    <Typography sx={{ 
+                      fontFamily: 'Share Tech, monospace', 
+                      fontSize: '0.9rem', 
+                      color: 'rgba(92, 127, 155, 0.7)'
+                    }}>
+                      Aucune livraison cette semaine
+                    </Typography>
+                  </Box>
+                ) : (
+                  <ResponsiveContainer width="110%" height="100%" style={{ marginLeft: '-45px' }}>
+                    <LineChart data={deliveryStats}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip />
+                      <Line 
+                        type="monotone" 
+                        dataKey="livraisons" 
+                        stroke="#008EFF" 
+                        strokeWidth={3}
+                        name="Livraisons"
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                )}
               </Box>
             </Paper>
           </Box>
@@ -334,35 +434,59 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                 </Typography>
               </Box>
               <Box sx={{ height: { xs: '120px', md: '160px' }, width: '100%'}}>
-                <ResponsiveContainer width="115%" height="100%" style={{ marginLeft: '-45px' }}>
-                  <BarChart data={statusData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(92, 127, 155, 0.2)" />
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: '#5C7F9B', fontFamily: 'Share Tech, monospace', fontSize: 12 }}
-                    />
-                    <YAxis 
-                      axisLine={false}
-                      tickLine={false}
-                      tick={{ fill: '#5C7F9B', fontFamily: 'Share Tech, monospace', fontSize: 12 }}
-                    />
-                    <Tooltip 
-                      contentStyle={{
-                        backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                        border: '1px solid rgba(92, 127, 155, 0.2)',
-                        borderRadius: '8px',
-                        fontFamily: 'Share Tech, monospace'
-                      }}
-                    />
-                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                      {statusData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                {isLoadingStats ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <CircularProgress />
+                  </Box>
+                ) : statusStats.length === 0 ? (
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    height: '100%',
+                    textAlign: 'center'
+                  }}>
+                    <LocalShippingOutlined sx={{ fontSize: 48, color: 'rgba(92, 127, 155, 0.5)', mb: 1 }} />
+                    <Typography sx={{ 
+                      fontFamily: 'Share Tech, monospace', 
+                      fontSize: '0.9rem', 
+                      color: 'rgba(92, 127, 155, 0.7)'
+                    }}>
+                      Aucune livraison enregistrée
+                    </Typography>
+                  </Box>
+                ) : (
+                  <ResponsiveContainer width="115%" height="100%" style={{ marginLeft: '-45px' }}>
+                    <BarChart data={statusStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(92, 127, 155, 0.2)" />
+                      <XAxis 
+                        dataKey="name" 
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#5C7F9B', fontFamily: 'Share Tech, monospace', fontSize: 12 }}
+                      />
+                      <YAxis 
+                        axisLine={false}
+                        tickLine={false}
+                        tick={{ fill: '#5C7F9B', fontFamily: 'Share Tech, monospace', fontSize: 12 }}
+                      />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                          border: '1px solid rgba(92, 127, 155, 0.2)',
+                          borderRadius: '8px',
+                          fontFamily: 'Share Tech, monospace'
+                        }}
+                      />
+                      <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                        {statusStats.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </Box>
               <Box sx={{ 
                 display: 'flex', 
@@ -372,7 +496,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                 mt: { xs: 1, md: 2 },
                 px: { xs: 1, md: 0 }
               }}>
-                {statusData.map((entry) => (
+                {statusStats.map((entry) => (
                   <Chip
                     key={entry.name}
                     label={`${entry.name}: ${entry.value}`}
@@ -495,50 +619,89 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                   borderRadius: '2px',
                 },
               }}>
-                {recentNotifications.map((notif) => (
-                  <ListItem 
-                    key={notif.id}
-                    sx={{ 
-                      borderLeft: `4px solid ${
-                        notif.priority === 'high' ? '#ef4444' :
-                        notif.priority === 'medium' ? '#f59e0b' : '#008EFF'
-                      }`,
-                      backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                      borderRadius: 1,
-                      mb: 1,
-                      py: 1
-                    }}
-                  >
-                    <ListItemText
-                      primary={
-                        <Typography sx={{ 
-                          fontFamily: 'Share Tech, monospace', 
-                          fontSize: { xs: '0.75rem', md: '0.9rem' }, 
-                          color: '#5C7F9B',
-                          lineHeight: 1.2
-                        }}>
-                          {notif.message}
-                        </Typography>
-                      }
-                      secondary={
-                        <Typography sx={{ 
-                          fontFamily: 'Share Tech, monospace', 
-                          fontSize: { xs: '0.6rem', md: '0.7rem' }, 
-                          color: '#5C7F9B', 
-                          opacity: 0.7 
-                        }}>
-                          Il y a {notif.time}
-                        </Typography>
-                      }
-                    />
-                    <Chip 
-                      label={notif.priority}
-                      size="small"
-                      color={notif.priority === 'high' ? 'error' : notif.priority === 'medium' ? 'warning' : 'info'}
-                      sx={{ fontFamily: 'Share Tech, monospace' }}
-                    />
-                  </ListItem>
-                ))}
+                {isLoadingStats ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <CircularProgress />
+                  </Box>
+                ) : recentNotifications.length === 0 ? (
+                  <Box sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    justifyContent: 'center', 
+                    alignItems: 'center', 
+                    height: '100%',
+                    textAlign: 'center'
+                  }}>
+                    <NotificationsNone sx={{ fontSize: 48, color: 'rgba(92, 127, 155, 0.5)', mb: 1 }} />
+                    <Typography sx={{ 
+                      fontFamily: 'Share Tech, monospace', 
+                      fontSize: '0.9rem', 
+                      color: 'rgba(92, 127, 155, 0.7)'
+                    }}>
+                      Aucune notification récente
+                    </Typography>
+                  </Box>
+                ) : (
+                  recentNotifications.map((notif) => (
+                    <ListItem 
+                      key={notif.notificationId}
+                      sx={{ 
+                        borderLeft: `4px solid ${getPriorityColor(notif.priority)}`,
+                        backgroundColor: notif.isRead ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.4)',
+                        borderRadius: 1,
+                        mb: 1,
+                        py: 1
+                      }}
+                    >
+                      <ListItemText
+                        primary={
+                          <Typography sx={{ 
+                            fontFamily: 'Share Tech, monospace', 
+                            fontSize: { xs: '0.75rem', md: '0.9rem' }, 
+                            color: '#5C7F9B',
+                            lineHeight: 1.2,
+                            fontWeight: notif.isRead ? 'normal' : 'bold'
+                          }}>
+                            {notif.title}
+                          </Typography>
+                        }
+                        secondary={
+                          <Typography sx={{ 
+                            fontFamily: 'Share Tech, monospace', 
+                            fontSize: { xs: '0.6rem', md: '0.7rem' }, 
+                            color: '#5C7F9B', 
+                            opacity: 0.7 
+                          }}>
+                            {formatTimeAgo(notif.createdAt)}
+                          </Typography>
+                        }
+                      />
+                      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+                        <Chip 
+                          label={getPriorityLabel(notif.priority)}
+                          size="small"
+                          sx={{ 
+                            fontFamily: 'Share Tech, monospace', 
+                            fontSize: '0.6rem',
+                            backgroundColor: getPriorityColor(notif.priority),
+                            color: 'white',
+                            height: 18
+                          }}
+                        />
+                        {!notif.isRead && (
+                          <Box
+                            sx={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: '50%',
+                              backgroundColor: '#008EFF',
+                            }}
+                          />
+                        )}
+                      </Box>
+                    </ListItem>
+                  ))
+                )}
               </List>
             </Paper>
           </Box>
@@ -740,6 +903,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
           ) : activeView === 'profil' && config.profileManagementComponent ? (
             <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
               {config.profileManagementComponent}
+            </Box>
+          ) : activeView === 'notifications' ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              <NotificationManagement notificationStore={notificationStore} />
             </Box>
           ) : activeView === 'historique' && config.historyManagementComponent ? (
             <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>

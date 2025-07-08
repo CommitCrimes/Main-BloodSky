@@ -3,6 +3,7 @@ import { bloods } from "../schemas/blood";
 import { deliveries } from "../schemas/delivery";
 import { db } from "../utils/db";
 import { eq, isNull, count, sql, inArray } from "drizzle-orm";
+import { NotificationService } from "../services/notification.service";
 
 export const bloodRouter = new Hono();
 
@@ -161,6 +162,20 @@ bloodRouter.post("/order", async (c) => {
       .set({ deliveryId })
       .where(inArray(bloods.bloodId, bloodIds));
 
+    // Envoyer notification au centre de donation
+    try {
+      await NotificationService.notifyDeliveryRequest(
+        hospitalId,
+        centerId,
+        deliveryId,
+        bloodType,
+        quantity,
+        isUrgent
+      );
+    } catch (notificationError) {
+      console.error('Erreur lors de l\'envoi de la notification:', notificationError);
+    }
+
     return c.json({
       success: true,
       deliveryId,
@@ -198,6 +213,17 @@ bloodRouter.post("/cancel-order/:deliveryId", async (c) => {
         success: false, 
         message: "Seules les commandes en attente peuvent être annulées" 
       }, 400);
+    }
+
+    try {
+      await NotificationService.notifyDeliveryStatusChange(
+        deliveryId,
+        'cancelled',
+        delivery[0].hospitalId!,
+        delivery[0].centerId!
+      );
+    } catch (notificationError) {
+      console.error('Erreur lors de l\'envoi de la notification d\'annulation:', notificationError);
     }
 
     // Remettre les poches de sang dispo

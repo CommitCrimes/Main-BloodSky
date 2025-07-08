@@ -15,7 +15,7 @@ const DonationCenterDashboard = () => {
     centerImage: pocheSangImage,
     centerImageAlt: 'Poche de Sang Dashboard',
     position: [48.8566, 2.3522] as [number, number],
-    chartTitle: 'Collections',
+    chartTitle: 'Livraisons',
     userManagementComponent: auth.user?.role?.admin && auth.user?.role?.centerId ? (
       <DonationCenterUserManagement donationCenterId={auth.user.role.centerId} />
     ) : undefined,

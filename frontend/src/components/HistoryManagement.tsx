@@ -53,8 +53,6 @@ import {
 import { useAuth } from '../hooks/useAuth';
 import type { 
   DeliveryHistory, 
-  DonationCenterHistory, 
-  HospitalHistory,
   HistoryFilters, 
   HistorySortConfig, 
   HistorySearchConfig 
@@ -125,121 +123,6 @@ const HistoryManagement: React.FC = observer(() => {
   const userType = auth.user?.role?.centerId ? 'donation_center' : 'hospital';
   const userEntityId = auth.user?.role?.centerId || auth.user?.role?.hospitalId;
 
-  const getMockData = useCallback((): DeliveryHistory[] => {
-    const baseDate = new Date('2024-01-01');
-    
-    if (userType === 'donation_center') {
-      const donationCenterHistory: DonationCenterHistory[] = [
-        {
-          id: '1',
-          deliveryId: 1,
-          type: 'delivery',
-          requestDate: new Date(baseDate.getTime() + 15 * 24 * 60 * 60 * 1000),
-          deliveryDate: new Date(baseDate.getTime() + 16 * 24 * 60 * 60 * 1000),
-          validationDate: new Date(baseDate.getTime() + 16 * 24 * 60 * 60 * 1000),
-          personIdentity: 'Dr. Martin Dubois',
-          deliveryStatus: 'delivered',
-          isUrgent: true,
-          bloodType: 'O-',
-          droneId: 1,
-          droneName: 'Drone Alpha',
-          destinationHospital: {
-            hospitalId: 1,
-            hospitalName: 'CHU de Nantes - Hôtel-Dieu',
-            hospitalCity: 'Nantes',
-            hospitalAddress: '1 Place Alexis-Ricordeau',
-            latitude: 47.2173,
-            longitude: -1.5534
-          },
-          departureCoordinates: {
-            latitude: 47.2383569,
-            longitude: -1.5603531
-          }
-        },
-        {
-          id: '2',
-          deliveryId: 2,
-          type: 'delivery',
-          requestDate: new Date(baseDate.getTime() + 14 * 24 * 60 * 60 * 1000),
-          deliveryDate: null,
-          validationDate: null,
-          personIdentity: 'Dr. Sophie Moreau',
-          deliveryStatus: 'in_transit',
-          isUrgent: false,
-          bloodType: 'A+',
-          droneId: 2,
-          droneName: 'Drone Beta',
-          destinationHospital: {
-            hospitalId: 2,
-            hospitalName: 'CHU de Nantes - Laënnec',
-            hospitalCity: 'Nantes',
-            hospitalAddress: 'Boulevard Jacques-Monod',
-            latitude: 47.2751,
-            longitude: -1.5473
-          },
-          departureCoordinates: {
-            latitude: 47.2383569,
-            longitude: -1.5603531
-          }
-        }
-      ];
-      return donationCenterHistory;
-    } else {
-      const hospitalHistory: HospitalHistory[] = [
-        {
-          id: '3',
-          deliveryId: 3,
-          type: 'order',
-          requestDate: new Date(baseDate.getTime() + 13 * 24 * 60 * 60 * 1000),
-          deliveryDate: null,
-          validationDate: null,
-          personIdentity: 'Dr. Antoine Leroy',
-          deliveryStatus: 'pending',
-          isUrgent: true,
-          bloodType: 'B-',
-          droneId: 3,
-          droneName: 'Drone Gamma',
-          sourceDonationCenter: {
-            centerId: 1,
-            centerCity: 'Nantes',
-            centerAddress: 'Centre de Transfusion Sanguine de Nantes',
-            latitude: 47.2383569,
-            longitude: -1.5603531
-          },
-          arrivalCoordinates: {
-            latitude: 47.2751,
-            longitude: -1.5473
-          }
-        },
-        {
-          id: '4',
-          deliveryId: 4,
-          type: 'order',
-          requestDate: new Date(baseDate.getTime() + 12 * 24 * 60 * 60 * 1000),
-          deliveryDate: new Date(baseDate.getTime() + 13 * 24 * 60 * 60 * 1000),
-          validationDate: new Date(baseDate.getTime() + 13 * 24 * 60 * 60 * 1000),
-          personIdentity: 'Dr. Claire Durand',
-          deliveryStatus: 'delivered',
-          isUrgent: false,
-          bloodType: 'AB+',
-          droneId: 1,
-          droneName: 'Drone Alpha',
-          sourceDonationCenter: {
-            centerId: 1,
-            centerCity: 'Nantes',
-            centerAddress: 'Centre de Transfusion Sanguine de Nantes',
-            latitude: 47.2383569,
-            longitude: -1.5603531
-          },
-          arrivalCoordinates: {
-            latitude: 47.2751,
-            longitude: -1.5473
-          }
-        }
-      ];
-      return hospitalHistory;
-    }
-  }, [userType]);
 
   const reloadHistoryData = useCallback(async () => {
     if (!userEntityId) return;
@@ -258,11 +141,11 @@ const HistoryManagement: React.FC = observer(() => {
     } catch (err) {
       console.error('Erreur lors du chargement de l\'historique:', err);
       setError('Impossible de charger l\'historique');
-      setHistoryData(getMockData());
+      setHistoryData([]);
     } finally {
       setIsLoading(false);
     }
-  }, [userEntityId, userType, getMockData]);
+  }, [userEntityId, userType]);
 
   useEffect(() => {
     reloadHistoryData();
