@@ -527,7 +527,7 @@ export const userSwagger: Record<string, any> = {
               type: "email",
             },
             example: "user1@example.com",
-          }
+          },
         ],
         responses: {
           "200": {
@@ -778,7 +778,152 @@ export const userSwagger: Record<string, any> = {
       },
     },
     "users/donation-center/{userId}": {
-
-    }
+      put: {
+        summary: "Update user then user in donation center",
+        tags: ["User"],
+        parameters: [
+          {
+            name: "userId",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+            },
+            example: 1,
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              example: {
+                user: {
+                  userId: 1,
+                  email: "donation-centerUpdated@bloodsky.fr",
+                  password: "nouveau mot de passe haché",
+                  userName: "DONATION",
+                  userFirstname: "CENTER",
+                  telNumber: null,
+                  userStatus: "active",
+                },
+                centerId: 1,
+                admin: true,
+                info: "nouvelles infos du user donation",
+              },
+            },
+          },
+        },
+      },
+    },
+    "users/hospital/{userId}": {
+      put: {
+        summary: "Update user then user in hospital",
+        tags: ["User"],
+        parameters: [
+          {
+            name: "userId",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+            },
+            example: 2,
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              example: {
+                user: {
+                  userId: 2,
+                  email: "hospitalUpdated@bloodsky.fr",
+                  password: "nouveau mot de passe haché",
+                  userName: "HOSPI",
+                  userFirstname: "TAL",
+                  telNumber: null,
+                  userStatus: "active",
+                },
+                hospitalId: 3,
+                admin: true,
+                info: "nouvelles infos du user hospital",
+              },
+            },
+          },
+        },
+      },
+    },
+    "users/dronist/{userId}": {
+      put: {
+        summary: "Update user then user in dronist",
+        tags: ["User"],
+        parameters: [
+          {
+            name: "userId",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+            },
+            example: 3,
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              example: {
+                user: {
+                  userId: 3,
+                  email: "dronistUpdated@bloodsky.fr",
+                  password: "nouveau mot de passe haché",
+                  userName: "dron",
+                  userFirstname: "iste",
+                  telNumber: null,
+                  userStatus: "active",
+                },
+                info: "nouvelles infos du user dronist",
+              },
+            },
+          },
+        },
+      },
+    },
+    "users/support-center/{userId}": {
+      put: {
+        summary: "Update user then user in support-center",
+        tags: ["User"],
+        parameters: [
+          {
+            name: "userId",
+            in: "path",
+            required: true,
+            schema: {
+              type: "integer",
+            },
+            example: 4,
+          },
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              example: {
+                user: {
+                  userId: 4,
+                  email: "support-centerUpdated@bloodsky.fr",
+                  password: "nouveau mot de passe haché",
+                  userName: "support",
+                  userFirstname: "center",
+                  telNumber: null,
+                  userStatus: "active",
+                },
+                info: "nouvelles infos du user support-center",
+              },
+            },
+          },
+        },
+      },
+    },
   },
 };
