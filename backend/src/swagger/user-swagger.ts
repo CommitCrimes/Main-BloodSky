@@ -187,7 +187,7 @@ export const userSwagger: Record<string, any> = {
         tags: ["User"],
         responses: {
           "200": {
-            description: "List of user donation centers",
+            description: "List of donation centers users",
             content: {
               "application/json": {
                 example: [
@@ -195,7 +195,7 @@ export const userSwagger: Record<string, any> = {
                     userId: 1,
                     centerId: 1,
                     admin: false,
-                    info: "Regular donor",
+                    info: "Regular employee",
                   },
                   {
                     userId: 2,
@@ -225,10 +225,10 @@ export const userSwagger: Record<string, any> = {
                       email: {
                         type: "string",
                         format: "email",
-                        example: "support@bloodsky.fr",
+                        example: "donation-center@bloodsky.fr",
                       },
                       password: { type: "string", example: "$2b$10$..." },
-                      userName: { type: "string", example: "support" },
+                      userName: { type: "string", example: "donation" },
                       userFirstname: { type: "string", example: "center" },
                       telNumber: { type: ["integer", "null"], example: null },
                       userStatus: {
@@ -255,9 +255,9 @@ export const userSwagger: Record<string, any> = {
               example: {
                 user: {
                   userId: 3,
-                  email: "support@bloodsky.fr",
+                  email: "donation-center@bloodsky.fr",
                   password: "mot de passe haché",
-                  userName: "support",
+                  userName: "donation",
                   userFirstname: "center",
                   telNumber: null,
                   userStatus: "active",
@@ -269,14 +269,14 @@ export const userSwagger: Record<string, any> = {
         },
         responses: {
           "201": {
-            description: "User donation center created successfully",
+            description: "Donation center user created successfully",
             content: {
               "application/json": {
                 example: {
                   userId: 3,
                   centerId: 1,
                   admin: false,
-                  info: "info du user donation",
+                  info: "info du donation user",
                 },
               },
             },
@@ -289,17 +289,17 @@ export const userSwagger: Record<string, any> = {
     },
     "users/dronist": {
       get: {
-        summary: "Get all user dronists",
+        summary: "Get all dronists users",
         tags: ["User"],
         responses: {
           "200": {
-            description: "List of user donation centers",
+            description: "List of dronists users",
             content: {
               "application/json": {
                 example: [
                   {
                     userId: 1,
-                    info: "info du user dronist",
+                    info: "info du dronist user",
                   },
                 ],
               },
@@ -308,7 +308,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
       post: {
-        summary: "Create a new user dronist",
+        summary: "Create a new dronist user",
         tags: ["User"],
         requestBody: {
           required: true,
@@ -317,7 +317,7 @@ export const userSwagger: Record<string, any> = {
               schema: {
                 type: "object",
                 properties: {
-                  info: { type: "string", example: "info du user dronist" },
+                  info: { type: "string", example: "info du dronist user" },
                 },
                 required: ["info"],
               },
@@ -330,12 +330,12 @@ export const userSwagger: Record<string, any> = {
         },
         responses: {
           "201": {
-            description: "User dronist created successfully",
+            description: "Dronist user created successfully",
             content: {
               "application/json": {
                 example: {
                   userId: 3,
-                  info: "info du user dronist",
+                  info: "info du dronist user",
                 },
               },
             },
@@ -348,26 +348,26 @@ export const userSwagger: Record<string, any> = {
     },
     "users/support-center": {
       get: {
-        summary: "Get all user support center",
+        summary: "Get all support centers users",
         tags: ["User"],
         responses: {
           "200": {
-            description: "List of user support centers",
+            description: "List of support centers users",
             content: {
               "application/json": {
                 example: [
                   {
                     userId: 1,
-                    info: "info du user support center"
-                  }
-                ]
-              }
-            }
-          }
-        }
+                    info: "info du support center user",
+                  },
+                ],
+              },
+            },
+          },
+        },
       },
       post: {
-        summary: "Create a new user support center",
+        summary: "Create a new support center user",
         tags: ["User"],
         requestBody: {
           required: true,
@@ -376,34 +376,143 @@ export const userSwagger: Record<string, any> = {
               schema: {
                 type: "object",
                 properties: {
-                  info: {type: "string", example: "info du user support center" },
+                  info: {
+                    type: "string",
+                    example: "info du support center user",
+                  },
                 },
                 required: ["info"],
               },
               example: {
                 userId: 5,
-                info: "New support center user info"
-              }
-            }
-          }
+                info: "New support center user info",
+              },
+            },
+          },
         },
         responses: {
           "201": {
-            description: "User support center created successfully",
+            description: "Dupport center user created successfully",
             content: {
               "application/json": {
                 example: {
                   userId: 5,
-                  info: "info du user support center"
-                }
-              }
-            }
+                  info: "info du support center user",
+                },
+              },
+            },
           },
           "400": {
             description: "Invalid input",
+          },
+        },
+      },
+    },
+    "users/hospital": {
+      get: {
+        summary: "Get all hospitals users",
+        tags: ["User"],
+        responses: {
+          "200": {
+            description: "List of hospital users",
+            content: {
+              "application/json": {
+                example: [
+                  {
+                    userId: 10,
+                    hospitalId: 10,
+                    admin: false,
+                    info: "Regular employee",
+                  },
+                  {
+                    userId: 11,
+                    hospitalId: 11,
+                    admin: true,
+                    info: "admin at this hospital",
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      post: {
+        summary: "Create a new hospital user",
+        tags: ["User"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  user: {
+                    type: "object",
+                    properties: {
+                      email: {
+                        type: "string",
+                        format: "email",
+                        example: "hospital@bloodsky.fr",
+                      },
+                      password: { type: "string", example: "$2b$10$..." },
+                      userName: { type: "string", example: "hospital" },
+                      userFirstname: { type: "string", example: "latipsoh" },
+                      telNumber: { type: ["integer", "null"], example: null },
+                      userStatus: {
+                        type: "string",
+                        enum: ["active", "pending", "suspended"],
+                        example: "active",
+                      },
+                    },
+                    required: [
+                      "email",
+                      "password",
+                      "userName",
+                      "userFirstname",
+                      "userStatus",
+                    ],
+                  },
+                  info: {
+                    type: "string",
+                    example: "info du user hospital",
+                  },
+                },
+                required: ["user", "info"],
+              },
+              example: {
+                user: {
+                  userId: 10,
+                  email: "hospital@bloodsky.fr",
+                  password: "mot de passe haché",
+                  userName: "hospital",
+                  userFirstname: "latipsoh",
+                  telNumber: null,
+                  userStatus: "active",
+                },
+                info: "info du user hospital",
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "Hospital user created successfully",
+            content: {
+              "application/json": {
+                example: {
+                  userId: 10,
+                  hospitalId: 10,
+                  admin: false,
+                  info: "Regular employee",
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid input"
           }
-        }
-      }
-    }
+        },
+      },
+    },
   },
 };
