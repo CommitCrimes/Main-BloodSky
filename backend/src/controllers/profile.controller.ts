@@ -2,7 +2,7 @@ import { Context } from 'hono';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from '@/utils/db';
-import { userDonationCenter, userHospital, users } from '@/schemas';
+import { userDonationCenter, userHospital, users, hospitals, donationCenters } from '@/schemas';
 
 const updateProfileSchema = z.object({
   userName: z.string().min(1).max(255).optional(),
@@ -20,10 +20,25 @@ const changePasswordSchema = z.object({
   path: ["confirmPassword"]
 });
 
+const updateCoordinatesSchema = z.object({
+  latitude: z.string().or(z.number()).transform(val => String(val)).refine(val => !isNaN(parseFloat(val)), {
+    message: "La latitude doit être un nombre valide"
+  }),
+  longitude: z.string().or(z.number()).transform(val => String(val)).refine(val => !isNaN(parseFloat(val)), {
+    message: "La longitude doit être un nombre valide"
+  })
+});
+
 export interface UserRole {
   type: 'super_admin' | 'hospital_admin' | 'donation_center_admin' | 'user';
   hospitalId?: number;
   centerId?: number;
+  hospitalName?: string;
+  centerName?: string;
+  hospitalLatitude?: string;
+  hospitalLongitude?: string;
+  centerLatitude?: string;
+  centerLongitude?: string;
   admin?: boolean;
   info?: string;
 }
@@ -48,9 +63,13 @@ async function getUserRole(userId: string, userEmail: string): Promise<UserRole 
     .select({
       hospitalId: userHospital.hospitalId,
       admin: userHospital.admin,
-      info: userHospital.info
+      info: userHospital.info,
+      hospitalName: hospitals.hospitalName,
+      hospitalLatitude: hospitals.hospitalLatitude,
+      hospitalLongitude: hospitals.hospitalLongitude
     })
     .from(userHospital)
+    .leftJoin(hospitals, eq(userHospital.hospitalId, hospitals.hospitalId))
     .where(eq(userHospital.userId, parseInt(userId)))
     .limit(1);
 
@@ -59,6 +78,9 @@ async function getUserRole(userId: string, userEmail: string): Promise<UserRole 
     return {
       type: role.admin ? 'hospital_admin' : 'user',
       hospitalId: role.hospitalId ?? undefined,
+      hospitalName: role.hospitalName ?? undefined,
+      hospitalLatitude: role.hospitalLatitude ?? undefined,
+      hospitalLongitude: role.hospitalLongitude ?? undefined,
       admin: role.admin ?? false,
       info: role.info ?? undefined
     };
@@ -68,9 +90,13 @@ async function getUserRole(userId: string, userEmail: string): Promise<UserRole 
     .select({
       centerId: userDonationCenter.centerId,
       admin: userDonationCenter.admin,
-      info: userDonationCenter.info
+      info: userDonationCenter.info,
+      centerName: donationCenters.centerCity,
+      centerLatitude: donationCenters.centerLatitude,
+      centerLongitude: donationCenters.centerLongitude
     })
     .from(userDonationCenter)
+    .leftJoin(donationCenters, eq(userDonationCenter.centerId, donationCenters.centerId))
     .where(eq(userDonationCenter.userId, parseInt(userId)))
     .limit(1);
 
@@ -79,6 +105,9 @@ async function getUserRole(userId: string, userEmail: string): Promise<UserRole 
     return {
       type: role.admin ? 'donation_center_admin' : 'user',
       centerId: role.centerId ?? undefined,
+      centerName: role.centerName ?? undefined,
+      centerLatitude: role.centerLatitude ?? undefined,
+      centerLongitude: role.centerLongitude ?? undefined,
       admin: role.admin ?? false,
       info: role.info ?? undefined
     };
@@ -339,5 +368,113 @@ export const changePassword = async (c: Context) => {
     
     console.error('Error changing password:', error);
     return c.json({ message: 'Erreur lors du changement de mot de passe' }, 500);
+  }
+};
+
+export const updateHospitalCoordinates = async (c: Context) => {
+  try {
+    const userId = c.get('user')?.userId;
+    if (!userId) {
+      return c.json({ message: 'Utilisateur non authentifié' }, 401);
+    }
+
+    const body = await c.req.json();
+    const validatedData = updateCoordinatesSchema.parse(body);
+
+    const user = await db
+      .select({
+        email: users.email
+      })
+      .from(users)
+      .where(eq(users.userId, parseInt(userId)))
+      .limit(1);
+
+    if (user.length === 0) {
+      return c.json({ message: 'Utilisateur non trouvé' }, 404);
+    }
+
+    const role = await getUserRole(userId, user[0].email);
+
+    if (!role?.admin || role.type !== 'hospital_admin') {
+      return c.json({ message: 'Accès refusé. Vous devez être administrateur d\'hôpital' }, 403);
+    }
+
+    if (!role.hospitalId) {
+      return c.json({ message: 'Aucun hôpital associé' }, 400);
+    }
+
+    await db
+      .update(hospitals)
+      .set({ 
+        hospitalLatitude: validatedData.latitude,
+        hospitalLongitude: validatedData.longitude
+      })
+      .where(eq(hospitals.hospitalId, role.hospitalId));
+
+    return c.json({ message: 'Coordonnées mises à jour avec succès' });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return c.json({ 
+        message: 'Données invalides', 
+        errors: error.errors 
+      }, 400);
+    }
+    
+    console.error('Error updating hospital coordinates:', error);
+    return c.json({ message: 'Erreur lors de la mise à jour des coordonnées' }, 500);
+  }
+};
+
+export const updateCenterCoordinates = async (c: Context) => {
+  try {
+    const userId = c.get('user')?.userId;
+    if (!userId) {
+      return c.json({ message: 'Utilisateur non authentifié' }, 401);
+    }
+
+    const body = await c.req.json();
+    const validatedData = updateCoordinatesSchema.parse(body);
+
+    const user = await db
+      .select({
+        email: users.email
+      })
+      .from(users)
+      .where(eq(users.userId, parseInt(userId)))
+      .limit(1);
+
+    if (user.length === 0) {
+      return c.json({ message: 'Utilisateur non trouvé' }, 404);
+    }
+
+    const role = await getUserRole(userId, user[0].email);
+
+    if (!role?.admin || role.type !== 'donation_center_admin') {
+      return c.json({ message: 'Accès refusé. Vous devez être administrateur de centre de donation' }, 403);
+    }
+
+    if (!role.centerId) {
+      return c.json({ message: 'Aucun centre de donation associé' }, 400);
+    }
+
+    await db
+      .update(donationCenters)
+      .set({ 
+        centerLatitude: validatedData.latitude,
+        centerLongitude: validatedData.longitude
+      })
+      .where(eq(donationCenters.centerId, role.centerId));
+
+    return c.json({ message: 'Coordonnées mises à jour avec succès' });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return c.json({ 
+        message: 'Données invalides', 
+        errors: error.errors 
+      }, 400);
+    }
+    
+    console.error('Error updating center coordinates:', error);
+    return c.json({ message: 'Erreur lors de la mise à jour des coordonnées' }, 500);
   }
 };

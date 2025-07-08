@@ -13,6 +13,12 @@ export interface Profile {
     type: 'super_admin' | 'hospital_admin' | 'donation_center_admin' | 'user';
     hospitalId?: number;
     centerId?: number;
+    hospitalName?: string;
+    centerName?: string;
+    hospitalLatitude?: string;
+    hospitalLongitude?: string;
+    centerLatitude?: string;
+    centerLongitude?: string;
     admin?: boolean;
     info?: string;
   };
@@ -32,12 +38,18 @@ export interface ChangePasswordRequest {
   confirmPassword: string;
 }
 
+export interface UpdateCoordinatesRequest {
+  latitude: string;
+  longitude: string;
+}
+
 class ProfileStore {
   profile: Profile | null = null;
   isLoading = false;
   error: string | null = null;
   isUpdating = false;
   isChangingPassword = false;
+  isUpdatingCoordinates = false;
 
   constructor() {
     makeAutoObservable(this);
@@ -53,6 +65,10 @@ class ProfileStore {
 
   private setChangingPassword(changing: boolean) {
     this.isChangingPassword = changing;
+  }
+
+  private setUpdatingCoordinates(updating: boolean) {
+    this.isUpdatingCoordinates = updating;
   }
 
   private setError(error: string | null) {
@@ -131,12 +147,47 @@ class ProfileStore {
     this.setError(null);
   }
 
+  async updateHospitalCoordinates(coordinatesData: UpdateCoordinatesRequest): Promise<boolean> {
+    try {
+      this.setUpdatingCoordinates(true);
+      this.setError(null);
+      
+      await profileApi.updateHospitalCoordinates(coordinatesData);
+      await this.getMyProfile();
+      return true;
+    } catch (error: any) {
+      this.setError(error.response?.data?.message || 'Erreur lors de la mise à jour des coordonnées');
+      console.error('Erreur updateHospitalCoordinates:', error);
+      return false;
+    } finally {
+      this.setUpdatingCoordinates(false);
+    }
+  }
+
+  async updateCenterCoordinates(coordinatesData: UpdateCoordinatesRequest): Promise<boolean> {
+    try {
+      this.setUpdatingCoordinates(true);
+      this.setError(null);
+      
+      await profileApi.updateCenterCoordinates(coordinatesData);
+      await this.getMyProfile();
+      return true;
+    } catch (error: any) {
+      this.setError(error.response?.data?.message || 'Erreur lors de la mise à jour des coordonnées');
+      console.error('Erreur updateCenterCoordinates:', error);
+      return false;
+    } finally {
+      this.setUpdatingCoordinates(false);
+    }
+  }
+
   reset() {
     this.profile = null;
     this.isLoading = false;
     this.error = null;
     this.isUpdating = false;
     this.isChangingPassword = false;
+    this.isUpdatingCoordinates = false;
   }
 }
 

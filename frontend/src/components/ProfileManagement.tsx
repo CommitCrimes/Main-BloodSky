@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import {
@@ -32,7 +33,7 @@ import {
 } from '@mui/icons-material';
 import { useProfile } from '../hooks/useProfile';
 import { useAuth } from '../hooks/useAuth';
-import type { UpdateProfileRequest, ChangePasswordRequest } from '../stores/profileStore';
+import type { UpdateProfileRequest, ChangePasswordRequest, UpdateCoordinatesRequest } from '../stores/profileStore';
 
 const ProfileManagement: React.FC = observer(() => {
   const profileStore = useProfile();
@@ -61,6 +62,11 @@ const ProfileManagement: React.FC = observer(() => {
     confirmPassword: '',
     match: ''
   });
+  const [coordinatesData, setCoordinatesData] = useState<UpdateCoordinatesRequest>({
+    latitude: '',
+    longitude: ''
+  });
+  const [isEditingCoordinates, setIsEditingCoordinates] = useState(false);
 
   useEffect(() => {
     profileStore.getMyProfile();
@@ -74,6 +80,13 @@ const ProfileManagement: React.FC = observer(() => {
         telNumber: profileStore.profile.telNumber || undefined,
         info: profileStore.profile.role?.info || ''
       });
+      
+      if (profileStore.profile.role?.admin) {
+        setCoordinatesData({
+          latitude: profileStore.profile.role.hospitalLatitude || profileStore.profile.role.centerLatitude || '',
+          longitude: profileStore.profile.role.hospitalLongitude || profileStore.profile.role.centerLongitude || ''
+        });
+      }
     }
   }, [profileStore.profile]);
 
@@ -106,6 +119,15 @@ const ProfileManagement: React.FC = observer(() => {
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setPasswordData(prev => ({
+      ...prev,
+      [field]: event.target.value
+    }));
+  };
+
+  const handleCoordinatesChange = (field: keyof UpdateCoordinatesRequest) => (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setCoordinatesData(prev => ({
       ...prev,
       [field]: event.target.value
     }));
@@ -167,6 +189,29 @@ const ProfileManagement: React.FC = observer(() => {
       confirmPassword: ''
     });
     setPasswordErrors({ newPassword: '', confirmPassword: '', match: '' });
+    profileStore.clearError();
+  };
+
+  const handleCoordinatesSubmit = async () => {
+    const isHospitalAdmin = profileStore.profile?.role?.type === 'hospital_admin';
+    const success = isHospitalAdmin 
+      ? await profileStore.updateHospitalCoordinates(coordinatesData)
+      : await profileStore.updateCenterCoordinates(coordinatesData);
+    
+    if (success) {
+      setIsEditingCoordinates(false);
+      setSuccessMessage('Coordonnées mises à jour avec succès !');
+    }
+  };
+
+  const handleCancelCoordinates = () => {
+    if (profileStore.profile?.role?.admin) {
+      setCoordinatesData({
+        latitude: profileStore.profile.role.hospitalLatitude || profileStore.profile.role.centerLatitude || '',
+        longitude: profileStore.profile.role.hospitalLongitude || profileStore.profile.role.centerLongitude || ''
+      });
+    }
+    setIsEditingCoordinates(false);
     profileStore.clearError();
   };
 
@@ -490,21 +535,6 @@ const ProfileManagement: React.FC = observer(() => {
               </Typography>
               <Divider sx={{ mb: 2 }} />
               
-              <Box mb={2}>
-                <Typography 
-                  variant="body2" 
-                  color="textSecondary"
-                  sx={{ fontFamily: 'Share Tech, monospace' }}
-                >
-                  Statut du compte
-                </Typography>
-                <Chip
-                  label={profile.userStatus}
-                  color={profile.userStatus === 'active' ? 'success' : 'warning'}
-                  size="small"
-                  sx={{ fontFamily: 'Share Tech, monospace' }}
-                />
-              </Box>
 
               {profile.dteCreate && (
                 <Box mb={2}>
@@ -524,39 +554,146 @@ const ProfileManagement: React.FC = observer(() => {
                 </Box>
               )}
 
-              {profile.role?.hospitalId && (
+              {profile.role?.hospitalName && (
                 <Box mb={2}>
                   <Typography 
                     variant="body2" 
                     color="textSecondary"
                     sx={{ fontFamily: 'Share Tech, monospace' }}
                   >
-                    ID Hôpital
+                    Hôpital
                   </Typography>
                   <Typography 
                     variant="body2"
                     sx={{ fontFamily: 'Share Tech, monospace' }}
                   >
-                    {profile.role.hospitalId}
+                    {profile.role.hospitalName}
                   </Typography>
                 </Box>
               )}
 
-              {profile.role?.centerId && (
+              {profile.role?.centerName && (
                 <Box mb={2}>
                   <Typography 
                     variant="body2" 
                     color="textSecondary"
                     sx={{ fontFamily: 'Share Tech, monospace' }}
                   >
-                    ID Centre de Don
+                    Centre de Don
                   </Typography>
                   <Typography 
                     variant="body2"
                     sx={{ fontFamily: 'Share Tech, monospace' }}
                   >
-                    {profile.role.centerId}
+                    {profile.role.centerName}
                   </Typography>
+                </Box>
+              )}
+
+              {/* seulement adminnnn */}
+              {profile.role?.admin && (
+                <Box mb={2}>
+                  <Typography 
+                    variant="body2" 
+                    color="textSecondary"
+                    sx={{ fontFamily: 'Share Tech, monospace', mb: 1 }}
+                  >
+                    Coordonnées {profile.role.type === 'hospital_admin' ? 'de l\'hôpital' : 'du centre'}
+                  </Typography>
+                  
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                      <TextField
+                        label="Latitude"
+                        value={coordinatesData.latitude}
+                        onChange={handleCoordinatesChange('latitude')}
+                        disabled={!isEditingCoordinates}
+                        fullWidth
+                        size="small"
+                        type="number"
+                        placeholder="Ex: 47.2383569"
+                        slotProps={{
+                          input: {
+                            step: "any"
+                          } as any,
+                          inputLabel: {
+                            sx: { fontFamily: 'Share Tech, monospace' }
+                          }
+                        }}
+                        sx={{
+                          '& .MuiInputBase-input': {
+                            fontFamily: 'Share Tech, monospace'
+                          }
+                        }}
+                      />
+                      <TextField
+                        label="Longitude"
+                        value={coordinatesData.longitude}
+                        onChange={handleCoordinatesChange('longitude')}
+                        disabled={!isEditingCoordinates}
+                        fullWidth
+                        size="small"
+                        type="number"
+                        placeholder="Ex: -1.5603531"
+                        slotProps={{
+                          input: {
+                            step: "any"
+                          } as any,
+                          inputLabel: {
+                            sx: { fontFamily: 'Share Tech, monospace' }
+                          }
+                        }}
+                        sx={{
+                          '& .MuiInputBase-input': {
+                            fontFamily: 'Share Tech, monospace'
+                          }
+                        }}
+                      />
+                    </Box>
+                    
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      {!isEditingCoordinates ? (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => setIsEditingCoordinates(true)}
+                          sx={{ 
+                            color: '#008EFF',
+                            borderColor: '#008EFF',
+                            '&:hover': { borderColor: '#0066cc', color: '#0066cc' },
+                            fontFamily: 'Share Tech, monospace'
+                          }}
+                        >
+                          Modifier coordonnées
+                        </Button>
+                      ) : (
+                        <>
+                          <Button
+                            size="small"
+                            variant="contained"
+                            onClick={handleCoordinatesSubmit}
+                            disabled={profileStore.isUpdatingCoordinates}
+                            sx={{ 
+                              bgcolor: '#008EFF',
+                              '&:hover': { bgcolor: '#0066cc' },
+                              fontFamily: 'Share Tech, monospace'
+                            }}
+                          >
+                            {profileStore.isUpdatingCoordinates ? <CircularProgress size={16} /> : 'Enregistrer'}
+                          </Button>
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={handleCancelCoordinates}
+                            disabled={profileStore.isUpdatingCoordinates}
+                            sx={{ fontFamily: 'Share Tech, monospace' }}
+                          >
+                            Annuler
+                          </Button>
+                        </>
+                      )}
+                    </Box>
+                  </Box>
                 </Box>
               )}
             </CardContent>

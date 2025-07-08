@@ -1,4 +1,4 @@
-import type { Profile, UpdateProfileRequest, ChangePasswordRequest } from '@/stores/profileStore';
+import type { Profile, UpdateProfileRequest, ChangePasswordRequest, UpdateCoordinatesRequest } from '@/stores/profileStore';
 import { api } from './api';
 
 export const profileApi = {
@@ -19,5 +19,13 @@ export const profileApi = {
 
   changePassword: async (passwordData: ChangePasswordRequest): Promise<void> => {
     await api.put('/users/profile/change-password', passwordData);
+  },
+
+  updateHospitalCoordinates: async (coordinatesData: UpdateCoordinatesRequest): Promise<void> => {
+    await api.put('/users/profile/hospital/coordinates', coordinatesData);
+  },
+
+  updateCenterCoordinates: async (coordinatesData: UpdateCoordinatesRequest): Promise<void> => {
+    await api.put('/users/profile/center/coordinates', coordinatesData);
   }
 };

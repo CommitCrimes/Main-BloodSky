@@ -1,4 +1,4 @@
-import React, { useState, type ReactNode } from 'react';
+import React, { useState, useEffect, type ReactNode } from 'react';
 import {
   Typography,
   Box,
@@ -74,10 +74,16 @@ interface DashboardLayoutProps {
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
   const auth = useAuth();
   const muiTheme = useTheme();
-  const [activeView, setActiveView] = useState('dashboard');
+  const [activeView, setActiveView] = useState(() => {
+    return localStorage.getItem('bloodsky-active-view') || 'dashboard';
+  });
   const [mobileOpen, setMobileOpen] = useState(false);
   
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
+
+  useEffect(() => {
+    localStorage.setItem('bloodsky-active-view', activeView);
+  }, [activeView]);
 
   const defaultMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <DashboardOutlined /> },
