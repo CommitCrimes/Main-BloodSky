@@ -58,6 +58,7 @@ interface DashboardConfig {
   position: [number, number];
   chartTitle: string;
   userManagementComponent?: ReactNode;
+  profileManagementComponent?: ReactNode;
   menuItems?: Array<{
     id: string;
     label: string;
@@ -719,6 +720,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
           {activeView === 'users' && auth.user?.role?.admin && config.userManagementComponent ? (
             <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
               {config.userManagementComponent}
+            </Box>
+          ) : activeView === 'profil' && config.profileManagementComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.profileManagementComponent}
             </Box>
           ) : activeView === 'dashboard' ? (
             renderDashboardContent()
