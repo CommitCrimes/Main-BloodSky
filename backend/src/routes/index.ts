@@ -10,7 +10,10 @@ import { entitiesRouter } from './entities.routes';
 import { superAdminRouter } from './superadmin.routes';
 import { hospitalAdminRouter } from './hospital-admin.routes';
 import { donationCenterAdminRouter } from './donation-center-admin.routes';
+import { profileRouter } from './profile.routes';
 import { swaggerUI } from '@hono/swagger-ui';
+import { bloodSwagger } from '@/swagger/blood-swagger';
+import { userSwagger } from '@/swagger/user-swagger';
 
 export const createRouter = () => {
   const api = new Hono();
@@ -654,7 +657,9 @@ export const createRouter = () => {
             '403': { description: 'Super admin access required' }
           }
         }
-      }
+      },
+      ...bloodSwagger.paths,
+      ...userSwagger.paths
     }
   }));
 
@@ -676,6 +681,9 @@ export const createRouter = () => {
     
     // Routes admin centre de donation
     api.route('/donation-center-admin', donationCenterAdminRouter);
+
+    // Routes profil utilisateur
+    api.route('/users/profile', profileRouter);
 
   api.get('/swagger', swaggerUI({ url: '/api/docs' }));
   
