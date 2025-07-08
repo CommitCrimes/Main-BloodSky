@@ -2,6 +2,7 @@ import { useAuth } from '@/hooks/useAuth';
 import pocheSangImage from '@/assets/poche_sang.png';
 import DonationCenterUserManagement from '@/components/DonationCenterUserManagement';
 import ProfileManagement from '@/components/ProfileManagement';
+import HistoryManagement from '@/components/HistoryManagement';
 import DashboardLayout from '@/components/DashboardLayout';
 
 const DonationCenterDashboard = () => {
@@ -19,6 +20,7 @@ const DonationCenterDashboard = () => {
       <DonationCenterUserManagement donationCenterId={auth.user.role.centerId} />
     ) : undefined,
     profileManagementComponent: <ProfileManagement />,
+    historyManagementComponent: <HistoryManagement />,
   };
 
   return <DashboardLayout config={dashboardConfig} />;

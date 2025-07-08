@@ -59,6 +59,8 @@ interface DashboardConfig {
   chartTitle: string;
   userManagementComponent?: ReactNode;
   profileManagementComponent?: ReactNode;
+  historyManagementComponent?: ReactNode;
+  orderBloodComponent?: ReactNode;
   menuItems?: Array<{
     id: string;
     label: string;
@@ -85,12 +87,20 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
     localStorage.setItem('bloodsky-active-view', activeView);
   }, [activeView]);
 
+  // Détermine le libellé selon le type d'utilisateur
+  const getDeliveryLabel = () => {
+    if (auth.user?.role?.centerId) {
+      return 'Livrer'; // Centre de donation = celui qui livre
+    }
+    return 'Se faire livrer'; // Hôpital = celui qui reçoit
+  };
+
   const defaultMenuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <DashboardOutlined /> },
     { id: 'historique', label: 'Historique', icon: <HistoryOutlined /> },
     { id: 'profil', label: 'Mon profil', icon: <AccountCircleOutlined /> },
     { id: 'notifications', label: 'Notifications', icon: <NotificationsOutlined />, hasNotification: true },
-    { id: 'livraison', label: 'Se faire livrer', icon: <LocalShippingOutlined /> },
+    { id: 'livraison', label: getDeliveryLabel(), icon: <LocalShippingOutlined /> },
     { id: 'contact', label: 'Contact', icon: <ContactSupportOutlined /> },
     ...(auth.user?.role?.admin ? [{ id: 'users', label: 'Gestion des utilisateurs', icon: <GroupOutlined /> }] : []),
   ];
@@ -730,6 +740,14 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
           ) : activeView === 'profil' && config.profileManagementComponent ? (
             <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
               {config.profileManagementComponent}
+            </Box>
+          ) : activeView === 'historique' && config.historyManagementComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.historyManagementComponent}
+            </Box>
+          ) : activeView === 'livraison' && config.orderBloodComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.orderBloodComponent}
             </Box>
           ) : activeView === 'dashboard' ? (
             renderDashboardContent()

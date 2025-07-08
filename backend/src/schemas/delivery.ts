@@ -1,10 +1,10 @@
-import { pgTable, varchar, timestamp, text, boolean, integer } from 'drizzle-orm/pg-core';
+import { pgTable, varchar, timestamp, text, boolean, integer, serial } from 'drizzle-orm/pg-core';
 import { drones } from './drone';
 import { hospitals } from './hospital';
 import { donationCenters } from './donation_center';
 
 export const deliveries = pgTable('delivery', {
-  deliveryId: integer('delivery_id').primaryKey(),
+  deliveryId: serial('delivery_id').primaryKey(),
   droneId: integer('drone_id').references(() => drones.droneId),
   bloodId: integer('blood_id'),
   hospitalId: integer('hospital_id').references(() => hospitals.hospitalId),
