@@ -2,7 +2,7 @@ import React from 'react';
 
 const Footer: React.FC = () => {
   return (
-    <footer style={{ background: '#f1f1f1', padding: '2rem 1rem 1rem 1rem', marginTop: '2rem' }}>
+    <footer style={{ background: '#E0CBBF', padding: '2rem 1rem 1rem 1rem', marginTop: '2rem' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', maxWidth: 900, margin: '0 auto', flexWrap: 'wrap' }}>
         {/* Colonne gauche */}
         <div style={{ minWidth: 120, marginBottom: '1rem' }}>
