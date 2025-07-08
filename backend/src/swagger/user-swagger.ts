@@ -166,7 +166,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
       delete: {
-        summary: "Delete user by ID",
+        summary: "Delete user by ID and cascade delete from related user tables",
         tags: ["User"],
         parameters: [
           {
@@ -262,6 +262,8 @@ export const userSwagger: Record<string, any> = {
                   telNumber: null,
                   userStatus: "active",
                 },
+                centerId: 3,
+                admin: true,
                 info: "info du user donation",
               },
             },
@@ -489,6 +491,8 @@ export const userSwagger: Record<string, any> = {
                   telNumber: null,
                   userStatus: "active",
                 },
+                hospitalId: 4,
+                admin: true,
                 info: "info du user hospital",
               },
             },
@@ -526,7 +530,7 @@ export const userSwagger: Record<string, any> = {
             schema: {
               type: "email",
             },
-            example: "user1@example.com",
+            example: "user@example.com",
           },
         ],
         responses: {
@@ -539,7 +543,7 @@ export const userSwagger: Record<string, any> = {
                   example: [
                     {
                       userId: 1,
-                      email: "user1@example.com",
+                      email: "user@example.com",
                       password: "hashed_password_1",
                       userName: "User One",
                       userFirstname: "First",
@@ -554,7 +558,7 @@ export const userSwagger: Record<string, any> = {
                     },
                     {
                       userId: 2,
-                      email: "user2@example.com",
+                      email: "user@example.com",
                       password: "hashed_password_2",
                       userName: "User Two",
                       userFirstname: "Second",
@@ -602,7 +606,7 @@ export const userSwagger: Record<string, any> = {
                       userId: 1,
                       email: "user1@example.com",
                       password: "hashed_password_1",
-                      userName: "User One",
+                      userName: "mark",
                       userFirstname: "First",
                       dteCreate: "2023-10-01T12:00:00Z",
                       telNumber: 123456789,
@@ -617,7 +621,7 @@ export const userSwagger: Record<string, any> = {
                       userId: 2,
                       email: "user2@example.com",
                       password: "hashed_password_2",
-                      userName: "User Two",
+                      userName: "mark",
                       userFirstname: "Second",
                       dteCreate: "2023-10-02T12:00:00Z",
                       telNumber: 987654321,
@@ -737,13 +741,13 @@ export const userSwagger: Record<string, any> = {
                     userId: 1,
                     hospitalId: 1,
                     admin: true,
-                    info: "Regular employee",
+                    info: "Admin at this hospital",
                   },
                   {
                     userId: 2,
                     hospitalId: 1,
                     admin: true,
-                    info: "Admin at this hospital",
+                    info: "Other admin at this hospital",
                   },
                 ],
               },
