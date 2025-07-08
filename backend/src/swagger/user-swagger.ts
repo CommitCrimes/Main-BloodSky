@@ -509,10 +509,276 @@ export const userSwagger: Record<string, any> = {
             },
           },
           "400": {
-            description: "Invalid input"
-          }
+            description: "Invalid input",
+          },
         },
       },
     },
+    "users/email/{email}": {
+      get: {
+        summary: "Get all users by email",
+        tags: ["User"],
+        parameters: [
+          {
+            name: "email",
+            in: "path",
+            required: true,
+            schema: {
+              type: "email",
+            },
+            example: "user1@example.com",
+          }
+        ],
+        responses: {
+          "200": {
+            description: "List of users",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  example: [
+                    {
+                      userId: 1,
+                      email: "user1@example.com",
+                      password: "hashed_password_1",
+                      userName: "User One",
+                      userFirstname: "First",
+                      dteCreate: "2023-10-01T12:00:00Z",
+                      telNumber: 123456789,
+                      userStatus: "active",
+                      tempPasswordToken: "temp_token_1",
+                      tempPasswordExpires: "2023-11-01T12:00:00Z",
+                      urlUsed: false,
+                      resetPasswordToken: "reset_token_1",
+                      resetPasswordExpires: "2023-11-02T12:00:00Z",
+                    },
+                    {
+                      userId: 2,
+                      email: "user2@example.com",
+                      password: "hashed_password_2",
+                      userName: "User Two",
+                      userFirstname: "Second",
+                      dteCreate: "2023-10-02T12:00:00Z",
+                      telNumber: 987654321,
+                      userStatus: "inactive",
+                      tempPasswordToken: "temp_token_2",
+                      tempPasswordExpires: "2023-11-02T12:00:00Z",
+                      urlUsed: true,
+                      resetPasswordToken: "reset_token_2",
+                      resetPasswordExpires: "2023-11-03T12:00:00Z",
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "users/name/{userName}": {
+      get: {
+        summary: "Get all users by userName",
+        tags: ["User"],
+        parameters: [
+          {
+            name: "userName",
+            in: "path",
+            required: true,
+            schema: {
+              type: "string",
+            },
+            example: "mark",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "List of users",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  example: [
+                    {
+                      userId: 1,
+                      email: "user1@example.com",
+                      password: "hashed_password_1",
+                      userName: "User One",
+                      userFirstname: "First",
+                      dteCreate: "2023-10-01T12:00:00Z",
+                      telNumber: 123456789,
+                      userStatus: "active",
+                      tempPasswordToken: "temp_token_1",
+                      tempPasswordExpires: "2023-11-01T12:00:00Z",
+                      urlUsed: false,
+                      resetPasswordToken: "reset_token_1",
+                      resetPasswordExpires: "2023-11-02T12:00:00Z",
+                    },
+                    {
+                      userId: 2,
+                      email: "user2@example.com",
+                      password: "hashed_password_2",
+                      userName: "User Two",
+                      userFirstname: "Second",
+                      dteCreate: "2023-10-02T12:00:00Z",
+                      telNumber: 987654321,
+                      userStatus: "inactive",
+                      tempPasswordToken: "temp_token_2",
+                      tempPasswordExpires: "2023-11-02T12:00:00Z",
+                      urlUsed: true,
+                      resetPasswordToken: "reset_token_2",
+                      resetPasswordExpires: "2023-11-03T12:00:00Z",
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+    "users/donation-center/{centerId}": {
+      get: {
+        summary: "Get users from a donation center",
+        tags: ["User"],
+        responses: {
+          "200": {
+            description: "List of users in this donation center",
+            content: {
+              "application/json": {
+                example: [
+                  {
+                    userId: 1,
+                    centerId: 1,
+                    admin: false,
+                    info: "Regular employee",
+                  },
+                  {
+                    userId: 2,
+                    centerId: 1,
+                    admin: true,
+                    info: "Admin at this center",
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+    "users/donation-center/{centerId}/admins": {
+      get: {
+        summary: "Get admin users from a donation center",
+        tags: ["User"],
+        responses: {
+          "200": {
+            description: "List of admin users in this donation center",
+            content: {
+              "application/json": {
+                example: [
+                  {
+                    userId: 1,
+                    centerId: 1,
+                    admin: true,
+                    info: "Admin at this center",
+                  },
+                  {
+                    userId: 2,
+                    centerId: 1,
+                    admin: true,
+                    info: "Other admin at this center",
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+    "users/hospital/{hospitalId}": {
+      get: {
+        summary: "Get users from a hospital",
+        tags: ["User"],
+        responses: {
+          "200": {
+            description: "List of users in this hospital",
+            content: {
+              "application/json": {
+                example: [
+                  {
+                    userId: 1,
+                    hospitalId: 1,
+                    admin: false,
+                    info: "Regular employee",
+                  },
+                  {
+                    userId: 2,
+                    hospitalId: 1,
+                    admin: true,
+                    info: "Admin at this hospital",
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+    "users/hospital/{hospitalId}/admins": {
+      get: {
+        summary: "Get admin users from a hospital",
+        tags: ["User"],
+        responses: {
+          "200": {
+            description: "List of admin users in this hospital",
+            content: {
+              "application/json": {
+                example: [
+                  {
+                    userId: 1,
+                    hospitalId: 1,
+                    admin: true,
+                    info: "Regular employee",
+                  },
+                  {
+                    userId: 2,
+                    hospitalId: 1,
+                    admin: true,
+                    info: "Admin at this hospital",
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+    "users/{userId}/deliveries": {
+      get: {
+        summary: "Get deliveries participation associated with user Id",
+        tags: ["User"],
+        responses: {
+          "200": {
+            description: "List of deliveries participation with this user Id",
+            content: {
+              "application/json": {
+                example: [
+                  {
+                    deliveryId: 1,
+                    userId: 1,
+                  },
+                  {
+                    deliveryId: 18,
+                    userId: 1,
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+    },
+    "users/donation-center/{userId}": {
+
+    }
   },
 };
