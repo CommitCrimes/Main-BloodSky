@@ -205,3 +205,77 @@ h1 {
     margin-top: -18px;
     line-height: 1.1;
 }
+
+.section4-custom {
+    padding: 4rem 2rem;
+    background: var(--cream-white);
+}
+
+.section4-title {
+    text-align: center;
+    font-size: 3rem;
+    font-family: 'Iceland', sans-serif;
+    color: var(--dark-red);
+    margin-bottom: 3rem;
+}
+
+.section4-content-blur {
+    background: var(--color-blue);
+    border-radius: 2.5rem;
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1.5px solid rgba(255,255,255,0.25);
+    padding: 3rem 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    margin-bottom: 2rem;
+}
+
+.section4-features {
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+}
+
+.section4-feature-card {
+    background: rgba(255,255,255,0.85);
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 24px rgba(178,45,45,0.13), 0 1.5px 8px rgba(0,0,0,0.07);
+    padding: 2.5rem 2rem 1.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 220px;
+    max-width: 260px;
+    transition: transform 0.2s;
+}
+.section4-feature-card:hover {
+    transform: translateY(-8px) scale(1.04);
+    box-shadow: 0 8px 32px rgba(178,45,45,0.18), 0 2px 12px rgba(0,0,0,0.10);
+}
+
+.section4-feature-icon {
+    width: 70px;
+    height: 70px;
+    margin-bottom: 1.2rem;
+}
+
+.section4-feature-text {
+    font-size: 1.25rem;
+    color: var(--dark-red);
+    text-align: center;
+    font-family: 'Pathway Extreme', sans-serif;
+    font-weight: 600;
+}
+@media (max-width: 900px) {
+    .section4-features {
+        flex-direction: column;
+        gap: 2rem;
+        align-items: center;
+    }
+    .section4-content-blur {
+        padding: 2rem 0.5rem;
+    }
+}
