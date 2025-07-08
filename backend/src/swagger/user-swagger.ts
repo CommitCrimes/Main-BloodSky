@@ -222,7 +222,6 @@ export const userSwagger: Record<string, any> = {
                   user: {
                     type: "object",
                     properties: {
-                      userId: { type: "integer", example: 3 },
                       email: {
                         type: "string",
                         format: "email",
@@ -248,8 +247,7 @@ export const userSwagger: Record<string, any> = {
                   },
                   info: {
                     type: "string",
-                    example:
-                      "info du user donation",
+                    example: "info du user donation",
                   },
                 },
                 required: ["user", "info"],
@@ -258,8 +256,7 @@ export const userSwagger: Record<string, any> = {
                 user: {
                   userId: 3,
                   email: "support@bloodsky.fr",
-                  password:
-                    "mot de passe haché",
+                  password: "mot de passe haché",
                   userName: "support",
                   userFirstname: "center",
                   telNumber: null,
@@ -291,25 +288,122 @@ export const userSwagger: Record<string, any> = {
       },
     },
     "users/dronist": {
-        get: {
-            summary: "Get all user dronists",
-            tags: ["User"],
-            responses: {
-                "200": {
-                    description: "List of user donation centers",
-                    content: {
-                        "application/json": {
-                            example: [
-                                {
-                                    userId: 1,
-                                    
-                                }
-                            ]
-                        }
-                    }
-                }
+      get: {
+        summary: "Get all user dronists",
+        tags: ["User"],
+        responses: {
+          "200": {
+            description: "List of user donation centers",
+            content: {
+              "application/json": {
+                example: [
+                  {
+                    userId: 1,
+                    info: "info du user dronist",
+                  },
+                ],
+              },
+            },
+          },
+        },
+      },
+      post: {
+        summary: "Create a new user dronist",
+        tags: ["User"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  info: { type: "string", example: "info du user dronist" },
+                },
+                required: ["info"],
+              },
+              example: {
+                userId: 3,
+                info: "New dronist info",
+              },
+            },
+          },
+        },
+        responses: {
+          "201": {
+            description: "User dronist created successfully",
+            content: {
+              "application/json": {
+                example: {
+                  userId: 3,
+                  info: "info du user dronist",
+                },
+              },
+            },
+          },
+          "400": {
+            description: "Invalid input",
+          },
+        },
+      },
+    },
+    "users/support-center": {
+      get: {
+        summary: "Get all user support center",
+        tags: ["User"],
+        responses: {
+          "200": {
+            description: "List of user support centers",
+            content: {
+              "application/json": {
+                example: [
+                  {
+                    userId: 1,
+                    info: "info du user support center"
+                  }
+                ]
+              }
             }
+          }
         }
+      },
+      post: {
+        summary: "Create a new user support center",
+        tags: ["User"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  info: {type: "string", example: "info du user support center" },
+                },
+                required: ["info"],
+              },
+              example: {
+                userId: 5,
+                info: "New support center user info"
+              }
+            }
+          }
+        },
+        responses: {
+          "201": {
+            description: "User support center created successfully",
+            content: {
+              "application/json": {
+                example: {
+                  userId: 5,
+                  info: "info du user support center"
+                }
+              }
+            }
+          },
+          "400": {
+            description: "Invalid input",
+          }
+        }
+      }
     }
   },
 };
