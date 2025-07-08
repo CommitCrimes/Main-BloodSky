@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  Box,
+  Typography,
+  TextField,
+  Button,
+  Paper,
+  Alert,
+  CircularProgress,
+  ThemeProvider,
+} from '@mui/material';
 import { api } from '../api/api';
+import logoImage from '@/assets/logo.png';
+import theme from '@/theme/theme';
 
 interface FormData {
   newPassword: string;
@@ -111,92 +123,177 @@ const UpdatePasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <div className="mx-auto h-12 w-12 flex items-center justify-center">
-            <img src="/blood-drop.svg" alt="BloodSky" className="h-12 w-12" />
-          </div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Définir votre mot de passe
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Choisissez un nouveau mot de passe pour votre compte BloodSky
-          </p>
-        </div>
-
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {errors.general && (
-            <div className="rounded-md bg-red-50 p-4">
-              <div className="text-sm text-red-700">{errors.general}</div>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-                Nouveau mot de passe
-              </label>
-              <input
-                id="newPassword"
-                name="newPassword"
-                type="password"
-                required
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
-                  errors.newPassword ? 'border-red-300' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
-                placeholder="Entrez votre nouveau mot de passe"
-                value={formData.newPassword}
-                onChange={handleInputChange}
+    <ThemeProvider theme={theme}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#e3f8fe',
+          py: 3,
+        }}
+      >
+        <Box sx={{ width: '100%', maxWidth: 500, mx: 'auto', px: 3 }}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              backgroundColor: 'rgba(255, 255, 255, 0.8)',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              borderRadius: '20px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)',
+            }}
+          >
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 4 }}>
+              <Box
+                component="img"
+                src={logoImage}
+                alt="BloodSky"
+                sx={{
+                  width: 80,
+                  height: 80,
+                  mb: 3,
+                }}
               />
-              {errors.newPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.newPassword}</p>
+              <Typography
+                variant="h1"
+                component="h2"
+                sx={{
+                  fontSize: '2rem',
+                  color: '#981A0E',
+                  fontFamily: 'Iceland, cursive',
+                  textAlign: 'center',
+                  mb: 1,
+                }}
+              >
+                Définir votre mot de passe
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontFamily: 'Share Tech, monospace',
+                  color: '#5C7F9B',
+                  textAlign: 'center',
+                  mb: 3,
+                  opacity: 0.8,
+                }}
+              >
+                Choisissez un nouveau mot de passe pour votre compte BloodSky
+              </Typography>
+            </Box>
+
+            <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+              {errors.general && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {errors.general}
+                </Alert>
               )}
-              <p className="mt-1 text-xs text-gray-500">
-                Au moins 8 caractères, 1 majuscule et 1 chiffre
-              </p>
-            </div>
 
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirmer le mot de passe
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                required
-                className={`mt-1 appearance-none relative block w-full px-3 py-2 border ${
-                  errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
-                } placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
-                placeholder="Confirmez votre nouveau mot de passe"
-                value={formData.confirmPassword}
-                onChange={handleInputChange}
-              />
-              {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>
-              )}
-            </div>
-          </div>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <TextField
+                  id="newPassword"
+                  name="newPassword"
+                  type="password"
+                  label="Nouveau mot de passe"
+                  placeholder="Entrez votre nouveau mot de passe"
+                  required
+                  fullWidth
+                  value={formData.newPassword}
+                  onChange={handleInputChange}
+                  error={!!errors.newPassword}
+                  helperText={errors.newPassword || 'Au moins 8 caractères, 1 majuscule et 1 chiffre'}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#008EFF',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#008EFF',
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#008EFF',
+                    },
+                  }}
+                />
 
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Mise à jour...' : 'Mettre à jour le mot de passe'}
-            </button>
-          </div>
+                <TextField
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  label="Confirmer le mot de passe"
+                  placeholder="Confirmez votre nouveau mot de passe"
+                  required
+                  fullWidth
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  error={!!errors.confirmPassword}
+                  helperText={errors.confirmPassword}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '&:hover fieldset': {
+                        borderColor: '#008EFF',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#008EFF',
+                      },
+                    },
+                    '& .MuiInputLabel-root.Mui-focused': {
+                      color: '#008EFF',
+                    },
+                  }}
+                />
+              </Box>
 
-          <div className="text-center">
-            <p className="text-xs text-gray-500">
-              Problème avec ce lien ? Contactez votre administrateur
-            </p>
-          </div>
-        </form>
-      </div>
-    </div>
+              <Button
+                type="submit"
+                disabled={isLoading}
+                fullWidth
+                variant="contained"
+                sx={{
+                  mt: 3,
+                  mb: 2,
+                  py: 1.5,
+                  backgroundColor: '#008EFF',
+                  fontFamily: 'Share Tech, monospace',
+                  '&:hover': {
+                    backgroundColor: '#0066CC',
+                  },
+                  '&:disabled': {
+                    backgroundColor: '#cccccc',
+                  },
+                }}
+              >
+                {isLoading ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CircularProgress size={20} color="inherit" />
+                    Mise à jour...
+                  </Box>
+                ) : (
+                  'Mettre à jour le mot de passe'
+                )}
+              </Button>
+
+              <Typography
+                variant="caption"
+                sx={{
+                  display: 'block',
+                  textAlign: 'center',
+                  color: '#5C7F9B',
+                  mt: 2,
+                  fontFamily: 'Share Tech, monospace',
+                  opacity: 0.7,
+                }}
+              >
+                Problème avec ce lien ? Contactez votre administrateur
+              </Typography>
+            </Box>
+          </Paper>
+        </Box>
+      </Box>
+    </ThemeProvider>
   );
 };
 

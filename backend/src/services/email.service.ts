@@ -26,7 +26,7 @@ export const sendInvitationEmail = async (
   userName?: string
 ): Promise<void> => {
   try {
-  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5174'}/update-password?token=${token}&temp=${tempPassword}`;
+  const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/update-password?token=${token}&temp=${tempPassword}`;
   
   const mailOptions = {
     from: 'admin@bloodsky.fr',
