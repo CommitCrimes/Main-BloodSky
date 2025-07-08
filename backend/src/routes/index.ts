@@ -12,6 +12,7 @@ import { hospitalAdminRouter } from './hospital-admin.routes';
 import { donationCenterAdminRouter } from './donation-center-admin.routes';
 import { profileRouter } from './profile.routes';
 import { swaggerUI } from '@hono/swagger-ui';
+import { bloodSwagger } from '@/swagger/blood-swagger';
 import { userSwagger } from '@/swagger/user-swagger';
 
 export const createRouter = () => {
@@ -657,6 +658,7 @@ export const createRouter = () => {
           }
         }
       },
+      ...bloodSwagger.paths,
       ...userSwagger.paths
     }
   }));
