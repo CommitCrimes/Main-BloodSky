@@ -43,7 +43,25 @@ const Section2 = () => (
     </div>
   </section>
 );
-const Section3 = () => <section className="section3" style={{minHeight: '30vh', padding: '2rem'}}>Section 3</section>;
+const Section3 = () => (
+  <section className="section3 section3-custom">
+    <h1 className="section3-title">Chiffres clés</h1>
+    <div className="section3-grid">
+      <div className="section3-col">
+        <div className="section3-col-top">+500</div>
+        <div className="section3-col-bottom">Livraisons effectuées</div>
+      </div>
+      <div className="section3-col">
+        <div className="section3-col-top">30</div>
+        <div className="section3-col-bottom">Partenaires</div>
+      </div>
+      <div className="section3-col">
+        <div className="section3-col-top">15 min</div>
+        <div className="section3-col-bottom">Temps moyen de livraison</div>
+      </div>
+    </div>
+  </section>
+);
 const Section4 = () => <section className="section4" style={{minHeight: '100vh', padding: '2rem' }}>Section 4</section>;
 const Section5 = () => <section className="section5" style={{ minHeight: '30vh', padding: '2rem' }}>Section 5</section>;
 
