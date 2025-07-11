@@ -59,6 +59,7 @@ export const userSwagger: Record<string, any> = {
           content: {
             "application/json": {
               example: {
+                userId: 3,
                 email: "user@example.com",
                 password: "hashed_password",
                 userName: "User Name",
