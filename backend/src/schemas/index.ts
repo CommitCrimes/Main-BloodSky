@@ -9,3 +9,4 @@ export * from './user_donation_center';
 export * from './user_dronist';
 export * from './user_hospital';
 export * from './user_support_center';
+export * from './notification';
