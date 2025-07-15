@@ -116,6 +116,9 @@ export const droneSwagger: Record<string, any> = {
               },
             },
           },
+          "404": {
+            description: "Drone not found",
+          },
         },
       },
       put: {
@@ -149,10 +152,30 @@ export const droneSwagger: Record<string, any> = {
             },
           },
         },
+        responses: {
+          "200": {
+            description: "Drone sample updated",
+            content: {
+              "application/json": {
+                example: {
+                  droneId: 1,
+                  droneName: "Drone Name",
+                  centerId: 1,
+                  droneStatus: "Flying",
+                  droneCurrentLat: 442,
+                  droneCurrentLong: 30,
+                  droneBattery: "51%",
+                  droneImage: "link/to/image.png",
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid input" },
+          "404": { description: "Drone not found" },
+        },
       },
       delete: {
-        summary:
-          "Delete drone by ID and cascade delete from related drone tables",
+        summary: "Delete drone by ID",
         tags: ["Drone"],
         parameters: [
           {
@@ -165,6 +188,25 @@ export const droneSwagger: Record<string, any> = {
             example: 1,
           },
         ],
+        responses: {
+          "200": {
+            description: "Drone deleted",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Drone deleted successfully",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "404": { description: "Drone not found" },
+        },
       },
     },
     "/drones/center/{centerId}": {
@@ -210,6 +252,9 @@ export const droneSwagger: Record<string, any> = {
               },
             },
           },
+          "404": {
+            description: "Center not found"
+          }
         },
       },
     },

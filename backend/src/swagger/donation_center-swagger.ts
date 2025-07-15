@@ -106,6 +106,9 @@ export const donation_centerSwagger: Record<string, any> = {
               },
             },
           },
+          "404": {
+            description: "Donation-center not found",
+          },
         },
       },
       put: {
@@ -137,6 +140,25 @@ export const donation_centerSwagger: Record<string, any> = {
             },
           },
         },
+        responses: {
+          "200": {
+            description: "Hospital sample updated",
+            content: {
+              "application/json": {
+                example: {
+                  centerId: 1,
+                  centerCity: "Donation-center City",
+                  centerPostal: 75001,
+                  centerAdress: "30 rue du poivre",
+                  centerLatitude: 442,
+                  centerLongitude: 30,
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid input" },
+          "404": { description: "Donation center not found" },
+        },
       },
       delete: {
         summary: "Delete center by ID",
@@ -152,6 +174,25 @@ export const donation_centerSwagger: Record<string, any> = {
             example: 1,
           },
         ],
+        responses: {
+          "200": {
+            description: "Donation center deleted",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "Donation center deleted successfully",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "404": { description: "Donation center not found" },
+        },
       },
     },
     "/donation-centers/postal/{center_postal}": {
@@ -188,7 +229,7 @@ export const donation_centerSwagger: Record<string, any> = {
               },
             },
           },
-          "404": { description: "Not found" },
+          "404": { description: "No donation center found with this postal code" },
         },
       },
     },
