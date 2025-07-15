@@ -59,6 +59,7 @@ export const userSwagger: Record<string, any> = {
           content: {
             "application/json": {
               example: {
+                userId: 3,
                 email: "user@example.com",
                 password: "hashed_password",
                 userName: "User Name",
@@ -135,6 +136,9 @@ export const userSwagger: Record<string, any> = {
               },
             },
           },
+          "404": {
+            description: "User not found",
+          },
         },
       },
       put: {
@@ -156,17 +160,53 @@ export const userSwagger: Record<string, any> = {
           content: {
             "application/json": {
               example: {
+                userId: 1,
                 email: "userUpdated@example.com",
+                password: "hashed_password",
                 userName: "User Updated Name",
                 userFirstname: "User Updated Firstname",
+                dteCreate: "2023-10-03T12:00:00Z",
                 telNumber: 987654321,
+                userStatus: "active",
+                tempPasswordToken: null,
+                tempPasswordExpires: null,
+                urlUsed: false,
+                resetPasswordToken: null,
+                resetPasswordExpires: null,
               },
             },
           },
         },
+        responses: {
+          "200": {
+            description: "User sample updated",
+            content: {
+              "application/json": {
+                example: {
+                  userId: 1,
+                  email: "userUpdated@example.com",
+                  password: "hashed_password",
+                  userName: "User Updated Name",
+                  userFirstname: "User Updated Firstname",
+                  dteCreate: "2023-10-03T12:00:00Z",
+                  telNumber: 987654321,
+                  userStatus: "active",
+                  tempPasswordToken: null,
+                  tempPasswordExpires: null,
+                  urlUsed: false,
+                  resetPasswordToken: null,
+                  resetPasswordExpires: null,
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid input" },
+          "404": { description: "User not found" },
+        },
       },
       delete: {
-        summary: "Delete user by ID and cascade delete from related user tables",
+        summary:
+          "Delete user by ID and cascade delete from related user tables",
         tags: ["User"],
         parameters: [
           {
@@ -179,6 +219,25 @@ export const userSwagger: Record<string, any> = {
             example: 1,
           },
         ],
+        responses: {
+          "200": {
+            description: "User deleted successfully",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: {
+                      type: "string",
+                      example: "User deleted successfully",
+                    },
+                  },
+                },
+              },
+            },
+          },
+          "404": { description: "User not found" },
+        },
       },
     },
     "/users/donation-centers": {
@@ -576,6 +635,9 @@ export const userSwagger: Record<string, any> = {
               },
             },
           },
+          "404": {
+            description: "No user found with this email",
+          },
         },
       },
     },
@@ -637,6 +699,9 @@ export const userSwagger: Record<string, any> = {
               },
             },
           },
+          "404": {
+            description: "No user found with this name",
+          },
         },
       },
     },
@@ -644,6 +709,15 @@ export const userSwagger: Record<string, any> = {
       get: {
         summary: "Get users from a donation center",
         tags: ["User"],
+        parameters: [
+          {
+            name: "centerId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+            example: 2,
+          },
+        ],
         responses: {
           "200": {
             description: "List of users in this donation center",
@@ -666,6 +740,9 @@ export const userSwagger: Record<string, any> = {
               },
             },
           },
+          "404": {
+            description: "Center not found",
+          },
         },
       },
     },
@@ -673,6 +750,15 @@ export const userSwagger: Record<string, any> = {
       get: {
         summary: "Get admin users from a donation center",
         tags: ["User"],
+        parameters: [
+          {
+            name: "centerId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+            example: 2,
+          },
+        ],
         responses: {
           "200": {
             description: "List of admin users in this donation center",
@@ -695,6 +781,9 @@ export const userSwagger: Record<string, any> = {
               },
             },
           },
+          "404": {
+            description: "Center not found",
+          },
         },
       },
     },
@@ -702,6 +791,15 @@ export const userSwagger: Record<string, any> = {
       get: {
         summary: "Get users from a hospital",
         tags: ["User"],
+        parameters: [
+          {
+            name: "hospitalId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+            example: 2,
+          },
+        ],
         responses: {
           "200": {
             description: "List of users in this hospital",
@@ -724,6 +822,9 @@ export const userSwagger: Record<string, any> = {
               },
             },
           },
+          "404": {
+            description: "Hospital not found",
+          },
         },
       },
     },
@@ -731,6 +832,15 @@ export const userSwagger: Record<string, any> = {
       get: {
         summary: "Get admin users from a hospital",
         tags: ["User"],
+        parameters: [
+          {
+            name: "hospitalId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+            example: 2,
+          },
+        ],
         responses: {
           "200": {
             description: "List of admin users in this hospital",
@@ -753,6 +863,9 @@ export const userSwagger: Record<string, any> = {
               },
             },
           },
+          "404": {
+            description: "Hospital not found",
+          },
         },
       },
     },
@@ -760,6 +873,15 @@ export const userSwagger: Record<string, any> = {
       get: {
         summary: "Get deliveries participation associated with user Id",
         tags: ["User"],
+        parameters: [
+          {
+            name: "userId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+            example: 3,
+          },
+        ],
         responses: {
           "200": {
             description: "List of deliveries participation with this user Id",
@@ -777,6 +899,9 @@ export const userSwagger: Record<string, any> = {
                 ],
               },
             },
+          },
+          "404": {
+            description: "User not found",
           },
         },
       },
@@ -817,6 +942,31 @@ export const userSwagger: Record<string, any> = {
             },
           },
         },
+        responses: {
+          "200": {
+            description: "User sample updated",
+            content: {
+              "application/json": {
+                example: {
+                  user: {
+                    userId: 1,
+                    email: "donation-centerUpdated@bloodsky.fr",
+                    password: "nouveau mot de passe haché",
+                    userName: "DONATION",
+                    userFirstname: "CENTER",
+                    telNumber: null,
+                    userStatus: "active",
+                  },
+                  centerId: 1,
+                  admin: true,
+                  info: "nouvelles infos du user donation",
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid input" },
+          "404": { description: "User not found" },
+        },
       },
     },
     "users/hospital/{userId}": {
@@ -855,6 +1005,31 @@ export const userSwagger: Record<string, any> = {
             },
           },
         },
+        responses: {
+          "200": {
+            description: "User sample updated",
+            content: {
+              "application/json": {
+                example: {
+                  user: {
+                    userId: 2,
+                    email: "hospitalUpdated@bloodsky.fr",
+                    password: "nouveau mot de passe haché",
+                    userName: "HOSPI",
+                    userFirstname: "TAL",
+                    telNumber: null,
+                    userStatus: "active",
+                  },
+                  hospitalId: 3,
+                  admin: true,
+                  info: "nouvelles infos du user hospital",
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid input" },
+          "404": { description: "User not found" },
+        },
       },
     },
     "users/dronist/{userId}": {
@@ -891,6 +1066,29 @@ export const userSwagger: Record<string, any> = {
             },
           },
         },
+        responses: {
+          "200": {
+            description: "User sample updated",
+            content: {
+              "application/json": {
+                example: {
+                  user: {
+                    userId: 3,
+                    email: "dronistUpdated@bloodsky.fr",
+                    password: "nouveau mot de passe haché",
+                    userName: "dron",
+                    userFirstname: "iste",
+                    telNumber: null,
+                    userStatus: "active",
+                  },
+                  info: "nouvelles infos du user dronist",
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid input" },
+          "404": { description: "User not found" },
+        },
       },
     },
     "users/support-center/{userId}": {
@@ -926,6 +1124,29 @@ export const userSwagger: Record<string, any> = {
               },
             },
           },
+        },
+        responses: {
+          "200": {
+            description: "User sample updated",
+            content: {
+              "application/json": {
+                example: {
+                  user: {
+                    userId: 4,
+                    email: "support-centerUpdated@bloodsky.fr",
+                    password: "nouveau mot de passe haché",
+                    userName: "support",
+                    userFirstname: "center",
+                    telNumber: null,
+                    userStatus: "active",
+                  },
+                  info: "nouvelles infos du user support-center",
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid input" },
+          "404": { description: "User not found" },
         },
       },
     },

@@ -11,9 +11,15 @@ import { superAdminRouter } from './superadmin.routes';
 import { hospitalAdminRouter } from './hospital-admin.routes';
 import { donationCenterAdminRouter } from './donation-center-admin.routes';
 import { profileRouter } from './profile.routes';
+import { notificationRouter } from './notification';
+import { dashboardRouter } from './dashboard';
 import { swaggerUI } from '@hono/swagger-ui';
 import { bloodSwagger } from '@/swagger/blood-swagger';
 import { userSwagger } from '@/swagger/user-swagger';
+import { hospitalSwagger } from '@/swagger/hospital-swagger';
+import { droneSwagger } from '@/swagger/drone-swagger';
+import { donation_centerSwagger } from '@/swagger/donation_center-swagger';
+import { deliverySwagger } from '@/swagger/delivery-swagger';
 
 export const createRouter = () => {
   const api = new Hono();
@@ -659,7 +665,11 @@ export const createRouter = () => {
         }
       },
       ...bloodSwagger.paths,
-      ...userSwagger.paths
+      ...userSwagger.paths,
+      ...hospitalSwagger.paths,
+      ...droneSwagger.paths,
+      ...donation_centerSwagger.paths,
+      ...deliverySwagger.paths
     }
   }));
 
@@ -684,6 +694,13 @@ export const createRouter = () => {
 
     // Routes profil utilisateur
     api.route('/users/profile', profileRouter);
+
+    // Routes notifications
+    api.route('/notifications', notificationRouter);
+    
+    
+    // Routes dashboard
+    api.route('/dashboard', dashboardRouter);
 
   api.get('/swagger', swaggerUI({ url: '/api/docs' }));
   
