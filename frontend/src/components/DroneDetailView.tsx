@@ -103,6 +103,8 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     lon: 0,
     alt: 0
   });
+  const [hospitals, setHospitals] = useState<any[]>([]);
+  const [hospitalsDialogOpen, setHospitalsDialogOpen] = useState(false);
 
   const fetchFlightInfo = async () => {
     try {
@@ -247,11 +249,64 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     });
   };
 
+  const fetchHospitals = async () => {
+    try {
+      console.log('Fetching hospitals...');
+      const response = await fetch('http://localhost:3000/api/hospitals');
+      console.log('Response status:', response.status);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Hospitals data:', data);
+        setHospitals(data);
+      } else {
+        console.error('Response not ok:', response.status, response.statusText);
+      }
+    } catch (error) {
+      console.error('Error fetching hospitals:', error);
+    }
+  };
+
+  const createMissionToHospital = async (hospital: any) => {
+    try {
+      // Créer la mission de livraison
+      const missionResponse = await fetch(`http://localhost:3000/api/drones/${droneId}/delivery-mission`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          pickupLat: 47.2098952,  // Position du centre de donation (Nantes)
+          pickupLon: -1.5513221,
+          deliveryLat: parseFloat(hospital.hospitalLatitude),
+          deliveryLon: parseFloat(hospital.hospitalLongitude),
+          altitude: 50
+        })
+      });
+
+      if (missionResponse.ok) {
+        // Démarrer la mission
+        const startResponse = await fetch(`http://localhost:3000/api/drones/${droneId}/mission/start`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (startResponse.ok) {
+          alert(`Mission créée et démarrée vers ${hospital.hospitalName}!`);
+          setHospitalsDialogOpen(false);
+          await fetchFlightInfo();
+        } else {
+          throw new Error('Erreur lors du démarrage de la mission');
+        }
+      } else {
+        throw new Error('Erreur lors de la création de la mission');
+      }
+    } catch (error) {
+      console.error('Mission error:', error);
+      alert(`Erreur: ${error}`);
+    }
+  };
+
   useEffect(() => {
     fetchFlightInfo();
-    // Refresh every 5 seconds
-    const interval = setInterval(fetchFlightInfo, 5000);
-    return () => clearInterval(interval);
+    fetchHospitals();
   }, [droneId]);
 
   if (loading) {
@@ -285,6 +340,13 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
             onClick={fetchFlightInfo}
           >
             Actualiser
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => setHospitalsDialogOpen(true)}
+            sx={{ bgcolor: '#f44336', '&:hover': { bgcolor: '#d32f2f' } }}
+          >
+            Hôpitaux
           </Button>
         </Box>
       </Paper>
@@ -606,6 +668,65 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
           <Button onClick={() => setModifyDialogOpen(false)}>Annuler</Button>
           <Button onClick={handleModifyMission} variant="contained">
             Modifier
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Hospitals Dialog */}
+      <Dialog open={hospitalsDialogOpen} onClose={() => setHospitalsDialogOpen(false)} maxWidth="md" fullWidth>
+        <DialogTitle>
+          Sélectionner un hôpital pour créer une mission
+        </DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+            {hospitals.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 4 }}>
+                <CircularProgress />
+                <Typography variant="body2" sx={{ mt: 2 }}>
+                  Chargement des hôpitaux...
+                </Typography>
+              </Box>
+            ) : (
+              hospitals.map((hospital) => (
+              <Paper 
+                key={hospital.hospitalId}
+                sx={{ 
+                  p: 2, 
+                  cursor: 'pointer',
+                  '&:hover': { 
+                    bgcolor: 'grey.100',
+                    boxShadow: 2
+                  }
+                }}
+                onClick={() => createMissionToHospital(hospital)}
+              >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f44336' }}>
+                      {hospital.hospitalName}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {hospital.hospitalAdress}, {hospital.hospitalCity} - {hospital.hospitalPostal}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Lat: {parseFloat(hospital.hospitalLatitude).toFixed(6)}, 
+                      Lon: {parseFloat(hospital.hospitalLongitude).toFixed(6)}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Typography variant="body2" color="primary">
+                      Cliquer pour créer mission
+                    </Typography>
+                  </Box>
+                </Box>
+              </Paper>
+              ))
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setHospitalsDialogOpen(false)}>
+            Fermer
           </Button>
         </DialogActions>
       </Dialog>

@@ -233,6 +233,45 @@ export class DroneControlService {
   }
 
   /**
+   * Change drone flight mode
+   */
+  async changeFlightMode(droneId: number, mode: string): Promise<DroneApiResponse> {
+    const apiUrl = await this.getDroneApiUrl(droneId);
+    if (!apiUrl) {
+      return { error: 'Drone API URL not configured' };
+    }
+
+    try {
+      const response = await fetch(`${apiUrl}/command`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode }),
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      // Update flight mode in database
+      await db
+        .update(drones)
+        .set({ 
+          flightMode: mode.toUpperCase(),
+          updatedAt: new Date()
+        })
+        .where(eq(drones.droneId, droneId));
+
+      return result;
+    } catch (error) {
+      console.error(`Failed to change flight mode for drone ${droneId}:`, error);
+      return { error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+
+  /**
    * Get flight info for a specific drone
    */
   async getFlightInfo(droneId: number): Promise<DroneApiResponse> {

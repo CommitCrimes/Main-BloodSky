@@ -153,9 +153,6 @@ const DroneManagement: React.FC = () => {
 
   useEffect(() => {
     fetchDronesData();
-    // Refresh data every 30 seconds
-    const interval = setInterval(fetchDronesData, 30000);
-    return () => clearInterval(interval);
   }, []);
 
   const getBatteryColor = (battery: string): string => {

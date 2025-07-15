@@ -229,3 +229,48 @@ droneRouter.post('/:id/delivery-mission', async (c) => {
   return c.json(result);
 });
 
+// POST /drones/:id/command - Change flight mode
+droneRouter.post('/:id/command', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (isNaN(id)) return c.text('Invalid ID', 400);
+  
+  const { mode } = await c.req.json();
+  
+  if (!mode) {
+    return c.json({ error: 'Missing required mode parameter' }, 400);
+  }
+  
+  const result = await droneControlService.changeFlightMode(id, mode);
+  
+  if (result.error) {
+    return c.json({ error: result.error }, 400);
+  }
+  
+  return c.json(result);
+});
+
+// POST /drones/:id/mission/send - Send mission file
+droneRouter.post('/:id/mission/send', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (isNaN(id)) return c.text('Invalid ID', 400);
+  
+  const formData = await c.req.formData();
+  const file = formData.get('file') as File;
+  
+  if (!file) {
+    return c.json({ error: 'No file provided' }, 400);
+  }
+  
+  if (!file.name.endsWith('.waypoints')) {
+    return c.json({ error: 'File must have .waypoints extension' }, 400);
+  }
+  
+  const result = await droneControlService.sendMissionFile(id, file);
+  
+  if (result.error) {
+    return c.json({ error: result.error }, 400);
+  }
+  
+  return c.json(result);
+});
+
