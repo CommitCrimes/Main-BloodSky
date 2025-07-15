@@ -1,35 +1,52 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { useAuth } from '../hooks/useAuth';
 
 const RoleBasedRedirect = observer(() => {
   const navigate = useNavigate();
+  const location = useLocation();
   const auth = useAuth();
+  const [hasRedirected, setHasRedirected] = useState(false);
 
   useEffect(() => {
+    if (hasRedirected) return;
+
     if (auth.isAuthenticated && auth.user?.role) {
       const role = auth.user.role;
+      let targetPath = '';
       
       switch (role.type) {
         case 'super_admin':
-          navigate('/admin', { replace: true });
+          targetPath = '/admin';
           break;
         case 'hospital_admin':
-          navigate('/hospital', { replace: true });
+          targetPath = '/hospital';
           break;
         case 'donation_center_admin':
-          navigate('/donation-center', { replace: true });
+          targetPath = '/donation-center';
+          break;
+        case 'dronist':
+          targetPath = '/dronist';
           break;
         case 'user':
         default:
-          navigate('/dashboard', { replace: true });
+          auth.logout();
+          targetPath = '/login';
           break;
       }
+
+      if (location.pathname !== targetPath) {
+        setHasRedirected(true);
+        navigate(targetPath, { replace: true });
+      }
     } else if (!auth.isAuthenticated) {
-      navigate('/login', { replace: true });
+      if (location.pathname !== '/login') {
+        setHasRedirected(true);
+        navigate('/login', { replace: true });
+      }
     }
-  }, [auth.isAuthenticated, auth.user?.role, navigate]);
+  }, [auth.isAuthenticated, auth.user?.role, navigate, location.pathname, hasRedirected, auth]);
 
   return <div>Redirection en cours...</div>;
 });

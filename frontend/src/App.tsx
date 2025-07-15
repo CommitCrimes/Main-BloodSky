@@ -6,6 +6,7 @@ import RegisterPage from './pages/RegisterPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import HospitalDashboard from './pages/HospitalDashboard';
 import DonationCenterDashboard from './pages/DonationCenterDashboard';
+import DronistDashboard from './pages/DronistDashboard';
 import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import PrivateRoute from './components/PrivateRoute';
 import RoleBasedRedirect from './components/RoleBasedRedirect';
@@ -42,6 +43,10 @@ const App = observer(() => {
           
           <Route element={<RoleProtectedRoute allowedRoles={['donation_center_admin']} />}>
             <Route path="/donation-center" element={<DonationCenterDashboard />} />
+          </Route>
+          
+          <Route element={<RoleProtectedRoute allowedRoles={['dronist']} />}>
+            <Route path="/dronist" element={<DronistDashboard />} />
           </Route>
         </Routes>
       </Router>
