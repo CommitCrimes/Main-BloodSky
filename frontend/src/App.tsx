@@ -9,8 +9,6 @@ import HospitalDashboard from './pages/HospitalDashboard';
 import DonationCenterDashboard from './pages/DonationCenterDashboard';
 import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import PrivateRoute from './components/PrivateRoute';
-import SearchBar from './components/SearchBar';
-import SuperAdminDashboardPage from './pages/SuperAdminDashboardPage';
 import RoleBasedRedirect from './components/RoleBasedRedirect';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
 import './App.css';
@@ -27,7 +25,6 @@ const App = observer(() => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/update-password" element={<UpdatePasswordPage />} />
-          <Route path="/search" element={<SuperAdminDashboardPage/>}></Route>
           
           {/* Routes protégées */}
           <Route element={<PrivateRoute />}>

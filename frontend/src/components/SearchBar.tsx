@@ -1,42 +1,82 @@
-import { use, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../api/api';
 import Modal from './Modal';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
+
+type Centre = {
+  centerId: string;
+  centerAdress: string;
+  centerCity: string;
+  centerPostal: number;
+};
+
+type Utilisateur = {
+  user: {
+    userId: string;
+    userFirstname: string;
+    userName: string;
+    email: string;
+  };
+  email: string;
+  telNumber: string;
+  dteCreate: string;
+  userStatus: string;
+  admin: boolean;
+};
+
+type Livraison = {
+  deliveryId: number;
+  deliveryStatus: string;
+  dteDelivery: string;
+  bloodId: number;
+};
+
+type Item = Centre | Utilisateur | Livraison;
 
 const SearchBar = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [allData, setAllData] = useState([]);
+  const [allData, setAllData] = useState<Item[]>([]);
   const [categories, setCategories] = useState('centre'); // utilisateur | centre | livraison
   const [sortOption, setSortOption] = useState('');
-  const [filteredResults, setFilteredResults] = useState([]);
+  const [filteredResults, setFilteredResults] = useState<Item[]>([]);
   const [error, setError] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [isEditing, setIsEditing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
-  const [modalEdit, setModalEdit] = useState(false)
+  const [modalEdit, setModalEdit] = useState(false);
+  const [formData, setFormData] = useState<any>({});
+
 
   useEffect(() => {
     refreshData("/donation-centers"); // chargement initial
   }, []);
 
   useEffect(() => {
+    if (selectedItem) {
+      setFormData(selectedItem); // Cloner les données sélectionnées
+    }
+  }, [selectedItem]);
+
+
+  useEffect(() => {
     let sorted = [...filteredResults];
 
     if (categories === 'centre') {
-      if (sortOption === 'az') sorted.sort((a, b) => a.centerAdress?.localeCompare(b.centerAdress));
-      if (sortOption === 'za') sorted.sort((a, b) => b.centerAdress?.localeCompare(a.centerAdress));
+      if (sortOption === 'az') sorted = (sorted as Centre[]).sort((a, b) => a.centerAdress?.localeCompare(b.centerAdress));
+      if (sortOption === 'za') sorted = (sorted as Centre[]).sort((a, b) => b.centerAdress?.localeCompare(a.centerAdress));
     }
 
     if (categories === 'utilisateur') {
-      if (sortOption === 'az') sorted.sort((a, b) => a.user?.firstname?.localeCompare(b.user?.firstname));
-      if (sortOption === 'za') sorted.sort((a, b) => b.user?.firstname?.localeCompare(a.user?.firstname));
+      if (sortOption === 'az') sorted = (sorted as Utilisateur[]).sort((a, b) => a.user.userFirstname?.localeCompare(b.user.userFirstname));
+      if (sortOption === 'za') sorted = (sorted as Utilisateur[]).sort((a, b) => b.user.userFirstname?.localeCompare(a.user.userFirstname));
     }
 
     if (categories === 'livraison') {
-      if (sortOption === 'livraison-asc') sorted.sort((a, b) => a.deliveryId - b.deliveryId);
-      if (sortOption === 'livraison-desc') sorted.sort((a, b) => b.deliveryId - a.deliveryId);
-      if (sortOption === 'date-crois') sorted.sort((a, b) => new Date(a.dteDelivery).getTime() - new Date(b.dteDelivery).getTime());
-      if (sortOption === 'date-decrois') sorted.sort((a, b) => new Date(b.dteDelivery).getTime() - new Date(a.dteDelivery).getTime());
+      if (sortOption === 'livraison-asc') sorted = (sorted as Livraison[]).sort((a, b) => a.deliveryId - b.deliveryId);
+      if (sortOption === 'livraison-desc') sorted = (sorted as Livraison[]).sort((a, b) => b.deliveryId - a.deliveryId);
+      if (sortOption === 'date-crois') sorted = (sorted as Livraison[]).sort((a, b) => new Date(a.dteDelivery).getTime() - new Date(b.dteDelivery).getTime());
+      if (sortOption === 'date-decrois') sorted = (sorted as Livraison[]).sort((a, b) => new Date(b.dteDelivery).getTime() - new Date(a.dteDelivery).getTime());
     }
 
     setFilteredResults(sorted);
@@ -84,30 +124,96 @@ const SearchBar = () => {
     setFilteredResults(filtered);
   };
 
-  const editInfo = (e, item) => {
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Déterminer le bon endpoint selon la catégorie
+    let endpoint = '';
+    if (categories === 'utilisateur') endpoint = '/users/' + selectedItem.user?.userId;
+    if (categories === 'centre') endpoint = '/donation-centers/' + selectedItem.centerId;
+    if (categories === 'livraison') endpoint = '/deliveries/' + selectedItem.deliveryId;
+
+    api.put(endpoint, formData)
+      .then(() => {
+        setModalEdit(false);
+        refreshData(endpoint.split('/')[1]); // recharge les données de la bonne catégorie
+      })
+      .catch((err) => {
+        console.error("Erreur lors de l'édition :", err);
+        setError("Erreur lors de l'édition.");
+      });
+  };
+
+
+  const editInfo = (e: React.FormEvent, item: []) => {
     e.stopPropagation();
     setModalEdit(true);
     setSelectedItem(item);
     console.log(item);
-    for(let i=0; i < selectedItem.length; i++){
-     //add one input avec ses infos      
-  }
+
   }
 
-  const deleteInfo = () => {
-    //requete delete avec un id et un champs (pour savoir dans quel table supp)
+  const suppInfo = (e: React.FormEvent, item: []) => {
+    e.stopPropagation();
+    setShowConfirm(true)
+    setSelectedItem(item);
   }
 
-  let formulaire = selectedItem.map((champ) => {
-    console.log(champ);
+  const deleteInfo = (path: string, id: string) => {
+    api.delete(path + `/${id}`)
+      .then(() => {
+        setShowConfirm(false)
+        refreshData(path)
+        setError('');
+      })
+      .catch((err) => {
+        setError("Erreur lors de la suppression du user.");
+        setFilteredResults([]);
+        console.error(err);
+      });
+  }
+  let form = null;
 
-  })
+  if (selectedItem != null) {
+    form = (
+      <form
+        className="flex flex-col justify-center items-center gap-2"
+        onSubmit={(e) => handleSubmit(e)}
+      >
+        {Object.entries(formData).map(([key, value]) => (
+          <div key={key} className="flex gap-2 w-full">
+            <label className="flex items-center capitalize">{key}</label>
+            {key == 'centerId' || key == 'hospitalId' || key == 'deliveryId' ?
+              <input
+                type="text"
+                value={formData[key] ?? ''}
+                onChange={(e) =>
+                  setFormData({ ...formData, [key]: e.target.value })
+                }
+                className="input-field w-full border px-2 py-1 rounded-md"
+                disabled
+              /> :
+              <input
+                type="text"
+                value={formData[key] ?? ''}
+                onChange={(e) =>
+                  setFormData({ ...formData, [key]: e.target.value })
+                }
+                className="input-field w-full border px-2 py-1 rounded-md"
+              />
+            }
+          </div>
+        ))}
+        <button type="submit" className="btn-primary mt-4">Modifier</button>
+      </form>
+    );
+  }
+
 
   return (
-    <div className="page-container relative">
-      <div className="w-full max-w-lg px-4 mx-auto">
+    <div className='relative' >
+      <div className="w-full max-w-lg px-4 mx-auto mb-6">
         <div className="mb-12 flex flex-col items-center">
-          <img src="/blood-drop.svg" alt="BloodSky Logo" className="w-16 h-16 mb-4 logo-animation" />
           <h1 className="text-3xl font-bold text-red-600 mb-2">
             Rechercher {categories === "livraison" ? "une" : "un"} {categories}
           </h1>
@@ -173,9 +279,9 @@ const SearchBar = () => {
                 {categories === "utilisateur" && (
                   <>
                     <h3 className="text-lg font-semibold text-red-700">
-                      {item.user?.userFirstname} {item.user?.userName}
+                      {item.userFirstname} {item.userName}
                     </h3>
-                    <p className="text-sm text-gray-500">Email : {item.user?.email}</p>
+                    <p className="text-sm text-gray-500">Email : {item.email}</p>
                   </>
                 )}
                 {categories === "centre" && (
@@ -189,15 +295,15 @@ const SearchBar = () => {
                     <h3 className="text-lg font-semibold text-red-700">Livraison #{item.deliveryId}</h3>
                     <p className="text-sm text-gray-500">Status : {item.deliveryStatus}</p>
                     <p className='text-sm text-red-600'>
-                      Date : {new Date(selectedItem.dteDelivery).toLocaleDateString()}</p>
+                      Date : {new Date(item.dteDelivery).toLocaleDateString()}</p>
                   </>
                 )}
                 <div className='absolute -top-4 right-0 flex gap-2'>
                   <div className='bg-gray-400 p-1 rounded-xl'>
-                    <button className='text-white' onClick={(e) => { editInfo(e, item) }}>Edit</button> {/* ON click modal en mode edition*/}
+                    <button className='text-white' onClick={(e) => { editInfo(e, item) }}><EditIcon/></button> {/* ON click modal en mode edition*/}
                   </div>
                   <div className='bg-red-950 p-1 rounded-xl'>
-                    <button className='text-white' onClick={() => { setShowConfirm(true) }}>Supp</button> {/* ON click confirmation de la supp + supp si oui*/}
+                    <button className='text-white' onClick={(e) => { suppInfo(e, item) }}><DeleteIcon/></button> {/* ON click confirmation de la supp + supp si oui*/}
                   </div>
                 </div>
               </div>
@@ -208,30 +314,29 @@ const SearchBar = () => {
 
       {/* Boutons de catégorie */}
       <div className="flex flex-col gap-2 absolute right-0 top-10">
-        <button className="btn-primary" onClick={() => { setCategories("utilisateur"); refreshData("/users-donation-centers"); }}>
+        <button className="btn-primary" onClick={() => { setCategories("utilisateur"); refreshData("/users"); }}>
           Utilisateurs
         </button>
         <button className="btn-primary" onClick={() => { setCategories("centre"); refreshData("/donation-centers"); }}>
           Centres
         </button>
-        <button className="btn-primary" onClick={() => { setCategories("livraison"); refreshData("/delivery"); }}>
+        <button className="btn-primary" onClick={() => { setCategories("livraison"); refreshData("/deliveries"); }}>
           Livraisons
         </button>
       </div>
 
-      {/* Modal Edition d'information (creation & edition) */}
+      {/* Modal Edition d'information (edition) */}
       <Modal isOpen={modalEdit} onClose={() => setModalEdit(false)}>
-        {isEditing ? <>
-
-        </> : 
-        <></>}
+        {form}
       </Modal>
 
       {/* Modal suppression d'information*/}
       <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)}>
-        <p>Etes vous sur de vouloir supprimer ces informations</p>
-        <button type="button" onClick={() => deleteInfo()}>Oui</button>
-        <button type="button" onClick={() => setShowConfirm(false)}>Non</button>
+        <p className='pb-2'>Etes vous sur de vouloir supprimer ces informations</p>
+        <div className='flex gap-2'>
+          <button type="button" className='btn-primary' onClick={() => deleteInfo("/donation-centers", selectedItem.centerId)}>Oui</button>
+          <button type="button" className='btn-primary' onClick={() => setShowConfirm(false)}>Non</button>
+        </div>
       </Modal>
 
       {/* Modal lecture d'information*/}
@@ -240,15 +345,15 @@ const SearchBar = () => {
           <div className='relative'>
             {categories === "utilisateur" && (
               <>
-                <p className='absolute bg-red-500 p-2 text-white rounded-xl -left-10 -top-10'>Id du user : {selectedItem.user?.userId}</p>
+                <p className='absolute bg-red-500 p-2 text-white rounded-xl -left-10 -top-10'>Id du user : {selectedItem.userId}</p>
                 <h2 className="text-xl font-semibold text-red-700">
                   {selectedItem.user?.userFirstname} {selectedItem.user?.userName}
                 </h2>
-                <p>Email : {selectedItem.user?.email}</p>
-                <p>Role : {selectedItem.user?.admin == true ? <>Admin</> : <>User</>}</p>
-                <p>Tel : {selectedItem.user?.telNumber}</p>
-                <p>Date de creation : {new Date(selectedItem.user?.dteCreate).toLocaleDateString()}</p>
-                <p>Status du user : {selectedItem.user?.userStatus}</p>
+                <p>Email : {selectedItem.email}</p>
+                <p>Role : {selectedItem.admin == true ? <>Admin</> : <>User</>}</p>
+                <p>Tel : {selectedItem.telNumber}</p>
+                <p>Date de creation : {new Date(selectedItem.dteCreate).toLocaleDateString()}</p>
+                <p>Status du user : {selectedItem.userStatus}</p>
 
               </>
             )}
