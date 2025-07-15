@@ -67,6 +67,7 @@ interface DashboardConfig {
   profileManagementComponent?: ReactNode;
   historyManagementComponent?: ReactNode;
   orderBloodComponent?: ReactNode;
+  customDashboardComponent?: ReactNode | ((setActiveView: (view: string) => void) => ReactNode);
   menuItems?: Array<{
     id: string;
     label: string;
@@ -917,7 +918,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
               {config.orderBloodComponent}
             </Box>
           ) : activeView === 'dashboard' ? (
-            renderDashboardContent()
+            config.customDashboardComponent ? (
+              <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+                {typeof config.customDashboardComponent === 'function' 
+                  ? config.customDashboardComponent(setActiveView) 
+                  : config.customDashboardComponent}
+              </Box>
+            ) : (
+              renderDashboardContent()
+            )
           ) : (
             <Box sx={{ 
               backgroundColor: 'background.default', 
