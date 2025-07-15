@@ -16,6 +16,7 @@ import { bloodSwagger } from '@/swagger/blood-swagger';
 import { userSwagger } from '@/swagger/user-swagger';
 import { hospitalSwagger } from '@/swagger/hospital-swagger';
 import { droneSwagger } from '@/swagger/drone-swagger';
+import { donation_centerSwagger } from '@/swagger/donation_center-swagger';
 
 export const createRouter = () => {
   const api = new Hono();
@@ -663,7 +664,8 @@ export const createRouter = () => {
       ...bloodSwagger.paths,
       ...userSwagger.paths,
       ...hospitalSwagger.paths,
-      ...droneSwagger.paths
+      ...droneSwagger.paths,
+      ...donation_centerSwagger.paths
     }
   }));
 
