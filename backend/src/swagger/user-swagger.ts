@@ -59,6 +59,7 @@ export const userSwagger: Record<string, any> = {
           content: {
             "application/json": {
               example: {
+                userId: 3,
                 email: "user@example.com",
                 password: "hashed_password",
                 userName: "User Name",
@@ -166,7 +167,8 @@ export const userSwagger: Record<string, any> = {
         },
       },
       delete: {
-        summary: "Delete user by ID and cascade delete from related user tables",
+        summary:
+          "Delete user by ID and cascade delete from related user tables",
         tags: ["User"],
         parameters: [
           {
@@ -644,6 +646,15 @@ export const userSwagger: Record<string, any> = {
       get: {
         summary: "Get users from a donation center",
         tags: ["User"],
+        parameters: [
+          {
+            name: "centerId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+            example: 2,
+          },
+        ],
         responses: {
           "200": {
             description: "List of users in this donation center",
@@ -673,6 +684,15 @@ export const userSwagger: Record<string, any> = {
       get: {
         summary: "Get admin users from a donation center",
         tags: ["User"],
+        parameters: [
+          {
+            name: "centerId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+            example: 2,
+          },
+        ],
         responses: {
           "200": {
             description: "List of admin users in this donation center",
@@ -702,6 +722,15 @@ export const userSwagger: Record<string, any> = {
       get: {
         summary: "Get users from a hospital",
         tags: ["User"],
+        parameters: [
+          {
+            name: "hospitalId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+            example: 2
+          }
+        ],
         responses: {
           "200": {
             description: "List of users in this hospital",
@@ -731,6 +760,15 @@ export const userSwagger: Record<string, any> = {
       get: {
         summary: "Get admin users from a hospital",
         tags: ["User"],
+        parameters: [
+          {
+            name: "hospitalId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+            example: 2
+          }
+        ],
         responses: {
           "200": {
             description: "List of admin users in this hospital",
@@ -760,6 +798,15 @@ export const userSwagger: Record<string, any> = {
       get: {
         summary: "Get deliveries participation associated with user Id",
         tags: ["User"],
+        parameters: [
+          {
+            name: "userId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+            example: 3
+          }
+        ],
         responses: {
           "200": {
             description: "List of deliveries participation with this user Id",
