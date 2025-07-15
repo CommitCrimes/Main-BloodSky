@@ -1,6 +1,9 @@
 import { useAuth } from '@/hooks/useAuth';
 import coeurImage from '@/assets/coeur_dashboard.png';
 import HospitalUserManagement from '@/components/HospitalUserManagement';
+import ProfileManagement from '@/components/ProfileManagement';
+import HistoryManagement from '@/components/HistoryManagement';
+import OrderBlood from '@/components/OrderBlood';
 import DashboardLayout from '@/components/DashboardLayout';
 
 const HospitalDashboard = () => {
@@ -17,6 +20,9 @@ const HospitalDashboard = () => {
     userManagementComponent: auth.user?.role?.admin && auth.user?.role?.hospitalId ? (
       <HospitalUserManagement hospitalId={auth.user.role.hospitalId} />
     ) : undefined,
+    profileManagementComponent: <ProfileManagement />,
+    historyManagementComponent: <HistoryManagement />,
+    orderBloodComponent: <OrderBlood />,
   };
 
   return <DashboardLayout config={dashboardConfig} />;

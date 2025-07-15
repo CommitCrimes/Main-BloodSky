@@ -1,14 +1,12 @@
-import { migrate } from 'drizzle-orm/node-postgres/migrator';
-import { db } from './db';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { Pool } from 'pg';
+import * as dotenv from 'dotenv';
 
-console.log('Running migrations...');
+dotenv.config();
 
-migrate(db, { migrationsFolder: './migrations' })
-  .then(() => {
-    console.log('Migrations completed successfully');
-    process.exit(0);
-  })
-  .catch((err) => {
-    console.error('Migration failed', err);
-    process.exit(1);
-  });
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
+
+export const db = drizzle(pool);

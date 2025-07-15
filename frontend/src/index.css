@@ -6,6 +6,44 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Ici tu ajoutes tes variables et utilitaires personnalisés */
+@layer base {
+  :root {
+    --background: 210 100% 4%;
+    --foreground: 210 20% 95%;
+    --card: 210 50% 8%;
+    --card-foreground: 210 20% 95%;
+    --primary: 195 100% 50%;
+    --primary-foreground: 210 100% 4%;
+    --accent: 180 100% 50%;
+    --accent-foreground: 210 100% 4%;
+    /* ... toutes les autres variables ... */
+  }
+}
+
+@layer utilities {
+  .glow-border {
+    border: 2.5px solid hsl(195 100% 50% / 0.4);
+    box-shadow: 0 0 10px hsl(195 100% 50% / 0.12);
+    transition: all 0.3s cubic-bezier(.4,2,.6,1);
+  }
+  .glow-border:hover {
+    border-color: hsl(195 100% 50% / 0.9);
+    box-shadow: 0 0 32px 4px hsl(195 100% 50% / 0.25);
+  }
+  .glow-border:focus-within {
+    border-color: hsl(195 100% 50%);
+    box-shadow: 0 0 40px 6px hsl(195 100% 50% / 0.35);
+  }
+  .cyber-grid {
+    background-image: 
+      linear-gradient(hsla(0, 84%, 60%, 0.155) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(0 84% 60% / 0.155) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+
+}
+
 :root {
   --primary-color: #e53e3e;
   --primary-dark: #c53030;
@@ -21,7 +59,7 @@ html, body, #root {
   height: 100%;
   width: 100%;
   box-sizing: border-box;
-  background-color: #f9fafb;
+  background-color: #f7f6fb;
   color: var(--text-color);
   font-family: var(--font-share-tech);
   -webkit-font-smoothing: antialiased;

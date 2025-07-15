@@ -3,10 +3,10 @@ import { observer } from 'mobx-react-lite';
 import AuthProvider from './components/AuthProvider';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import DashboardPage from './pages/DashboardPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import HospitalDashboard from './pages/HospitalDashboard';
 import DonationCenterDashboard from './pages/DonationCenterDashboard';
+import DronistDashboard from './pages/DronistDashboard';
 import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import PrivateRoute from './components/PrivateRoute';
 import RoleBasedRedirect from './components/RoleBasedRedirect';
@@ -28,7 +28,6 @@ const App = observer(() => {
           
           {/* Routes protégées */}
           <Route element={<PrivateRoute />}>
-            <Route path="/dashboard" element={<DashboardPage />} />
             {/* Route de redirection basée sur le rôle pour utilisateurs connectés */}
             <Route path="/home" element={<RoleBasedRedirect />} />
           </Route>
@@ -44,6 +43,10 @@ const App = observer(() => {
           
           <Route element={<RoleProtectedRoute allowedRoles={['donation_center_admin']} />}>
             <Route path="/donation-center" element={<DonationCenterDashboard />} />
+          </Route>
+          
+          <Route element={<RoleProtectedRoute allowedRoles={['dronist']} />}>
+            <Route path="/dronist" element={<DronistDashboard />} />
           </Route>
         </Routes>
       </Router>
