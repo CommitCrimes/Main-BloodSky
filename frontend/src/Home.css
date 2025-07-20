@@ -292,3 +292,19 @@ h1 {
     gap: 2.5rem;
 }
 
+
+button {
+    position: absolute;
+    margin-top: -38rem;
+    margin-left: 83rem;
+    padding: 10px 28px;
+    border: 2px solid #fff;
+    border-radius: 30px;
+    background: transparent;
+    color: #fff;
+    font-weight: 600;
+    font-size: 18;
+    cursor: pointer;
+    font-family: 'Share Tech', sans-serif;
+    transition: background 0.2s, color 0.2s;
+}

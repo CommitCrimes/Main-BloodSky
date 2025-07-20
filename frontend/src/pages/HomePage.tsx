@@ -15,20 +15,45 @@ import heartIcon from '../assets/icon-home/validation.svg';
 import crossIcon from '../assets/icon-home/box.svg';
 import timeIcon from '../assets/icon-home/fly.svg';
 import bloodIcon from '../assets/icon-home/heart1.svg';
+import { useNavigate } from 'react-router-dom';
 
 
-const Section1 = () => (
-  <section className="section1 section1-custom" style={{ maxHeight: '100vh', padding: '2rem', position: 'relative', overflow: 'hidden' }}>
-    {/* Texte 1 derrière l'image */}
-    <span className="avenir-text">L'AVENIR</span>
-    {/* Image du drone */}
-    <img src={droneImg} alt="drone" className="drone-img" />
-    {/* Texte 2 devant l'image, à gauche */}
-    <span className="avec-text">AVEC</span>
-    {/* Texte 3 devant l'image, à droite, en rouge */}
-    <span className="bloodsky-text">BLOODSKY</span>
-  </section>
-);
+const Section1 = () => {
+  const navigate = useNavigate();
+
+  return (
+    <section
+      className="section1 section1-custom"
+      style={{
+        maxHeight: '100vh',
+        padding: '2rem',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Bouton Se connecter */}
+      <button
+        onClick={() => navigate('/login')}
+        onMouseOver={e => {
+          (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.12)';
+        }}
+        onMouseOut={e => {
+          (e.currentTarget as HTMLButtonElement).style.background = 'transparent';
+        }}
+      >
+        Se connecter
+      </button>
+      {/* Texte 1 derrière l'image */}
+      <span className="avenir-text">L'AVENIR</span>
+      {/* Image du drone */}
+      <img src={droneImg} alt="drone" className="drone-img" />
+      {/* Texte 2 devant l'image, à gauche */}
+      <span className="avec-text">AVEC</span>
+      {/* Texte 3 devant l'image, à droite, en rouge */}
+      <span className="bloodsky-text">BLOODSKY</span>
+    </section>
+  );
+};
 const Section2 = () => (
   <section className="section2 section2-custom">
       <h1 className="section2-title">L’avenir de la logistique médicale,<br/>
