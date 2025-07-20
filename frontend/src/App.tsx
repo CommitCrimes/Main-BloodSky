@@ -14,6 +14,8 @@ import RoleProtectedRoute from './components/RoleProtectedRoute';
 import HomePage from './pages/HomePage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsAndConditions from './pages/ TermsAndConditions.tsx';
+import FAQ from './pages/FAQ.tsx';
+
 import LegalNotice from './pages/LegalNotice.tsx';
 
 import './App.css';
@@ -33,6 +35,7 @@ const App = observer(() => {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-condition" element={<TermsAndConditions />} />
           <Route path="/legal-notice" element={<LegalNotice />} />
+          <Route path="/faq" element={<FAQ />} />
 
 
           {/* Routes protégées */}

@@ -14,7 +14,9 @@ const Footer: React.FC = () => {
           <div>        <Link to="/" style={{ color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>
               Accueil
           </Link></div>
-          <div style={{ marginTop: 8 }}>FAQ</div>
+          <div style={{ marginTop: 8 }}><Link to="/faq" style={{ color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>
+              FAQ
+          </Link></div>
         </div>
         {/* Colonne droite */}
         <div style={{ minWidth: 120, textAlign: 'right', marginBottom: '1rem' }}>
