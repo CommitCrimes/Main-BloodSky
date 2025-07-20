@@ -13,6 +13,7 @@ import RoleBasedRedirect from './components/RoleBasedRedirect';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
 import HomePage from './pages/HomePage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsAndConditions from './pages/ TermsAndConditions.tsx';
 import './App.css';
 
 const App = observer(() => {
@@ -28,6 +29,7 @@ const App = observer(() => {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/update-password" element={<UpdatePasswordPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-condition" element={<TermsAndConditions />} />
           
           {/* Routes protégées */}
           <Route element={<PrivateRoute />}>

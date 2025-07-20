@@ -25,7 +25,9 @@ const Footer: React.FC = () => {
       <div style={{ borderTop: '1px solid #ddd', margin: '1rem 0 0.5rem 0', paddingTop: '1rem', textAlign: 'center', fontSize: '0.95rem' }}>
         <Link to="/privacy-policy" style={{ color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>
           Politique de protection des données
-        </Link> – Politique de gestion des cookies
+        </Link> – <Link to="/terms-condition" style={{ color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>
+          Conditions Générales d'Utilisation
+      </Link>
       </div>
       <div style={{ textAlign: 'center', fontSize: '0.9rem', color: '#888', marginTop: 4 }}>
         © 2025 BloodSky. Tous droits réservés.
