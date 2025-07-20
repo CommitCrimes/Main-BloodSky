@@ -10,7 +10,7 @@ export interface Profile {
   telNumber?: number;
   userStatus: 'active' | 'suspended' | 'pending';
   role?: {
-    type: 'super_admin' | 'hospital_admin' | 'donation_center_admin' | 'user';
+    type: 'super_admin' | 'hospital_admin' | 'donation_center_admin' | 'dronist' | 'user';
     hospitalId?: number;
     centerId?: number;
     hospitalName?: string;

@@ -6,10 +6,13 @@ import RegisterPage from './pages/RegisterPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import HospitalDashboard from './pages/HospitalDashboard';
 import DonationCenterDashboard from './pages/DonationCenterDashboard';
+import DronistDashboard from './pages/DronistDashboard';
 import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import PrivateRoute from './components/PrivateRoute';
 import RoleBasedRedirect from './components/RoleBasedRedirect';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
+import HomePage from './pages/HomePage';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import './App.css';
 
 const App = observer(() => {
@@ -18,12 +21,13 @@ const App = observer(() => {
       <Router>
         <Routes>
           {/* Page d'accueil publique - redirige vers login */}
-          <Route path="/" element={<LoginPage />} />
+          <Route path="/" element={<HomePage />} />
           
           {/* Routes publiques */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/update-password" element={<UpdatePasswordPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           
           {/* Routes protégées */}
           <Route element={<PrivateRoute />}>
@@ -42,6 +46,10 @@ const App = observer(() => {
           
           <Route element={<RoleProtectedRoute allowedRoles={['donation_center_admin']} />}>
             <Route path="/donation-center" element={<DonationCenterDashboard />} />
+          </Route>
+          
+          <Route element={<RoleProtectedRoute allowedRoles={['dronist']} />}>
+            <Route path="/dronist" element={<DronistDashboard />} />
           </Route>
         </Routes>
       </Router>
