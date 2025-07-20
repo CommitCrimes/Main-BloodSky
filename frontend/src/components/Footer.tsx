@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer: React.FC = () => {
   return (
@@ -10,7 +11,9 @@ const Footer: React.FC = () => {
         </div>
         {/* Colonne centre */}
         <div style={{ minWidth: 120, marginBottom: '1rem' }}>
-          <div>Accueil</div>
+          <div>        <Link to="/" style={{ color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>
+              Accueil
+          </Link></div>
           <div style={{ marginTop: 8 }}>FAQ</div>
         </div>
         {/* Colonne droite */}
@@ -20,7 +23,9 @@ const Footer: React.FC = () => {
         </div>
       </div>
       <div style={{ borderTop: '1px solid #ddd', margin: '1rem 0 0.5rem 0', paddingTop: '1rem', textAlign: 'center', fontSize: '0.95rem' }}>
-        Politique de protection des données – Politique de gestion des cookies
+        <Link to="/privacy-policy" style={{ color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>
+          Politique de protection des données
+        </Link> – Politique de gestion des cookies
       </div>
       <div style={{ textAlign: 'center', fontSize: '0.9rem', color: '#888', marginTop: 4 }}>
         © 2025 BloodSky. Tous droits réservés.

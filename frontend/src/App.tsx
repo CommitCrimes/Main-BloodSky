@@ -12,6 +12,7 @@ import PrivateRoute from './components/PrivateRoute';
 import RoleBasedRedirect from './components/RoleBasedRedirect';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
 import HomePage from './pages/HomePage';
+import PrivacyPolicy from './pages/PrivacyPolicy';
 import './App.css';
 
 const App = observer(() => {
@@ -26,6 +27,7 @@ const App = observer(() => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/update-password" element={<UpdatePasswordPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           
           {/* Routes protégées */}
           <Route element={<PrivateRoute />}>
