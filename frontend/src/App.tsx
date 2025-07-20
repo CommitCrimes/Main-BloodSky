@@ -14,6 +14,8 @@ import RoleProtectedRoute from './components/RoleProtectedRoute';
 import HomePage from './pages/HomePage';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsAndConditions from './pages/ TermsAndConditions.tsx';
+import LegalNotice from './pages/LegalNotice.tsx';
+
 import './App.css';
 
 const App = observer(() => {
@@ -30,7 +32,9 @@ const App = observer(() => {
           <Route path="/update-password" element={<UpdatePasswordPage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-condition" element={<TermsAndConditions />} />
-          
+          <Route path="/legal-notice" element={<LegalNotice />} />
+
+
           {/* Routes protégées */}
           <Route element={<PrivateRoute />}>
             {/* Route de redirection basée sur le rôle pour utilisateurs connectés */}

@@ -19,7 +19,9 @@ const Footer: React.FC = () => {
         {/* Colonne droite */}
         <div style={{ minWidth: 120, textAlign: 'right', marginBottom: '1rem' }}>
           <div>Contact</div>
-          <div style={{ marginTop: 8 }}>Mention légale</div>
+          <div style={{ marginTop: 8 }}><Link to="/legal-notice" style={{ color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>
+              Mention Légale
+          </Link></div>
         </div>
       </div>
       <div style={{ borderTop: '1px solid #ddd', margin: '1rem 0 0.5rem 0', paddingTop: '1rem', textAlign: 'center', fontSize: '0.95rem' }}>
