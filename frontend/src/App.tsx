@@ -11,6 +11,7 @@ import UpdatePasswordPage from './pages/UpdatePasswordPage';
 import PrivateRoute from './components/PrivateRoute';
 import RoleBasedRedirect from './components/RoleBasedRedirect';
 import RoleProtectedRoute from './components/RoleProtectedRoute';
+import HomePage from './pages/HomePage';
 import './App.css';
 
 const App = observer(() => {
@@ -19,7 +20,7 @@ const App = observer(() => {
       <Router>
         <Routes>
           {/* Page d'accueil publique - redirige vers login */}
-          <Route path="/" element={<LoginPage />} />
+          <Route path="/" element={<HomePage />} />
           
           {/* Routes publiques */}
           <Route path="/login" element={<LoginPage />} />
