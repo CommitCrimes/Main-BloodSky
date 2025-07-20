@@ -10,6 +10,11 @@ import feature3 from '../assets/icon-home/heart.png';
 import feature4 from '../assets/icon-home/time.png';
 import feature5 from '../assets/icon-home/blood.png';
 import feature6 from '../assets/icon-home/center.png';
+import boardIcon from '../assets/icon-home/add.svg';
+import heartIcon from '../assets/icon-home/validation.svg';
+import crossIcon from '../assets/icon-home/box.svg';
+import timeIcon from '../assets/icon-home/fly.svg';
+import bloodIcon from '../assets/icon-home/heart1.svg';
 
 
 const Section1 = () => (
@@ -113,7 +118,93 @@ const Section4 = () => (
     </div>
   </section>
 );
-const Section5 = () => <section className="section5" style={{minHeight: '30vh', padding: '2rem'}}>Section 5</section>;
+const Section5 = () => (
+  <section className="section5-howitworks" style={{ padding: '3rem 0', background: 'linear-gradient(180deg, #fff 60%, #f9f6fa 100%)' }}>
+    <h1
+      style={{
+        textAlign: 'center',
+        fontSize: '65px',
+        fontWeight: 800,
+        background: 'linear-gradient(90deg,rgb(90, 183, 249),rgb(236, 15, 89))',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+        backgroundClip: 'text',
+        color: 'transparent',  
+        marginBottom: '1rem',
+        lineHeight: 1.1,
+      }}
+    >
+      Comment ça fonctionne
+    </h1>
+    <div style={{ textAlign: 'center', color: '#7b7b93', fontSize: '1.3rem', marginBottom: '3rem' }}>
+      Un processus sécurisé et efficace pour le transport de produits sanguins par drone
+    </div>
+    <div
+      style={{
+        display: 'flex',
+        justifyContent: 'center',
+        gap: 20,
+        flexWrap: 'nowrap',
+        overflowX: 'auto',
+        overflow: 'visible',
+      }}
+    >
+      {/* Étape 1 */}
+      <div className="howitworks-step" style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px #e6e6f7', padding: 32, width: 220, position: 'relative', minHeight: 300 }}>
+        <div style={{
+          position: 'absolute', top: -24, left: 24, background: '#6a8afd', color: '#fff', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 22, border: '4px solid #e6e6f7'
+        }}>1</div>
+        <img src={boardIcon} alt="Demande" style={{ width: 54, height: 54, margin: '32px auto 16px', display: 'block', background: '#f1f5ff', borderRadius: 16 }} />
+        <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 8, textAlign: 'center' }}>Demande initiale</div>
+        <div style={{ color: '#7b7b93', textAlign: 'center' }}>Le centre de santé ou la banque de sang fait une demande</div>
+      </div>
+      {/* Flèche */}
+      <div style={{ alignSelf: 'center', fontSize: 32, color: '#bdbdf7' }}>→</div>
+      {/* Étape 2 */}
+      <div className="howitworks-step" style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px #e6e6f7', padding: 32, width: 220, position: 'relative', minHeight: 300 }}>
+        <div style={{
+          position: 'absolute', top: -24, left: 24, background: '#6a8afd', color: '#fff', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 22, border: '4px solid #e6e6f7'
+        }}>2</div>
+        <img src={heartIcon} alt="Validation" style={{ width: 54, height: 54, margin: '32px auto 16px', display: 'block', background: '#eaffea', borderRadius: 16 }} />
+        <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 8, textAlign: 'center' }}>Validation</div>
+        <div style={{ color: '#7b7b93', textAlign: 'center' }}>Une demande de validation est envoyée à la banque de sang expéditeur et le droniste</div>
+      </div>
+      {/* Flèche */}
+      <div style={{ alignSelf: 'center', fontSize: 32, color: '#bdbdf7' }}>→</div>
+      {/* Étape 3 */}
+      <div className="howitworks-step" style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px #e6e6f7', padding: 32, width: 220, position: 'relative', minHeight: 300 }}>
+        <div style={{
+          position: 'absolute', top: -24, left: 24, background: '#6a8afd', color: '#fff', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 22, border: '4px solid #e6e6f7'
+        }}>3</div>
+        <img src={crossIcon} alt="Préparation" style={{ width: 54, height: 54, margin: '32px auto 16px', display: 'block', background: '#fff0f0', borderRadius: 16 }} />
+        <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 8, textAlign: 'center' }}>Préparation</div>
+        <div style={{ color: '#7b7b93', textAlign: 'center' }}>La banque de sang prépare et scanne la poche</div>
+      </div>
+      {/* Flèche */}
+      <div style={{ alignSelf: 'center', fontSize: 32, color: '#bdbdf7' }}>→</div>
+      {/* Étape 4 */}
+      <div className="howitworks-step" style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px #e6e6f7', padding: 32, width: 220, position: 'relative', minHeight: 300 }}>
+        <div style={{
+          position: 'absolute', top: -24, left: 24, background: '#6a8afd', color: '#fff', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 22, border: '4px solid #e6e6f7'
+        }}>4</div>
+        <img src={timeIcon} alt="Décollage" style={{ width: 54, height: 54, margin: '32px auto 16px', display: 'block', background: '#f1f5ff', borderRadius: 16 }} />
+        <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 8, textAlign: 'center' }}>Décollage</div>
+        <div style={{ color: '#7b7b93', textAlign: 'center' }}>Un drone est déclenché</div>
+      </div>
+      {/* Flèche */}
+      <div style={{ alignSelf: 'center', fontSize: 32, color: '#bdbdf7' }}>→</div>
+      {/* Étape 5 */}
+      <div className="howitworks-step" style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px #e6e6f7', padding: 32, width: 220, position: 'relative', minHeight: 300 }}>
+        <div style={{
+          position: 'absolute', top: -24, left: 24, background: '#6a8afd', color: '#fff', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 22, border: '4px solid #e6e6f7'
+        }}>5</div>
+        <img src={bloodIcon} alt="Livraison" style={{ width: 54, height: 54, margin: '32px auto 16px', display: 'block', background: '#fff0f0', borderRadius: 16 }} />
+        <div style={{ fontWeight: 700, fontSize: 22, marginBottom: 8, textAlign: 'center' }}>Livraison</div>
+        <div style={{ color: '#7b7b93', textAlign: 'center' }}>Plus qu'à récupérer la poche de sang à l'arrivée !</div>
+      </div>
+    </div>
+  </section>
+);
 
 const HomePage: React.FC = () => {
     return (
