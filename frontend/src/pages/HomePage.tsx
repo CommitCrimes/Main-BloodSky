@@ -74,38 +74,38 @@ const Section4 = () => (
     <h1 className="section4-title">Explorez nos fonctionnalités clés</h1>
     <div className="section4-content-blur">
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-        <div className="section4-features-grid">
+        <div className="section4-features-grid" style={{ width: '100%' }}>
           {/* Colonne 1 */}
-          <div className="section4-feature-col">
-            <div className="section4-feature-card" style={{ height: 181, width: 387, maxWidth: '100%' }}>
-              <img src={feature1} alt="Planification de livraisons" className="section4-feature-icon" style={{ width: 70, height: 70 }} />
-              <div className="section4-feature-text">Planification de livraisons</div>
+          <div className="section4-feature-col" style={{ justifyContent: 'flex-end', height: 600 }}>
+            <div className="section4-feature-card" style={{ height: 161, width: 337, maxWidth: '100%' }}>
+              <img src={feature1} alt="Livraisons en urgence" className="section4-feature-icon" style={{ width: 70, height: 70 }} />
+              <div className="section4-feature-text" style={{ fontSize: 28, lineHeight: 1.3 }}>Livraisons en urgence</div>
             </div>
-            <div className="section4-feature-card" style={{ height: 264, width: 293, maxWidth: '100%' }}>
+            <div className="section4-feature-card" style={{ height: 254, width: 293, maxWidth: '100%' }}>
               <img src={feature2} alt="Traçabilité des poches de sang" className="section4-feature-icon" style={{ width: 85, height: 85 }} />
-              <div className="section4-feature-text">Traçabilité des poches de sang</div>
+              <div className="section4-feature-text" style={{ fontSize: 36, lineHeight: 1.3, marginTop: 15 }}>Traçabilité des poches de sang</div>
             </div>
           </div>
           {/* Colonne 2 */}
-          <div className="section4-feature-col">
+          <div className="section4-feature-col" style={{ justifyContent: 'flex-end', height: 600 }}>
             <div className="section4-feature-card" style={{ height: 316, width: 422, maxWidth: '100%' }}>
-              <img src={feature3} alt="Demande de livraison en ligne" className="section4-feature-icon" style={{ width: 150, height: 150 }} />
-              <div className="section4-feature-text">Demande de livraison en ligne</div>
+              <img src={feature3} alt="Demande de livraison en ligne" className="section4-feature-icon" style={{ width: 140, height: 140 }} />
+              <div className="section4-feature-text" style={{ fontSize: 48, lineHeight: 1.3 }}>Demande de livraison en ligne</div>
             </div>
-            <div className="section4-feature-card" style={{ height: 251, width: 296, maxWidth: '100%' }}>
+            <div className="section4-feature-card" style={{ height: 231, width: 296, maxWidth: '100%' }}>
               <img src={feature4} alt="Livraison rapide par drone" className="section4-feature-icon" style={{ width: 85, height: 85 }} />
-              <div className="section4-feature-text">Livraison rapide par drone</div>
+              <div className="section4-feature-text" style={{ fontSize: 32, lineHeight: 1.3, marginTop: 15 }}>Livraison rapide par drone</div>
             </div>
           </div>
           {/* Colonne 3 */}
-          <div className="section4-feature-col">
+          <div className="section4-feature-col" style={{ justifyContent: 'flex-end', height: 600 }}>
             <div className="section4-feature-card" style={{ height: 244, width: 355, maxWidth: '100%' }}>
               <img src={feature5} alt="Suivi en temps réel des colis" className="section4-feature-icon" style={{ width: 101, height: 101 }} />
-              <div className="section4-feature-text">Suivi en temps réel des colis</div>
+              <div className="section4-feature-text" style={{ fontSize: 34, lineHeight: 1.3 }}>Suivi en temps réel des colis</div>
             </div>
-            <div className="section4-feature-card" style={{ height: 302, width: 355, maxWidth: '100%' }}>
+            <div className="section4-feature-card" style={{ height: 292, width: 355, maxWidth: '100%' }}>
               <img src={feature6} alt="Sécurité et fiabilité des données" className="section4-feature-icon" style={{ width: 119, height: 119 }} />
-              <div className="section4-feature-text">Sécurité et fiabilité des données</div>
+              <div className="section4-feature-text" style={{ fontSize: 37, lineHeight: 1.3 }}>Sécurité et fiabilité des données</div>
             </div>
           </div>
         </div>
