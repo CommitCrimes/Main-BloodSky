@@ -183,7 +183,7 @@ export const hospitalSwagger: Record<string, any> = {
         },
       },
     },
-    "hospital/postal/{hospital_postal}": {
+    "/hospital/postal/{hospital_postal}": {
       get: {
         summary: "Get hospital by postal code",
         tags: ["Hospital"],

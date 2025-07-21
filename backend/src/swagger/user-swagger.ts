@@ -1,4 +1,3 @@
-import { password } from "bun";
 
 export const userSwagger: Record<string, any> = {
   paths: {
@@ -78,7 +77,7 @@ export const userSwagger: Record<string, any> = {
                   userId: 3,
                   email: "user@example.com",
                   password: "hashed_password",
-                  userName: "User Name",
+                    userName: "User Name",
                   userFirstname: "User Firstname",
                   dteCreate: "2023-10-03T12:00:00Z",
                   telNumber: 123456789,
@@ -122,7 +121,7 @@ export const userSwagger: Record<string, any> = {
                   userId: 1,
                   email: "user@example.com",
                   password: "hashed_password",
-                  userName: "User Name",
+                    userName: "User Name",
                   userFirstname: "User Firstname",
                   dteCreate: "2023-10-03T12:00:00Z",
                   telNumber: 123456789,
@@ -186,7 +185,7 @@ export const userSwagger: Record<string, any> = {
                   userId: 1,
                   email: "userUpdated@example.com",
                   password: "hashed_password",
-                  userName: "User Updated Name",
+                    userName: "User Updated Name",
                   userFirstname: "User Updated Firstname",
                   dteCreate: "2023-10-03T12:00:00Z",
                   telNumber: 987654321,
@@ -315,7 +314,6 @@ export const userSwagger: Record<string, any> = {
                 user: {
                   userId: 3,
                   email: "donation-center@bloodsky.fr",
-                  password: "mot de passe haché",
                   userName: "donation",
                   userFirstname: "center",
                   telNumber: null,
@@ -348,7 +346,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "users/dronist": {
+    "/users/dronist": {
       get: {
         summary: "Get all dronists users",
         tags: ["User"],
@@ -407,7 +405,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "users/support-center": {
+    "/users/support-center": {
       get: {
         summary: "Get all support centers users",
         tags: ["User"],
@@ -453,7 +451,7 @@ export const userSwagger: Record<string, any> = {
         },
         responses: {
           "201": {
-            description: "Dupport center user created successfully",
+            description: "Support center user created successfully",
             content: {
               "application/json": {
                 example: {
@@ -469,7 +467,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "users/hospital": {
+    "/users/hospital": {
       get: {
         summary: "Get all hospitals users",
         tags: ["User"],
@@ -544,7 +542,6 @@ export const userSwagger: Record<string, any> = {
                 user: {
                   userId: 10,
                   email: "hospital@bloodsky.fr",
-                  password: "mot de passe haché",
                   userName: "hospital",
                   userFirstname: "latipsoh",
                   telNumber: null,
@@ -577,7 +574,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "users/email/{email}": {
+    "/users/email/{email}": {
       get: {
         summary: "Get all users by email",
         tags: ["User"],
@@ -587,7 +584,8 @@ export const userSwagger: Record<string, any> = {
             in: "path",
             required: true,
             schema: {
-              type: "email",
+              type: "string",
+              format: "email",
             },
             example: "user@example.com",
           },
@@ -603,7 +601,6 @@ export const userSwagger: Record<string, any> = {
                     {
                       userId: 1,
                       email: "user@example.com",
-                      password: "hashed_password_1",
                       userName: "User One",
                       userFirstname: "First",
                       dteCreate: "2023-10-01T12:00:00Z",
@@ -618,7 +615,6 @@ export const userSwagger: Record<string, any> = {
                     {
                       userId: 2,
                       email: "user@example.com",
-                      password: "hashed_password_2",
                       userName: "User Two",
                       userFirstname: "Second",
                       dteCreate: "2023-10-02T12:00:00Z",
@@ -641,7 +637,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "users/name/{userName}": {
+    "/users/name/{userName}": {
       get: {
         summary: "Get all users by userName",
         tags: ["User"],
@@ -667,7 +663,6 @@ export const userSwagger: Record<string, any> = {
                     {
                       userId: 1,
                       email: "user1@example.com",
-                      password: "hashed_password_1",
                       userName: "mark",
                       userFirstname: "First",
                       dteCreate: "2023-10-01T12:00:00Z",
@@ -682,7 +677,6 @@ export const userSwagger: Record<string, any> = {
                     {
                       userId: 2,
                       email: "user2@example.com",
-                      password: "hashed_password_2",
                       userName: "mark",
                       userFirstname: "Second",
                       dteCreate: "2023-10-02T12:00:00Z",
@@ -705,7 +699,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "users/donation-center/{centerId}": {
+    "/users/donation-center/{centerId}": {
       get: {
         summary: "Get users from a donation center",
         tags: ["User"],
@@ -746,7 +740,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "users/donation-center/{centerId}/admins": {
+    "/users/donation-center/{centerId}/admins": {
       get: {
         summary: "Get admin users from a donation center",
         tags: ["User"],
@@ -787,7 +781,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "users/hospital/{hospitalId}": {
+    "/users/hospital/{hospitalId}": {
       get: {
         summary: "Get users from a hospital",
         tags: ["User"],
@@ -828,7 +822,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "users/hospital/{hospitalId}/admins": {
+    "/users/hospital/{hospitalId}/admins": {
       get: {
         summary: "Get admin users from a hospital",
         tags: ["User"],
@@ -869,7 +863,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "users/{userId}/deliveries": {
+    "/users/{userId}/deliveries": {
       get: {
         summary: "Get deliveries participation associated with user Id",
         tags: ["User"],
@@ -906,7 +900,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "users/donation-center/{userId}": {
+    "/users/donation-center/{userId}": {
       put: {
         summary: "Update user then user in donation center",
         tags: ["User"],
@@ -929,7 +923,6 @@ export const userSwagger: Record<string, any> = {
                 user: {
                   userId: 1,
                   email: "donation-centerUpdated@bloodsky.fr",
-                  password: "nouveau mot de passe haché",
                   userName: "DONATION",
                   userFirstname: "CENTER",
                   telNumber: null,
@@ -951,8 +944,7 @@ export const userSwagger: Record<string, any> = {
                   user: {
                     userId: 1,
                     email: "donation-centerUpdated@bloodsky.fr",
-                    password: "nouveau mot de passe haché",
-                    userName: "DONATION",
+                      userName: "DONATION",
                     userFirstname: "CENTER",
                     telNumber: null,
                     userStatus: "active",
@@ -969,7 +961,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "users/hospital/{userId}": {
+    "/users/hospital/{userId}": {
       put: {
         summary: "Update user then user in hospital",
         tags: ["User"],
@@ -992,7 +984,6 @@ export const userSwagger: Record<string, any> = {
                 user: {
                   userId: 2,
                   email: "hospitalUpdated@bloodsky.fr",
-                  password: "nouveau mot de passe haché",
                   userName: "HOSPI",
                   userFirstname: "TAL",
                   telNumber: null,
@@ -1014,8 +1005,7 @@ export const userSwagger: Record<string, any> = {
                   user: {
                     userId: 2,
                     email: "hospitalUpdated@bloodsky.fr",
-                    password: "nouveau mot de passe haché",
-                    userName: "HOSPI",
+                      userName: "HOSPI",
                     userFirstname: "TAL",
                     telNumber: null,
                     userStatus: "active",
@@ -1032,7 +1022,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "users/dronist/{userId}": {
+    "/users/dronist/{userId}": {
       put: {
         summary: "Update user then user in dronist",
         tags: ["User"],
@@ -1055,7 +1045,6 @@ export const userSwagger: Record<string, any> = {
                 user: {
                   userId: 3,
                   email: "dronistUpdated@bloodsky.fr",
-                  password: "nouveau mot de passe haché",
                   userName: "dron",
                   userFirstname: "iste",
                   telNumber: null,
@@ -1075,8 +1064,7 @@ export const userSwagger: Record<string, any> = {
                   user: {
                     userId: 3,
                     email: "dronistUpdated@bloodsky.fr",
-                    password: "nouveau mot de passe haché",
-                    userName: "dron",
+                      userName: "dron",
                     userFirstname: "iste",
                     telNumber: null,
                     userStatus: "active",
@@ -1091,7 +1079,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "users/support-center/{userId}": {
+    "/users/support-center/{userId}": {
       put: {
         summary: "Update user then user in support-center",
         tags: ["User"],
@@ -1114,7 +1102,6 @@ export const userSwagger: Record<string, any> = {
                 user: {
                   userId: 4,
                   email: "support-centerUpdated@bloodsky.fr",
-                  password: "nouveau mot de passe haché",
                   userName: "support",
                   userFirstname: "center",
                   telNumber: null,
@@ -1134,8 +1121,7 @@ export const userSwagger: Record<string, any> = {
                   user: {
                     userId: 4,
                     email: "support-centerUpdated@bloodsky.fr",
-                    password: "nouveau mot de passe haché",
-                    userName: "support",
+                      userName: "support",
                     userFirstname: "center",
                     telNumber: null,
                     userStatus: "active",
@@ -1149,6 +1135,40 @@ export const userSwagger: Record<string, any> = {
           "404": { description: "User not found" },
         },
       },
+    },
+    "/users/role": {
+      get: {
+        summary: "Obtenir le rôle de l'utilisateur connecté",
+        description: "Retourne le rôle de l'utilisateur actuellement connecté",
+        tags: ["User"],
+        security: [{ bearerAuth: [] }],
+        responses: {
+          "200": {
+            description: "Rôle utilisateur récupéré avec succès",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    role: {
+                      type: "string",
+                      enum: ["user", "admin", "dronist", "hospital_admin", "donation_center_admin", "super_admin"],
+                      example: "dronist"
+                    },
+                    userId: {
+                      type: "integer",
+                      example: 123
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            description: "Token d'authentification manquant ou invalide"
+          }
+        }
+      }
     },
   },
 };
