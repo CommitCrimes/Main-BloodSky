@@ -20,6 +20,10 @@ import { hospitalSwagger } from '@/swagger/hospital-swagger';
 import { droneSwagger } from '@/swagger/drone-swagger';
 import { donation_centerSwagger } from '@/swagger/donation_center-swagger';
 import { deliverySwagger } from '@/swagger/delivery-swagger';
+import { notificationSwagger } from '@/swagger/notification-swagger';
+import { profileSwagger } from '@/swagger/profile-swagger';
+import { adminSwagger } from '@/swagger/admin-swagger';
+import { dashboardSwagger } from '@/swagger/dashboard-swagger';
 
 export const createRouter = () => {
   const api = new Hono();
@@ -45,6 +49,12 @@ export const createRouter = () => {
           scheme: 'bearer',
           bearerFormat: 'JWT',
           description: 'JWT token for authentication. Use the token received from login endpoint.'
+        },
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'JWT token for authentication. Use the token received from login endpoint.'
         }
       },
       schemas: {
@@ -61,7 +71,7 @@ export const createRouter = () => {
         },
         RegisterRequest: {
           type: 'object',
-          required: ['email', 'password', 'userName', 'userFirstname'],
+          required: ['email', 'password'],
           properties: {
             email: { type: 'string', format: 'email' },
             password: { type: 'string', minLength: 8 },
@@ -80,7 +90,7 @@ export const createRouter = () => {
         },
         InviteUserRequest: {
           type: 'object',
-          required: ['email', 'userName', 'userFirstname'],
+          required: ['email'],
           properties: {
             email: { type: 'string', format: 'email' },
             userName: { type: 'string', minLength: 2 },
@@ -669,7 +679,11 @@ export const createRouter = () => {
       ...hospitalSwagger.paths,
       ...droneSwagger.paths,
       ...donation_centerSwagger.paths,
-      ...deliverySwagger.paths
+      ...deliverySwagger.paths,
+      ...notificationSwagger.paths,
+      ...profileSwagger.paths,
+      ...adminSwagger.paths,
+      ...dashboardSwagger.paths
     }
   }));
 

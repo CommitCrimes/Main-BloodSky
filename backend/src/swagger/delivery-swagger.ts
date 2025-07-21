@@ -89,7 +89,7 @@ export const deliverySwagger: Record<string, any> = {
     },
     "/deliveries/{deliveryId}": {
       get: {
-        summary: "Get drone by ID",
+        summary: "Get delivery by ID",
         tags: ["Delivery"],
         parameters: [
           {
@@ -127,7 +127,7 @@ export const deliverySwagger: Record<string, any> = {
         },
       },
       put: {
-        summary: "Update drone by ID",
+        summary: "Update delivery by ID",
         tags: ["Delivery"],
         parameters: [
           {
