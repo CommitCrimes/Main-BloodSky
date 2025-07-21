@@ -3,12 +3,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import AdminInviteForm from '../components/AdminInviteForm';
+import SearchBar from '@/components/SearchBar';
 
 const AdminDashboardPage = observer(() => {
   const auth = useAuth();
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'invite-donation' | 'invite-hospital'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'invite-donation' | 'invite-hospital' | 'searchbar'>('dashboard');
 
   useEffect(() => {
     if (!auth.user || auth.user.email !== 'admin@bloodsky.fr') {
@@ -23,7 +24,7 @@ const AdminDashboardPage = observer(() => {
   }
 
   return (
-    <div className="page-container">
+    <div className="page-container relative">
       <div className="max-w-6xl mx-auto w-full">
         <div className="flex items-center justify-center mb-10">
           <img src="/blood-drop.svg" alt="BloodSky Logo" className="w-12 h-12 mr-4 logo-animation" />
@@ -65,6 +66,16 @@ const AdminDashboardPage = observer(() => {
                 }`}
               >
                 Inviter Admin Hôpital
+              </button>
+              <button
+                onClick={() => setActiveTab('searchbar')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'searchbar'
+                    ? 'border-pink-500 text-pink-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Barre de recherche
               </button>
             </nav>
           </div>
@@ -130,8 +141,12 @@ const AdminDashboardPage = observer(() => {
           <AdminInviteForm type="hospital" />
         )}
 
+        {activeTab === 'searchbar' && (
+          <SearchBar />
+        )}
+
         {/* Déconnexion */}
-        <div className="flex justify-center">
+        <div className="absolute top-5 right-5">
           <button
             onClick={() => auth.logout()}
             className="bg-gray-200 text-gray-800 py-3 px-6 rounded-lg hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-colors duration-200 share-tech-font font-bold"

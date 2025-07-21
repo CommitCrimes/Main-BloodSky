@@ -1,7 +1,7 @@
 import { api } from './api';
 
 export interface UserRole {
-  type: 'super_admin' | 'hospital_admin' | 'donation_center_admin' | 'user';
+  type: 'super_admin' | 'hospital_admin' | 'donation_center_admin' | 'dronist' | 'user';
   hospitalId?: number;
   centerId?: number;
   admin?: boolean;
@@ -24,6 +24,11 @@ interface UserDonationCenterRecord {
   userId: number;
   centerId: number;
   admin: boolean;
+  info?: string;
+}
+
+interface UserDronistRecord {
+  userId: number;
   info?: string;
 }
 
@@ -66,6 +71,18 @@ export const userProfileApi = {
           centerId: donationUser.centerId,
           admin: donationUser.admin,
           info: donationUser.info
+        };
+      }
+      
+      // Vérifier dans user_dronist
+      const dronistResponse = await api.get(`/users/dronist`);
+      const dronistUsers: UserDronistRecord[] = dronistResponse.data || [];
+      const dronistUser = dronistUsers.find((u) => u.userId === userIdNumber);
+      
+      if (dronistUser) {
+        return {
+          type: 'dronist',
+          info: dronistUser.info
         };
       }
       
