@@ -1,0 +1,310 @@
+@import url('https://fonts.googleapis.com/css2?family=Iceland&family=Share+Tech&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Pathway+Extreme:ital,opsz,wght@0,8..144,100..900;1,8..144,100..900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --white : #FFFFFF;
+        --cream-white : #FDFDFD;
+        --grey : #6D6C6F ;
+        --black : #000000;
+        --color-blue : #BCD3E1;
+        --light-red : #CE1313;
+        --dark-red : #B22D2D;
+    }
+}
+
+h1 {
+    text-align: center;
+    font-size: 72px;
+    font-family: 'Iceland', sans-serif;
+    margin-bottom: 2.5rem;
+    color: var(--dark-red);
+}
+
+.section1 {
+    background-color: var(--color-blue);
+    font-family: ice;
+    overflow: hidden;
+}
+
+.section2, .section3, .section4, .section5 {
+    background-color: var(--cream-white);
+}
+
+.section1-custom {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.avenir-text {
+    position: absolute;
+    top: -10%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 220px;
+    font-family: 'Iceland', sans-serif;
+    z-index: 1;
+    white-space: nowrap;
+    pointer-events: none;
+    color: var(--cream-white);
+    letter-spacing: 24px;
+}
+
+.drone-img {
+    position: relative;
+    z-index: 2;
+    width: 60vw;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    animation: drone-fly 3s ease-in-out infinite alternate;
+}
+
+@keyframes drone-fly {
+    0% {
+        transform: translateY(0);
+    }
+    100% {
+        transform: translateY(-30px);
+    }
+}
+
+.avec-text {
+    position: absolute;
+    left: 10vw;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 182px;
+    font-family: 'Iceland', sans-serif;
+    color: var(--cream-white);
+    z-index: 3;
+    white-space: nowrap;
+    letter-spacing: 14px;
+
+}
+
+.bloodsky-text {
+    position: absolute;
+    right: 2vw;
+    top: 80%;
+    transform: translateY(-50%);
+    font-size: 180px;
+    font-family: 'Iceland', sans-serif;
+    color: var(--cream-white);
+    z-index: 3;
+    white-space: nowrap;
+    letter-spacing: 14px;
+
+}
+
+.section2-custom {
+    padding: 1rem 2rem;
+}
+
+.section2-content {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 0rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.section2-left, .section2-right {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.section2-left {
+    align-items: flex-start;
+}
+
+.section2-right {
+    justify-content: flex-start;
+    align-items: flex-end;
+
+}
+
+.section2-title {
+    line-height: 1.05;
+}
+
+.section2-text-top {
+    font-size: 27px;
+    margin-bottom: 2rem;
+    color: var(--grey);
+    text-align: left;
+    font-family: "Pathway Extreme", sans-serif;
+    line-height: 1.4;
+}
+
+
+.section2-img-left {
+    width: 320px;
+    margin-bottom: 1rem;
+    margin-left: 20%;
+}
+
+.section2-text-bottom {
+    font-size: 27px;
+    color: var(--grey);
+    margin-top: 1rem;
+    text-align: right;
+    font-family: "Pathway Extreme", sans-serif;
+    line-height: 1.4;
+}
+
+.section2-img-right {
+    max-width: 77%;
+
+}
+
+.section3-custom {
+    background: var(--cream-white);
+    padding: 4rem 2rem;
+}
+
+.section3-grid {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    max-width: 1100px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+}
+
+.section3-col {
+    min-width: 220px;
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: -15px;
+}
+
+.section3-col-top {
+    font-size: 65px;
+    font-family: 'Iceland', sans-serif;
+    color: var(--light-red);
+}
+
+.section3-col-bottom {
+    font-size: 45px;
+    color: var(--grey);
+    text-align: center;
+    font-family: 'Iceland', sans-serif;
+    margin-top: -18px;
+    line-height: 1.1;
+}
+
+.section4-custom {
+    padding: 4rem 2rem;
+    background: var(--cream-white);
+}
+
+.section4-content-blur {
+    position: relative;
+    background: var(--color-blue);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(30px);
+    padding: 3rem 2rem;
+    width: 100vw;
+    left: 50%;
+    right: 50%;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    box-shadow: 0 0 60px 30px var(--color-blue);
+    overflow: hidden;
+    border-radius: 0;
+}
+.section4-content-blur::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    border-radius: inherit;
+    box-shadow: 0 0 160px 100px var(--color-blue); /* plus large et plus diffus */
+    z-index: 0;
+}
+.section4-content-blur > * {
+    position: relative;
+    z-index: 1;
+}
+
+.section4-features {
+    display: flex;
+    justify-content: center;
+    gap: 2.5rem;
+    flex-wrap: wrap;
+}
+
+.section4-feature-card {
+    background: rgba(246, 246, 246, 0.85);
+    border-radius: 1.5rem;
+    box-shadow: 0 4px 24px rgba(178,45,45,0.13), 0 1.5px 8px rgba(0,0,0,0.07);
+    padding: 1.5rem 1.5rem 1.5rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: transform 0.2s;
+}
+.section4-feature-card:hover {
+    transform: translateY(-8px) scale(1.04);
+    box-shadow: 0 8px 32px rgba(178,45,45,0.18), 0 2px 12px rgba(0,0,0,0.10);
+}
+
+.section4-feature-icon {
+    width: 70px;
+    height: 70px;
+}
+
+.section4-feature-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3em;
+    color: var(--black);
+    text-align: center;
+    font-family: 'Share Tech', sans-serif;
+    font-weight: 500;
+}
+
+.section4-features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2.5rem 2.5rem;
+    max-width: 1100px;
+    justify-items: center; /* <-- centre les colonnes */
+}
+
+.section4-feature-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+}
+
+
+button {
+    position: absolute;
+    margin-top: -38rem;
+    margin-left: 83rem;
+    padding: 10px 28px;
+    border: 2px solid #fff;
+    border-radius: 30px;
+    background: transparent;
+    color: #fff;
+    font-weight: 600;
+    font-size: 18;
+    cursor: pointer;
+    font-family: 'Share Tech', sans-serif;
+    transition: background 0.2s, color 0.2s;
+}
