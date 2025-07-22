@@ -48,6 +48,14 @@ L.Icon.Default.mergeOptions({
 const createDroneIcon = (heading: number, travelDirection: number, isMoving: boolean) => {
   const arrowDirection = isMoving ? travelDirection : heading;
   
+  let angleDiff = arrowDirection - heading;
+  if (angleDiff > 180) angleDiff -= 360;
+  if (angleDiff < -180) angleDiff += 360;
+  
+  const isBackward = Math.abs(angleDiff) > 90;
+  const arrowPosition = isBackward ? 'bottom: -15px;' : 'top: -15px;';
+  const finalDirection = isBackward ? arrowDirection + 180 : arrowDirection;
+  
   return L.divIcon({
     html: `
       <div style="
@@ -66,14 +74,14 @@ const createDroneIcon = (heading: number, travelDirection: number, isMoving: boo
         " />
         <div style="
           position: absolute;
-          top: -15px;
+          ${arrowPosition}
           left: 50%;
-          transform: translateX(-50%) rotate(${arrowDirection - heading}deg);
+          transform: translateX(-50%) rotate(${finalDirection - heading}deg);
           width: 0;
           height: 0;
           border-left: 10px solid transparent;
           border-right: 10px solid transparent;
-          border-bottom: 20px solid ${isMoving ? '#00ff00' : '#ffffffff'};
+          border-bottom: 20px solid ${isMoving ? (isBackward ? '#ff6600' : '#0c578bff') : '#ffffffff'};
           filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.66));
         "></div>
       </div>
@@ -152,9 +160,9 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const calculateTravelDirection = (currentLat: number, currentLon: number, prevLat: number, prevLon: number): number => {
     const deltaLat = currentLat - prevLat;
     const deltaLon = currentLon - prevLon;
-    
-    const angleRad = Math.atan2(deltaLon, deltaLat);
+    const angleRad = Math.atan2(deltaLat, deltaLon);
     let angleDeg = angleRad * (180 / Math.PI);
+    angleDeg = 90 - angleDeg;
     
     if (angleDeg < 0) {
       angleDeg += 360;
@@ -542,8 +550,21 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
                   Vitesse: {flightInfo.horizontal_speed_m_s.toFixed(1)} m/s<br />
                   Cap (heading): {flightInfo.heading_deg.toFixed(0)}°<br />
                   {isMoving ? (
-                    <>Déplacement: {travelDirection.toFixed(0)}°<br />
-                    <span style={{color: '#00ff00'}}>🡹 En mouvement</span></>
+                    <>
+                      Déplacement: {travelDirection.toFixed(0)}°<br />
+                      {(() => {
+                        let angleDiff = travelDirection - flightInfo.heading_deg;
+                        if (angleDiff > 180) angleDiff -= 360;
+                        if (angleDiff < -180) angleDiff += 360;
+                        const isBackward = Math.abs(angleDiff) > 90;
+                        
+                        return isBackward ? (
+                          <span style={{color: '#ff6600'}}>🡸 Marche arrière</span>
+                        ) : (
+                          <span style={{color: '#00ff00'}}>🡹 Marche avant</span>
+                        );
+                      })()}
+                    </>
                   ) : (
                     <span style={{color: '#999'}}>⏸ Stationnaire</span>
                   )}
