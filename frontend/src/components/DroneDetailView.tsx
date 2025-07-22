@@ -367,11 +367,17 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   };
 
   useEffect(() => {
-    fetchFlightInfo();
-    fetchHospitals();
+    const loadData = async () => {
+      await fetchFlightInfo();
+      await fetchHospitals();
+    };
+    
+    loadData();
     
     // Refresh flight info every 5 seconds
-    const interval = setInterval(fetchFlightInfo, 5000);
+    const interval = setInterval(() => {
+      fetchFlightInfo();
+    }, 5000);
     return () => clearInterval(interval);
   }, [droneId]);
 

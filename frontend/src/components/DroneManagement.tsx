@@ -201,15 +201,20 @@ const DroneManagement: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       await fetchDronesData();
-      await fetchAllDronesFlightInfo();
     };
     loadData();
+  }, []);
 
-    // Refresh flight info every 5 seconds
-    const interval = setInterval(() => {
+  useEffect(() => {
+    if (dronesHistory.length > 0) {
       fetchAllDronesFlightInfo();
-    }, 5000);
-    return () => clearInterval(interval);
+      
+      // Refresh flight info every 5 seconds
+      const interval = setInterval(() => {
+        fetchAllDronesFlightInfo();
+      }, 5000);
+      return () => clearInterval(interval);
+    }
   }, [dronesHistory]);
 
   const getStatusColor = (status: string): string => {
