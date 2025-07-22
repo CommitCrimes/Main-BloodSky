@@ -35,6 +35,7 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import droneTopViewImage from '../assets/drone_TopView.png';
 
 // Fix for default markers in react-leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -43,6 +44,42 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
+
+const createDroneIcon = (heading: number) => {
+  return L.divIcon({
+    html: `
+      <div style="
+        transform: rotate(${heading}deg);
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <img src="${droneTopViewImage}" style="
+          width: 65px;
+          height: 65px;
+          filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
+        " />
+        <div style="
+          position: absolute;
+          top: -15px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 0;
+          height: 0;
+          border-left: 10px solid transparent;
+          border-right: 10px solid transparent;
+          border-bottom: 20px solid #ffffffff;
+          filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.66));
+        "></div>
+      </div>
+    `,
+    className: 'drone-marker',
+    iconSize: [40, 40],
+    iconAnchor: [30, 30],
+  });
+};
 
 interface DroneDetailViewProps {
   droneId: number;
@@ -443,13 +480,17 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
               attribution='&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Source: Esri'
             />
             <MapClickHandler />
-            <Marker position={[flightInfo.latitude, flightInfo.longitude]}>
+            <Marker 
+              position={[flightInfo.latitude, flightInfo.longitude]}
+              icon={createDroneIcon(flightInfo.heading_deg)}
+            >
               <Popup>
                 <div>
                   <strong>Drone {droneId}</strong><br />
                   Mode: {flightInfo.flight_mode}<br />
                   Altitude: {flightInfo.altitude_m.toFixed(1)} m<br />
-                  Vitesse: {flightInfo.horizontal_speed_m_s.toFixed(1)} m/s
+                  Vitesse: {flightInfo.horizontal_speed_m_s.toFixed(1)} m/s<br />
+                  Direction: {flightInfo.heading_deg.toFixed(0)}°
                 </div>
               </Popup>
             </Marker>
