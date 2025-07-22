@@ -44,6 +44,7 @@ import { useAuth } from '@/hooks/useAuth';
 import authStore from '@/stores/authStore';
 import { NotificationStore } from '@/stores/NotificationStore';
 import NotificationManagement from './NotificationManagement';
+import DroneManagement from './DroneManagement';
 import { dashboardApi } from '@/api/dashboard';
 
 // Fix for default markers in react-leaflet
@@ -916,6 +917,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
           ) : activeView === 'livraison' && config.orderBloodComponent ? (
             <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
               {config.orderBloodComponent}
+            </Box>
+          ) : activeView === 'drones' ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              <DroneManagement />
             </Box>
           ) : activeView === 'dashboard' ? (
             config.customDashboardComponent ? (
