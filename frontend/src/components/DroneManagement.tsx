@@ -147,7 +147,7 @@ const DroneManagement: React.FC = () => {
     const results = await Promise.allSettled(flightInfoPromises);
     const newFlightInfo: {[key: number]: DroneFlightInfo} = {};
 
-    results.forEach((result: any) => {
+    results.forEach((result) => {
       if (result.status === 'fulfilled' && result.value.flightInfo) {
         newFlightInfo[result.value.droneId] = result.value.flightInfo;
       }
@@ -206,9 +206,11 @@ const DroneManagement: React.FC = () => {
     loadData();
 
     // Refresh flight info every 5 seconds
-    const interval = setInterval(fetchAllDronesFlightInfo, 5000);
+    const interval = setInterval(() => {
+      fetchAllDronesFlightInfo();
+    }, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [dronesHistory]);
 
   const getStatusColor = (status: string): string => {
     switch (status?.toLowerCase()) {
@@ -461,7 +463,7 @@ const DroneManagement: React.FC = () => {
                   <TableCell>
                     <Typography variant="body2">
                       {dronesFlightInfo[drone.droneId]?.battery_remaining_percent 
-                        ? `${dronesFlightInfo[drone.droneId].battery_remaining_percent.toFixed(0)}%`
+                        ? `${dronesFlightInfo[drone.droneId].battery_remaining_percent?.toFixed(0)}%`
                         : 'N/A'
                       }
                     </Typography>
@@ -546,9 +548,9 @@ const DroneManagement: React.FC = () => {
                       <Typography><strong>Longitude:</strong> {dronesFlightInfo[selectedDrone.droneId].longitude.toFixed(6)}</Typography>
                       <Typography><strong>Altitude:</strong> {dronesFlightInfo[selectedDrone.droneId].altitude_m.toFixed(1)} m</Typography>
                       <Typography><strong>Vitesse:</strong> {dronesFlightInfo[selectedDrone.droneId].horizontal_speed_m_s.toFixed(1)} m/s</Typography>
-                      <Typography><strong>Direction:</strong> {dronesFlightInfo[selectedDrone.droneId].heading_deg.toFixed(0)}°</Typography>
-                      <Typography><strong>Déplacement:</strong> {dronesFlightInfo[selectedDrone.droneId].movement_track_deg.toFixed(0)}°</Typography>
-                      <Typography><strong>Batterie:</strong> {dronesFlightInfo[selectedDrone.droneId].battery_remaining_percent.toFixed(0)}%</Typography>
+                      <Typography><strong>Direction:</strong> {dronesFlightInfo[selectedDrone.droneId].heading_deg?.toFixed(0) || 'N/A'}°</Typography>
+                      <Typography><strong>Déplacement:</strong> {dronesFlightInfo[selectedDrone.droneId].movement_track_deg?.toFixed(0) || 'N/A'}°</Typography>
+                      <Typography><strong>Batterie:</strong> {dronesFlightInfo[selectedDrone.droneId].battery_remaining_percent?.toFixed(0) || 'N/A'}%</Typography>
                     </>
                   )}
                 </Box>

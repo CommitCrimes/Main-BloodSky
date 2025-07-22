@@ -46,6 +46,14 @@ L.Icon.Default.mergeOptions({
 });
 
 const createDroneIcon = (heading: number, movementTrack: number, isMoving: boolean) => {
+  let headingDiff = movementTrack - heading;
+  if (headingDiff > 180) headingDiff -= 360;
+  if (headingDiff < -180) headingDiff += 360;
+  
+  const isMovingForward = Math.abs(headingDiff) < 90;
+  const arrowColor = isMovingForward ? '#f4f5f4ff' : '#f3e9daff';
+  const arrowPosition = isMovingForward ? 'top: -15px;' : 'bottom: -15px;';
+  
   return L.divIcon({
     html: `
       <div style="
@@ -64,14 +72,14 @@ const createDroneIcon = (heading: number, movementTrack: number, isMoving: boole
         " />
         <div style="
           position: absolute;
-          top: -15px;
+          ${arrowPosition}
           left: 50%;
           transform: translateX(-50%) rotate(${movementTrack - heading}deg);
           width: 0;
           height: 0;
           border-left: 10px solid transparent;
           border-right: 10px solid transparent;
-          border-bottom: 20px solid white;
+          border-bottom: 20px solid ${isMoving ? arrowColor : 'white'};
           filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.66));
         "></div>
       </div>
@@ -143,7 +151,15 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     lon: 0,
     alt: 0
   });
-  const [hospitals, setHospitals] = useState<any[]>([]);
+  const [hospitals, setHospitals] = useState<Array<{
+    hospitalId: number;
+    hospitalName: string;
+    hospitalAdress: string;
+    hospitalCity: string;
+    hospitalPostal: string;
+    hospitalLatitude: string;
+    hospitalLongitude: string;
+  }>>([]);
   const [hospitalsDialogOpen, setHospitalsDialogOpen] = useState(false);
 
   const fetchFlightInfo = async () => {
@@ -307,7 +323,12 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     }
   };
 
-  const createMissionToHospital = async (hospital: any) => {
+  const createMissionToHospital = async (hospital: {
+    hospitalId: number;
+    hospitalName: string;
+    hospitalLatitude: string;
+    hospitalLongitude: string;
+  }) => {
     try {
       // Créer la mission de livraison
       const missionResponse = await fetch(`http://localhost:3000/api/drones/${droneId}/delivery-mission`, {
@@ -348,6 +369,10 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   useEffect(() => {
     fetchFlightInfo();
     fetchHospitals();
+    
+    // Refresh flight info every 5 seconds
+    const interval = setInterval(fetchFlightInfo, 5000);
+    return () => clearInterval(interval);
   }, [droneId]);
 
   if (loading) {
@@ -499,8 +524,8 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
                   Altitude: {flightInfo.altitude_m.toFixed(1)} m<br />
                   Vitesse: {flightInfo.horizontal_speed_m_s.toFixed(1)} m/s<br />
                   Cap (heading): {flightInfo.heading_deg.toFixed(0)}°<br />
-                  Déplacement: {flightInfo.movement_track_deg.toFixed(0)}°<br />
-                  Batterie: {flightInfo.battery_remaining_percent.toFixed(0)}%<br />
+                  Déplacement: {flightInfo.movement_track_deg?.toFixed(0) || 'N/A'}°<br />
+                  Batterie: {flightInfo.battery_remaining_percent?.toFixed(0) || 'N/A'}%<br />
                   {flightInfo.horizontal_speed_m_s > 0.1 ? (
                     <span style={{color: '#00ff00'}}>🡹 En mouvement</span>
                   ) : (
