@@ -81,7 +81,7 @@ const createDroneIcon = (heading: number, travelDirection: number, isMoving: boo
           height: 0;
           border-left: 10px solid transparent;
           border-right: 10px solid transparent;
-          border-bottom: 20px solid ${isMoving ? (isBackward ? '#ff6600' : '#0c578bff') : '#ffffffff'};
+          border-bottom: 20px solid #ffffffff;
           filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.66));
         "></div>
       </div>
@@ -160,10 +160,13 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const calculateTravelDirection = (currentLat: number, currentLon: number, prevLat: number, prevLon: number): number => {
     const deltaLat = currentLat - prevLat;
     const deltaLon = currentLon - prevLon;
-    const angleRad = Math.atan2(deltaLat, deltaLon);
+    const angleRad = Math.atan2(deltaLon, deltaLat);
     let angleDeg = angleRad * (180 / Math.PI);
-    angleDeg = 90 - angleDeg;
+    angleDeg = 90 - angleDeg + 180;
     
+    if (angleDeg >= 360) {
+      angleDeg -= 360;
+    }
     if (angleDeg < 0) {
       angleDeg += 360;
     }
