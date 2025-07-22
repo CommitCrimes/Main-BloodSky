@@ -70,6 +70,8 @@ interface DroneFlightInfo {
   horizontal_speed_m_s: number;
   vertical_speed_m_s: number;
   heading_deg: number;
+  movement_track_deg: number;
+  battery_remaining_percent: number;
 }
 
 interface DroneStatus {
@@ -369,6 +371,27 @@ const DroneManagement: React.FC = () => {
             </CardContent>
           </Card>
         </Box>
+        <Box sx={{ flex: '1 1 250px', minWidth: 250 }}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="h6" color="success.main">
+                    {Math.round(
+                      Object.values(dronesFlightInfo).reduce((acc, info) => 
+                        acc + (info?.battery_remaining_percent || 0), 0
+                      ) / Math.max(Object.keys(dronesFlightInfo).length, 1)
+                    )}%
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Batterie moy.
+                  </Typography>
+                </Box>
+                <NavigationOutlined sx={{ fontSize: 40, color: '#4caf50' }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
       </Box>
 
       {/* Drones Table */}
@@ -381,7 +404,7 @@ const DroneManagement: React.FC = () => {
               <TableCell>Statut</TableCell>
               <TableCell>État</TableCell>
               <TableCell>Mode de vol</TableCell>
-              <TableCell>Données</TableCell>
+              <TableCell>Batterie</TableCell>
               <TableCell>Centre</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
@@ -436,8 +459,11 @@ const DroneManagement: React.FC = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    <Typography variant="body2" color="text.secondary">
-                      Temps réel
+                    <Typography variant="body2">
+                      {dronesFlightInfo[drone.droneId]?.battery_remaining_percent 
+                        ? `${dronesFlightInfo[drone.droneId].battery_remaining_percent.toFixed(0)}%`
+                        : 'N/A'
+                      }
                     </Typography>
                   </TableCell>
                   <TableCell>
@@ -520,6 +546,9 @@ const DroneManagement: React.FC = () => {
                       <Typography><strong>Longitude:</strong> {dronesFlightInfo[selectedDrone.droneId].longitude.toFixed(6)}</Typography>
                       <Typography><strong>Altitude:</strong> {dronesFlightInfo[selectedDrone.droneId].altitude_m.toFixed(1)} m</Typography>
                       <Typography><strong>Vitesse:</strong> {dronesFlightInfo[selectedDrone.droneId].horizontal_speed_m_s.toFixed(1)} m/s</Typography>
+                      <Typography><strong>Direction:</strong> {dronesFlightInfo[selectedDrone.droneId].heading_deg.toFixed(0)}°</Typography>
+                      <Typography><strong>Déplacement:</strong> {dronesFlightInfo[selectedDrone.droneId].movement_track_deg.toFixed(0)}°</Typography>
+                      <Typography><strong>Batterie:</strong> {dronesFlightInfo[selectedDrone.droneId].battery_remaining_percent.toFixed(0)}%</Typography>
                     </>
                   )}
                 </Box>

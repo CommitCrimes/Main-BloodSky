@@ -109,9 +109,10 @@ export class DroneControlService {
     }
 
     try {
-      const response = await fetch(`${apiUrl}/rth`, {
+      const response = await fetch(`${apiUrl}/command`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'rtl' }),
         signal: AbortSignal.timeout(10000)
       });
 

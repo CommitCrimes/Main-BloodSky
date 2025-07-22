@@ -45,17 +45,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-const createDroneIcon = (heading: number, travelDirection: number, isMoving: boolean) => {
-  const arrowDirection = isMoving ? travelDirection : heading;
-  
-  let angleDiff = arrowDirection - heading;
-  if (angleDiff > 180) angleDiff -= 360;
-  if (angleDiff < -180) angleDiff += 360;
-  
-  const isBackward = Math.abs(angleDiff) > 90;
-  const arrowPosition = isBackward ? 'bottom: -15px;' : 'top: -15px;';
-  const finalDirection = isBackward ? arrowDirection + 180 : arrowDirection;
-  
+const createDroneIcon = (heading: number, movementTrack: number, isMoving: boolean) => {
   return L.divIcon({
     html: `
       <div style="
@@ -74,14 +64,14 @@ const createDroneIcon = (heading: number, travelDirection: number, isMoving: boo
         " />
         <div style="
           position: absolute;
-          ${arrowPosition}
+          top: -15px;
           left: 50%;
-          transform: translateX(-50%) rotate(${finalDirection - heading}deg);
+          transform: translateX(-50%) rotate(${movementTrack - heading}deg);
           width: 0;
           height: 0;
           border-left: 10px solid transparent;
           border-right: 10px solid transparent;
-          border-bottom: 20px solid #ffffffff;
+          border-bottom: 20px solid white;
           filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.66));
         "></div>
       </div>
@@ -107,6 +97,8 @@ interface DroneFlightInfo {
   horizontal_speed_m_s: number;
   vertical_speed_m_s: number;
   heading_deg: number;
+  movement_track_deg: number;
+  battery_remaining_percent: number;
 }
 
 interface MissionWaypoint {
@@ -135,9 +127,6 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const [flightInfo, setFlightInfo] = useState<DroneFlightInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [prevPosition, setPrevPosition] = useState<{lat: number, lon: number, timestamp: number} | null>(null);
-  const [travelDirection, setTravelDirection] = useState<number>(0);
-  const [isMoving, setIsMoving] = useState<boolean>(false);
   const [missionDialogOpen, setMissionDialogOpen] = useState(false);
   const [modifyDialogOpen, setModifyDialogOpen] = useState(false);
   const [waypoints, setWaypoints] = useState<MissionWaypoint[]>([]);
@@ -157,23 +146,6 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const [hospitals, setHospitals] = useState<any[]>([]);
   const [hospitalsDialogOpen, setHospitalsDialogOpen] = useState(false);
 
-  const calculateTravelDirection = (currentLat: number, currentLon: number, prevLat: number, prevLon: number): number => {
-    const deltaLat = currentLat - prevLat;
-    const deltaLon = currentLon - prevLon;
-    const angleRad = Math.atan2(deltaLon, deltaLat);
-    let angleDeg = angleRad * (180 / Math.PI);
-    angleDeg = 90 - angleDeg + 180;
-    
-    if (angleDeg >= 360) {
-      angleDeg -= 360;
-    }
-    if (angleDeg < 0) {
-      angleDeg += 360;
-    }
-    
-    return angleDeg;
-  };
-
   const fetchFlightInfo = async () => {
     try {
       const response = await fetch(`http://localhost:3000/api/drones/${droneId}/flight_info`);
@@ -181,35 +153,6 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
         throw new Error('Failed to fetch flight info');
       }
       const data = await response.json();
-      
-      const now = Date.now();
-      const currentPos = { lat: data.latitude, lon: data.longitude, timestamp: now };
-      
-      if (prevPosition && (now - prevPosition.timestamp) > 1000) {
-        const distance = Math.sqrt(
-          Math.pow(currentPos.lat - prevPosition.lat, 2) + 
-          Math.pow(currentPos.lon - prevPosition.lon, 2)
-        );
-        
-        const minMovementThreshold = 0.00001;
-        
-        if (distance > minMovementThreshold && data.horizontal_speed_m_s > 0.1) {
-          const direction = calculateTravelDirection(
-            currentPos.lat, currentPos.lon, 
-            prevPosition.lat, prevPosition.lon
-          );
-          setTravelDirection(direction);
-          setIsMoving(true);
-        } else if (data.horizontal_speed_m_s <= 0.05) {
-          setIsMoving(false);
-        }
-        
-        setPrevPosition(currentPos);
-      } else if (!prevPosition) {
-        // Première position enregistrée
-        setPrevPosition(currentPos);
-        setIsMoving(false);
-      }
       
       setFlightInfo(data);
       setError(null);
@@ -543,7 +486,11 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
             <MapClickHandler />
             <Marker 
               position={[flightInfo.latitude, flightInfo.longitude]}
-              icon={createDroneIcon(flightInfo.heading_deg, travelDirection, isMoving)}
+              icon={createDroneIcon(
+                flightInfo.heading_deg, 
+                flightInfo.movement_track_deg, 
+                flightInfo.horizontal_speed_m_s > 0.1
+              )}
             >
               <Popup>
                 <div>
@@ -552,22 +499,10 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
                   Altitude: {flightInfo.altitude_m.toFixed(1)} m<br />
                   Vitesse: {flightInfo.horizontal_speed_m_s.toFixed(1)} m/s<br />
                   Cap (heading): {flightInfo.heading_deg.toFixed(0)}°<br />
-                  {isMoving ? (
-                    <>
-                      Déplacement: {travelDirection.toFixed(0)}°<br />
-                      {(() => {
-                        let angleDiff = travelDirection - flightInfo.heading_deg;
-                        if (angleDiff > 180) angleDiff -= 360;
-                        if (angleDiff < -180) angleDiff += 360;
-                        const isBackward = Math.abs(angleDiff) > 90;
-                        
-                        return isBackward ? (
-                          <span style={{color: '#ff6600'}}>🡸 Marche arrière</span>
-                        ) : (
-                          <span style={{color: '#00ff00'}}>🡹 Marche avant</span>
-                        );
-                      })()}
-                    </>
+                  Déplacement: {flightInfo.movement_track_deg.toFixed(0)}°<br />
+                  Batterie: {flightInfo.battery_remaining_percent.toFixed(0)}%<br />
+                  {flightInfo.horizontal_speed_m_s > 0.1 ? (
+                    <span style={{color: '#00ff00'}}>🡹 En mouvement</span>
                   ) : (
                     <span style={{color: '#999'}}>⏸ Stationnaire</span>
                   )}
