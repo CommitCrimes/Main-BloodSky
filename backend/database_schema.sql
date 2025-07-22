@@ -58,10 +58,23 @@ CREATE TABLE drone (
     drone_name VARCHAR,
     center_id INTEGER REFERENCES donationcenter(center_id),
     drone_status TEXT,
-    drone_current_lat INTEGER,
-    drone_current_long INTEGER,
+    drone_current_lat DECIMAL(10,8),
+    drone_current_long DECIMAL(11,8),
     drone_battery TEXT,
-    drone_image VARCHAR
+    drone_image VARCHAR,
+    drone_api_url VARCHAR,
+    drone_api_id INTEGER,
+    altitude_m DECIMAL(8,2),
+    horizontal_speed_m_s DECIMAL(6,2),
+    vertical_speed_m_s DECIMAL(6,2),
+    heading_deg DECIMAL(5,2),
+    flight_mode VARCHAR(50),
+    is_armed BOOLEAN DEFAULT false,
+    mission_status VARCHAR(50),
+    current_mission_id INTEGER,
+    last_sync_at TIMESTAMP,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Delivery table

@@ -3,6 +3,7 @@ import { logger } from 'hono/logger';
 import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { createRouter } from './routes';
+import { droneSyncService } from './services/drone-sync.service';
 
 // Load environment variables
 const PORT = process.env.PORT || 3000;
@@ -40,6 +41,20 @@ app.route('/api', createRouter());
 
 // Health check
 app.get('/', (c) => c.json({ status: 'ok', message: 'BloodSky API is running' }));
+
+droneSyncService.startSync();
+
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM, shutting down gracefully...');
+  droneSyncService.stopSync();
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('Received SIGINT, shutting down gracefully...');
+  droneSyncService.stopSync();
+  process.exit(0);
+});
 
 // Start server
 console.log(`Server running on http://localhost:${PORT}`);
