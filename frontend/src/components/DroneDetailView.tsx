@@ -46,13 +46,13 @@ L.Icon.Default.mergeOptions({
 });
 
 const createDroneIcon = (heading: number, movementTrack: number, isMoving: boolean) => {
-  let headingDiff = movementTrack - heading;
-  if (headingDiff > 180) headingDiff -= 360;
-  if (headingDiff < -180) headingDiff += 360;
+  //let headingDiff = movementTrack - heading;
+  //if (headingDiff < -180) headingDiff -= 360;
+  //if (headingDiff > 180) headingDiff += 360;
   
-  const isMovingForward = Math.abs(headingDiff) < 90;
-  const arrowColor = isMovingForward ? '#f4f5f4ff' : '#f3e9daff';
-  const arrowPosition = isMovingForward ? 'top: -15px;' : 'bottom: -15px;';
+  //const isMovingForward = Math.abs(headingDiff) > 90;
+  //const arrowColor = isMovingForward ? '#f4f5f4ff' : '#f3e9daff';
+  //const arrowPosition = isMovingForward ? 'top: -15px;' : 'bottom: -15px;';
   
   return L.divIcon({
     html: `
@@ -72,14 +72,14 @@ const createDroneIcon = (heading: number, movementTrack: number, isMoving: boole
         " />
         <div style="
           position: absolute;
-          ${arrowPosition}
+          
           left: 50%;
           transform: translateX(-50%) rotate(${movementTrack - heading}deg);
           width: 0;
           height: 0;
           border-left: 10px solid transparent;
           border-right: 10px solid transparent;
-          border-bottom: 20px solid ${isMoving ? arrowColor : 'white'};
+          border-bottom: 20px solid;
           filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.66));
         "></div>
       </div>
