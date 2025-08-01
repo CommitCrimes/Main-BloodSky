@@ -555,14 +555,20 @@ const HistoryManagementDrone: React.FC = observer(() => {
                 </TableCell>
                 <TableCell>
                   <Chip
-                    icon={getStatusIcon(item.deliveryStatus)}
-                    label={getStatusLabel(item.deliveryStatus)}
-                    sx={{
-                      backgroundColor: getStatusColor(item.deliveryStatus),
-                      color: 'white',
-                      ...commonStyles.techFont
-                    }}
-                  />
+                  icon={getStatusIcon(item.deliveryStatus)}
+                  label={getStatusLabel(item.deliveryStatus)}
+                  sx={{
+                    backgroundColor: getStatusColor(item.deliveryStatus),
+                    color: 'white',
+                    fontFamily: 'Share Tech, monospace',
+                    border: '2px solid transparent',
+                    transition: 'border-color 0.3s ease',
+                    cursor: 'default',
+                    '&:hover': {
+                      borderColor: '#ffffff' // ou une autre couleur douce comme '#e0e0e0'
+                    }
+                  }}
+                />
                 </TableCell>
               </TableRow>
             ))}
@@ -694,7 +700,14 @@ const HistoryManagementDrone: React.FC = observer(() => {
                           sx={{
                             backgroundColor: getStatusColor(selectedDelivery.deliveryStatus),
                             color: 'white',
-                            fontFamily: 'Share Tech, monospace'
+                            fontFamily: 'Share Tech, monospace',
+                            border: '2px solid transparent',
+                            transition: 'border-color 0.3s ease',
+                            cursor: 'pointer',
+                            '&:hover': {
+                              borderColor: '#fff', // ou une couleur comme '#e0e0e0' si tu veux plus subtil
+                            }
+
                           }}
                         />
                       </Box>
