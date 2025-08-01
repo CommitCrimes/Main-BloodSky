@@ -171,7 +171,7 @@ export const historyApi = {
         deliveryDate: delivery.dteValidation ? new Date(delivery.dteValidation) : null,
         validationDate: delivery.dteValidation ? new Date(delivery.dteValidation) : null,
         personIdentity: 'Système', // À adapter selon vos besoins
-        deliveryStatus: delivery.deliveryStatus as unknown,
+        deliveryStatus: delivery.deliveryStatus as any,
         isUrgent: delivery.deliveryUrgent,
         bloodType: blood?.bloodType,
         droneId: drone?.droneId,
@@ -219,6 +219,14 @@ export const historyApi = {
         bloodType: blood?.bloodType ?? 'Inconnu',
         droneId: drone?.droneId,
         droneName: drone?.droneName ?? 'Non assigné',
+        sourceDonationCenter: {
+          centerId: center?.centerId ?? 0,
+          centerCity: center?.centerCity ?? 'Inconnu',
+          centerName: center?.centerCity ?? 'Inconnu', // fallback s'il n'y a pas de nom
+          centerAddress: center?.centerAdress ?? '',
+          latitude: parseFloat(center?.centerLatitude ?? '0'),
+          longitude: parseFloat(center?.centerLongitude ?? '0')
+        },
         destinationHospital: {
           hospitalId: hospital?.hospitalId ?? 0,
           hospitalName: hospital?.hospitalName ?? 'Inconnu',

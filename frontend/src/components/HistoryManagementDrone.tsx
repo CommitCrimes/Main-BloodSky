@@ -526,7 +526,7 @@ const HistoryManagementDrone: React.FC = observer(() => {
                   {item.droneName}
                 </TableCell>
                 <TableCell sx={commonStyles.techFont}>
-                  {item.departureCoordinates.latitude}, {item.departureCoordinates.longitude}
+                  {item.sourceDonationCenter?.centerCity || 'Inconnu'}
                 </TableCell>
                 <TableCell sx={commonStyles.techFont}>
                   {item.destinationHospital.hospitalName}

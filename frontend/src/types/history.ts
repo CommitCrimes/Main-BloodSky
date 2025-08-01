@@ -13,6 +13,7 @@ interface BaseHistoryItem {
 }
 
 export interface DonationCenterHistory extends BaseHistoryItem {
+  sourceDonationCenter: any;
   type: 'delivery';
   destinationHospital: {
     hospitalId: number;
