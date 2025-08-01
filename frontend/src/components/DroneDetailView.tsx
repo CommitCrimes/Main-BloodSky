@@ -35,6 +35,7 @@ import {
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import droneTopViewImage from '../assets/drone_TopView.png';
 
 // Fix for default markers in react-leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -43,6 +44,51 @@ L.Icon.Default.mergeOptions({
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
+
+const createDroneIcon = (heading: number, movementTrack: number, isMoving: boolean) => {
+  let headingDiff = movementTrack - heading;
+  if (headingDiff > 180) headingDiff -= 360;
+  if (headingDiff < -180) headingDiff += 360;
+  
+  const isMovingForward = Math.abs(headingDiff) < 90;
+  const arrowColor = isMovingForward ? '#f4f5f4ff' : '#f3e9daff';
+  const arrowPosition = isMovingForward ? 'top: -15px;' : 'bottom: -15px;';
+  
+  return L.divIcon({
+    html: `
+      <div style="
+        width: 80px;
+        height: 80px;
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      ">
+        <img src="${droneTopViewImage}" style="
+          width: 65px;
+          height: 65px;
+          transform: rotate(${heading}deg);
+          filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
+        " />
+        <div style="
+          position: absolute;
+          ${arrowPosition}
+          left: 50%;
+          transform: translateX(-50%) rotate(${movementTrack - heading}deg);
+          width: 0;
+          height: 0;
+          border-left: 10px solid transparent;
+          border-right: 10px solid transparent;
+          border-bottom: 20px solid ${isMoving ? arrowColor : 'white'};
+          filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.66));
+        "></div>
+      </div>
+    `,
+    className: 'drone-marker',
+    iconSize: [80, 80],
+    iconAnchor: [40, 40],
+  });
+};
 
 interface DroneDetailViewProps {
   droneId: number;
@@ -59,6 +105,8 @@ interface DroneFlightInfo {
   horizontal_speed_m_s: number;
   vertical_speed_m_s: number;
   heading_deg: number;
+  movement_track_deg: number;
+  battery_remaining_percent: number;
 }
 
 interface MissionWaypoint {
@@ -103,7 +151,15 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     lon: 0,
     alt: 0
   });
-  const [hospitals, setHospitals] = useState<any[]>([]);
+  const [hospitals, setHospitals] = useState<Array<{
+    hospitalId: number;
+    hospitalName: string;
+    hospitalAdress: string;
+    hospitalCity: string;
+    hospitalPostal: string;
+    hospitalLatitude: string;
+    hospitalLongitude: string;
+  }>>([]);
   const [hospitalsDialogOpen, setHospitalsDialogOpen] = useState(false);
 
   const fetchFlightInfo = async () => {
@@ -113,6 +169,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
         throw new Error('Failed to fetch flight info');
       }
       const data = await response.json();
+      
       setFlightInfo(data);
       setError(null);
     } catch (err) {
@@ -266,7 +323,12 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     }
   };
 
-  const createMissionToHospital = async (hospital: any) => {
+  const createMissionToHospital = async (hospital: {
+    hospitalId: number;
+    hospitalName: string;
+    hospitalLatitude: string;
+    hospitalLongitude: string;
+  }) => {
     try {
       // Créer la mission de livraison
       const missionResponse = await fetch(`http://localhost:3000/api/drones/${droneId}/delivery-mission`, {
@@ -305,8 +367,18 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   };
 
   useEffect(() => {
-    fetchFlightInfo();
-    fetchHospitals();
+    const loadData = async () => {
+      await fetchFlightInfo();
+      await fetchHospitals();
+    };
+    
+    loadData();
+    
+    // Refresh flight info every 5 seconds
+    const interval = setInterval(() => {
+      fetchFlightInfo();
+    }, 5000);
+    return () => clearInterval(interval);
   }, [droneId]);
 
   if (loading) {
@@ -443,13 +515,28 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
               attribution='&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Source: Esri'
             />
             <MapClickHandler />
-            <Marker position={[flightInfo.latitude, flightInfo.longitude]}>
+            <Marker 
+              position={[flightInfo.latitude, flightInfo.longitude]}
+              icon={createDroneIcon(
+                flightInfo.heading_deg, 
+                flightInfo.movement_track_deg, 
+                flightInfo.horizontal_speed_m_s > 0.1
+              )}
+            >
               <Popup>
                 <div>
                   <strong>Drone {droneId}</strong><br />
                   Mode: {flightInfo.flight_mode}<br />
                   Altitude: {flightInfo.altitude_m.toFixed(1)} m<br />
-                  Vitesse: {flightInfo.horizontal_speed_m_s.toFixed(1)} m/s
+                  Vitesse: {flightInfo.horizontal_speed_m_s.toFixed(1)} m/s<br />
+                  Cap (heading): {flightInfo.heading_deg.toFixed(0)}°<br />
+                  Déplacement: {flightInfo.movement_track_deg?.toFixed(0) || 'N/A'}°<br />
+                  Batterie: {flightInfo.battery_remaining_percent?.toFixed(0) || 'N/A'}%<br />
+                  {flightInfo.horizontal_speed_m_s > 0.1 ? (
+                    <span style={{color: '#00ff00'}}>🡹 En mouvement</span>
+                  ) : (
+                    <span style={{color: '#999'}}>⏸ Stationnaire</span>
+                  )}
                 </div>
               </Popup>
             </Marker>

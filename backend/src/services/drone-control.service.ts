@@ -19,13 +19,9 @@ export class DroneControlService {
    * Get drone API URL by drone ID
    */
   private async getDroneApiUrl(droneId: number): Promise<string | null> {
-    const drone = await db
-      .select({ droneApiUrl: drones.droneApiUrl })
-      .from(drones)
-      .where(eq(drones.droneId, droneId))
-      .limit(1);
-
-    return drone[0]?.droneApiUrl || null;
+    // For now, all drones use the same API URL
+    // In the future, this could be configurable per drone or environment-based
+    return 'http://localhost:5000';
   }
 
   /**
@@ -51,12 +47,11 @@ export class DroneControlService {
 
       const result = await response.json();
       
-      // Update mission status in database
+      // Update drone status in database
       await db
         .update(drones)
         .set({ 
-          missionStatus: 'READY',
-          updatedAt: new Date()
+          droneStatus: 'ready'
         })
         .where(eq(drones.droneId, droneId));
 
@@ -93,8 +88,7 @@ export class DroneControlService {
       await db
         .update(drones)
         .set({ 
-          missionStatus: 'ACTIVE',
-          updatedAt: new Date()
+          droneStatus: 'active'
         })
         .where(eq(drones.droneId, droneId));
 
@@ -115,9 +109,10 @@ export class DroneControlService {
     }
 
     try {
-      const response = await fetch(`${apiUrl}/rth`, {
+      const response = await fetch(`${apiUrl}/command`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'rtl' }),
         signal: AbortSignal.timeout(10000)
       });
 
@@ -131,8 +126,7 @@ export class DroneControlService {
       await db
         .update(drones)
         .set({ 
-          missionStatus: 'RETURNING',
-          updatedAt: new Date()
+          droneStatus: 'returning'
         })
         .where(eq(drones.droneId, droneId));
 
@@ -179,8 +173,7 @@ export class DroneControlService {
       await db
         .update(drones)
         .set({ 
-          missionStatus: 'MODIFIED',
-          updatedAt: new Date()
+          droneStatus: 'modified'
         })
         .where(eq(drones.droneId, droneId));
 
@@ -220,8 +213,7 @@ export class DroneControlService {
       await db
         .update(drones)
         .set({ 
-          missionStatus: 'UPLOADED',
-          updatedAt: new Date()
+          droneStatus: 'uploaded'
         })
         .where(eq(drones.droneId, droneId));
 
@@ -255,14 +247,8 @@ export class DroneControlService {
 
       const result = await response.json();
       
-      // Update flight mode in database
-      await db
-        .update(drones)
-        .set({ 
-          flightMode: mode.toUpperCase(),
-          updatedAt: new Date()
-        })
-        .where(eq(drones.droneId, droneId));
+      // Note: flight mode is now handled by drone API directly
+      // No need to update database as flight_mode is retrieved in real-time
 
       return result;
     } catch (error) {

@@ -1,13 +1,13 @@
 export interface DroneFlightInfo {
   drone_id: string;
-  is_armed: boolean;
-  flight_mode: string;
   latitude: number;
   longitude: number;
   altitude_m: number;
   horizontal_speed_m_s: number;
   vertical_speed_m_s: number;
   heading_deg: number;
+  is_armed: boolean;
+  flight_mode: string;
 }
 
 export interface DroneWaypoint {
@@ -42,21 +42,10 @@ export interface DroneStatus {
   droneId: number;
   isOnline: boolean;
   lastSyncAt: Date | null;
-  apiUrl: string | null;
-  apiId: number | null;
 }
 
 export interface DroneUpdate {
-  droneCurrentLat?: number;
-  droneCurrentLong?: number;
-  altitudeM?: number;
-  horizontalSpeedMS?: number;
-  verticalSpeedMS?: number;
-  headingDeg?: number;
-  flightMode?: string;
-  isArmed?: boolean;
-  missionStatus?: string;
-  currentMissionId?: number;
+  droneStatus?: string;
   lastSyncAt?: Date;
 }
 

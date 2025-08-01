@@ -48,13 +48,13 @@ export class DroneSyncService {
    */
   async syncAllDrones(): Promise<void> {
     try {
-      const dronesWithApi = await db
+      const availableDrones = await db
         .select()
-        .from(drones)
-        .where(isNotNull(drones.droneApiUrl));
+        .from(drones);
 
-      const syncPromises = dronesWithApi.map(drone => 
-        this.syncDrone(drone.droneId, drone.droneApiUrl!, drone.droneApiId)
+      // For now, sync all drones using the fixed API URL
+      const syncPromises = availableDrones.map(drone => 
+        this.syncDrone(drone.droneId, 'http://localhost:5000', drone.droneId)
       );
 
       await Promise.allSettled(syncPromises);
@@ -101,20 +101,13 @@ export class DroneSyncService {
   }
 
   /**
-   * Update drone record with flight info
+   * Update drone record with sync timestamp
+   * Flight info is now retrieved in real-time, no need to store it
    */
   private async updateDroneFromFlightInfo(droneId: number, flightInfo: DroneFlightInfo): Promise<void> {
+    // Only update sync timestamp and status
     const updateData = {
-      droneCurrentLat: String(flightInfo.latitude),
-      droneCurrentLong: String(flightInfo.longitude),
-      altitudeM: String(flightInfo.altitude_m),
-      horizontalSpeedMS: String(flightInfo.horizontal_speed_m_s),
-      verticalSpeedMS: String(flightInfo.vertical_speed_m_s),
-      headingDeg: String(flightInfo.heading_deg),
-      flightMode: flightInfo.flight_mode,
-      isArmed: flightInfo.is_armed,
-      lastSyncAt: new Date(),
-      updatedAt: new Date()
+      droneStatus: flightInfo.is_armed ? 'armed' : 'available'
     };
 
     await db
@@ -131,25 +124,11 @@ export class DroneSyncService {
     
     return allDrones.map(drone => ({
       droneId: drone.droneId,
-      isOnline: this.isDroneOnline(drone.lastSyncAt),
-      lastSyncAt: drone.lastSyncAt,
-      apiUrl: drone.droneApiUrl,
-      apiId: drone.droneApiId
+      isOnline: true, // Always consider online since we use real-time API
+      lastSyncAt: new Date() // Current time as we sync on-demand
     }));
   }
 
-  /**
-   * Check if drone is considered online based on last sync
-   */
-  private isDroneOnline(lastSyncAt: Date | null): boolean {
-    if (!lastSyncAt) return false;
-    
-    const now = new Date();
-    const timeDiff = now.getTime() - lastSyncAt.getTime();
-    const ONLINE_THRESHOLD_MS = 15000; // 15 seconds
-    
-    return timeDiff < ONLINE_THRESHOLD_MS;
-  }
 
   /**
    * Force sync a specific drone
@@ -162,11 +141,11 @@ export class DroneSyncService {
         .where(eq(drones.droneId, droneId))
         .limit(1);
 
-      if (drone.length === 0 || !drone[0].droneApiUrl) {
+      if (drone.length === 0) {
         return false;
       }
 
-      await this.syncDrone(droneId, drone[0].droneApiUrl, drone[0].droneApiId);
+      await this.syncDrone(droneId, 'http://localhost:5000', droneId);
       return true;
     } catch (error) {
       console.error(`Force sync failed for drone ${droneId}:`, error);
