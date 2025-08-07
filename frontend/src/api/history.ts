@@ -82,6 +82,8 @@ export const historyApi = {
     return response.data;
   },
 
+  
+
   // Récupérer l'historique pour un centre de donation
   getDonationCenterHistory: async (centerId: number): Promise<DonationCenterHistory[]> => {
     const [deliveries, hospitals, drones, bloodTypes, donationCenters] = await Promise.all([
@@ -187,5 +189,58 @@ export const historyApi = {
         }
       };
     });
+  },
+
+    getDroneDeliveryHistory: async (): Promise<DonationCenterHistory[]> => {
+    const [deliveries, hospitals, donationCenters, drones, bloodTypes] = await Promise.all([
+      historyApi.getDeliveries(),
+      historyApi.getHospitals(),
+      historyApi.getDonationCenters(),
+      historyApi.getDrones(),
+      historyApi.getBloodTypes()
+    ]);
+
+    return deliveries.map(delivery => {
+      const drone = drones.find(d => d.droneId === delivery.droneId);
+      const center = donationCenters.find(c => c.centerId === delivery.centerId);
+      const hospital = hospitals.find(h => h.hospitalId === delivery.hospitalId);
+      const blood = bloodTypes.find(b => b.deliveryId === delivery.deliveryId);
+
+      return {
+        id: delivery.deliveryId.toString(),
+        deliveryId: delivery.deliveryId,
+        type: 'delivery',
+        requestDate: delivery.dteDelivery ? new Date(delivery.dteDelivery) : new Date(),
+        deliveryDate: delivery.dteValidation ? new Date(delivery.dteValidation) : null,
+        validationDate: delivery.dteValidation ? new Date(delivery.dteValidation) : null,
+        personIdentity: 'Système',
+        deliveryStatus: delivery.deliveryStatus as any,
+        isUrgent: delivery.deliveryUrgent,
+        bloodType: blood?.bloodType ?? 'Inconnu',
+        droneId: drone?.droneId,
+        droneName: drone?.droneName ?? 'Non assigné',
+        sourceDonationCenter: {
+          centerId: center?.centerId ?? 0,
+          centerCity: center?.centerCity ?? 'Inconnu',
+          centerName: center?.centerCity ?? 'Inconnu', // fallback s'il n'y a pas de nom
+          centerAddress: center?.centerAdress ?? '',
+          latitude: parseFloat(center?.centerLatitude ?? '0'),
+          longitude: parseFloat(center?.centerLongitude ?? '0')
+        },
+        destinationHospital: {
+          hospitalId: hospital?.hospitalId ?? 0,
+          hospitalName: hospital?.hospitalName ?? 'Inconnu',
+          hospitalCity: hospital?.hospitalCity ?? '',
+          hospitalAddress: hospital?.hospitalAdress ?? '',
+          latitude: parseFloat(hospital?.hospitalLatitude ?? '0'),
+          longitude: parseFloat(hospital?.hospitalLongitude ?? '0')
+        },
+        departureCoordinates: {
+          latitude: parseFloat(center?.centerLatitude ?? '0'),
+          longitude: parseFloat(center?.centerLongitude ?? '0')
+        }
+      };
+    });
   }
+
 };

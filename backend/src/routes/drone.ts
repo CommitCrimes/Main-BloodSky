@@ -30,13 +30,8 @@ droneRouter.get('/history', async (c) => {
       .select({
         droneId: drones.droneId,
         droneName: drones.droneName,
-        droneBattery: drones.droneBattery,
         droneStatus: drones.droneStatus,
-        missionStatus: drones.missionStatus,
-        flightMode: drones.flightMode,
-        isArmed: drones.isArmed,
-        createdAt: drones.createdAt,
-        lastSyncAt: drones.lastSyncAt,
+        droneImage: drones.droneImage,
         // Delivery info
         deliveryId: deliveries.deliveryId,
         deliveryStatus: deliveries.deliveryStatus,
@@ -123,17 +118,8 @@ droneRouter.put('/:id', async (c) => {
   
   // Add updated timestamp and convert decimal fields to strings
   const updateData: any = {
-    ...body,
-    updatedAt: new Date()
+    ...body
   };
-  
-  // Convert decimal fields to strings if present
-  if (updateData.droneCurrentLat !== undefined) updateData.droneCurrentLat = String(updateData.droneCurrentLat);
-  if (updateData.droneCurrentLong !== undefined) updateData.droneCurrentLong = String(updateData.droneCurrentLong);
-  if (updateData.altitudeM !== undefined) updateData.altitudeM = String(updateData.altitudeM);
-  if (updateData.horizontalSpeedMS !== undefined) updateData.horizontalSpeedMS = String(updateData.horizontalSpeedMS);
-  if (updateData.verticalSpeedMS !== undefined) updateData.verticalSpeedMS = String(updateData.verticalSpeedMS);
-  if (updateData.headingDeg !== undefined) updateData.headingDeg = String(updateData.headingDeg);
   
   await db.update(drones).set(updateData).where(eq(drones.droneId, id));
   return c.text('Updated');
