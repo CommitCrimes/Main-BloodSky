@@ -36,6 +36,7 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from '
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import droneTopViewImage from '../assets/drone_TopView.png';
+import BloodHouseIcon from '../assets/drop_of_blood.png';
 
 // Fix for default markers in react-leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -89,6 +90,15 @@ const createDroneIcon = (heading: number, movementTrack: number, isMoving: boole
     iconAnchor: [40, 40],
   });
 };
+
+const createBloodHouseIcon = () =>
+  L.icon({
+    iconUrl: BloodHouseIcon,
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40],
+  });
+
 
 interface DroneDetailViewProps {
   droneId: number;
