@@ -27,20 +27,15 @@
     Card,
     CardContent,
     Fade,
-    Tooltip,
     CircularProgress,
     Alert,
   } from '@mui/material';
   import {
     Search,
-    Sort,
-    Visibility,
     LocalShipping,
     Schedule,
     Business,
     Close,
-    ArrowUpward,
-    ArrowDownward,
     CheckCircle,
     Cancel,
     Pending,
@@ -54,8 +49,8 @@
   import type { 
     DeliveryHistory, 
     HistoryFilters, 
-    HistorySortConfig, 
-    HistorySearchConfig 
+    HistorySearchConfig, 
+    DroneHistorySortConfig
   } from '../types/history';
   import { historyApi } from '../api/history';
   import { orderApi } from '../api/order';
@@ -110,8 +105,8 @@
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [filters, setFilters] = useState<HistoryFilters>({});
-    const [sortConfig, setSortConfig] = useState<HistorySortConfig>({
-      field: 'requestDate',
+    const [sortConfig] = useState<DroneHistorySortConfig>({
+      field: 'deliveryDate',
       direction: 'desc'
     });
     const [searchConfig, setSearchConfig] = useState<HistorySearchConfig>({
@@ -122,10 +117,9 @@
     const [historyData, setHistoryData] = useState<DeliveryHistory[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [cancellingDelivery, setCancellingDelivery] = useState<number | null>(null);
 
     const [history, setHistory] = useState<DonationCenterHistory[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [, setLoading] = useState(true);
     const [openEditPopup, setOpenEditPopup] = useState(false);
     const [deliveryToEdit, setDeliveryToEdit] = useState<DeliveryHistory | null>(null);
 
@@ -249,7 +243,7 @@
     };
 
     const filteredAndSortedData = useMemo(() => {
-      let result = [...historyData];
+      let result = [...history];
 
       if (filters.status) {
         result = result.filter(item => item.deliveryStatus === filters.status);
@@ -258,28 +252,42 @@
         result = result.filter(item => item.isUrgent === filters.isUrgent);
       }
 
-      if (searchConfig.searchTerm) {
-        const searchTerm = searchConfig.searchTerm.toLowerCase();
-        result = result.filter(item => {
-          const institutionName = item.type === 'delivery' 
-            ? item.destinationHospital.hospitalName
-            : item.sourceDonationCenter.centerCity;
-            
-          return item.deliveryId.toString().includes(searchTerm) ||
-                institutionName.toLowerCase().includes(searchTerm) ||
-                item.personIdentity.toLowerCase().includes(searchTerm) ||
-                (item.bloodType && item.bloodType.toLowerCase().includes(searchTerm));
-        });
-      }
+if (searchConfig.searchTerm) {
+  const searchTerm = searchConfig.searchTerm.toLowerCase();
+  result = result.filter(item => {
+    return Object.values({
+      deliveryId: item.deliveryId.toString(),
+      droneName: item.droneName || '',
+      centerCity: item.sourceDonationCenter?.centerCity || '',
+      centerAddress: item.sourceDonationCenter?.centerAddress || '',
+      hospitalName: item.destinationHospital?.hospitalName || '',
+      hospitalCity: item.destinationHospital?.hospitalCity || '',
+      hospitalAddress: item.destinationHospital?.hospitalAddress || '',
+      bloodType: item.bloodType || '',
+      personIdentity: item.personIdentity || '',
+      status: getStatusLabel(item.deliveryStatus) || '',
+      urgent: item.isUrgent ? 'urgent' : 'normal',
+      requestDate: item.requestDate?.toLocaleDateString('fr-FR') || '',
+      deliveryDate: item.deliveryDate?.toLocaleDateString('fr-FR') || '',
+      validationDate: item.validationDate?.toLocaleDateString('fr-FR') || ''
+    }).some(value =>
+      value.toString().toLowerCase().includes(searchTerm)
+    );
+  });
+}
 
       result.sort((a, b) => {
         let aValue: string | number | Date;
         let bValue: string | number | Date;
 
         switch (sortConfig.field) {
-          case 'requestDate':
-            aValue = new Date(a.requestDate).getTime();
-            bValue = new Date(b.requestDate).getTime();
+          case 'deliveryDate':
+            aValue = a.deliveryDate ? new Date(a.deliveryDate).getTime() : 0;
+            bValue = b.deliveryDate ? new Date(b.deliveryDate).getTime() : 0;
+            break;
+          case 'validationDate':
+            aValue = a.validationDate ? new Date(a.validationDate).getTime() : 0;
+            bValue = b.validationDate ? new Date(b.validationDate).getTime() : 0;
             break;
           case 'deliveryId':
             aValue = a.deliveryId;
@@ -290,8 +298,8 @@
             bValue = b.type === 'delivery' ? b.destinationHospital.hospitalName : '';
             break;
           case 'sourceName':
-            aValue = a.type === 'order' ? a.sourceDonationCenter.centerCity : '';
-            bValue = b.type === 'order' ? b.sourceDonationCenter.centerCity : '';
+            aValue = a.type === 'delivery' ? a.sourceDonationCenter.centerCity : '';
+            bValue = b.type === 'delivery' ? b.sourceDonationCenter.centerCity : '';
             break;
           case 'bloodType':
             aValue = a.bloodType || '';
@@ -315,18 +323,6 @@
       return result;
     }, [historyData, filters, sortConfig, searchConfig]);
 
-    const handleSort = (field: HistorySortConfig['field']) => {
-      setSortConfig(prev => ({
-        field,
-        direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc'
-      }));
-    };
-
-    const handleViewDetail = (delivery: DeliveryHistory) => {
-      setSelectedDelivery(delivery);
-      setShowDetailDialog(true);
-    };
-
     const handleCloseDetail = () => {
       setSelectedDelivery(null);
       setShowDetailDialog(false);
@@ -339,33 +335,6 @@
     const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
       setRowsPerPage(parseInt(event.target.value, 10));
       setPage(0);
-    };
-
-    const handleCancelOrder = async (deliveryId: number) => {
-      if (!window.confirm('Êtes-vous sûr de vouloir annuler cette commande ?')) {
-        return;
-      }
-
-      setCancellingDelivery(deliveryId);
-      try {
-        await orderApi.cancelOrder(deliveryId);
-        
-        await reloadHistoryData();
-        
-        setError(null);
-      } catch (err) {
-        console.error('Erreur lors de l\'annulation:', err);
-        setError('Impossible d\'annuler la commande');
-      } finally {
-        setCancellingDelivery(null);
-      }
-    };
-
-    const getSortIcon = (field: HistorySortConfig['field']) => {
-      if (sortConfig.field === field) {
-        return sortConfig.direction === 'asc' ? <ArrowUpward /> : <ArrowDownward />;
-      }
-      return <Sort />;
     };
 
     if (isLoading) {
@@ -549,7 +518,7 @@
             </TableRow>
           </TableHead>
           <TableBody>
-            {history
+            {filteredAndSortedData
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((item) => (
                 <TableRow key={item.deliveryId}>
@@ -610,7 +579,7 @@
       <TablePagination
         rowsPerPageOptions={[5, 10, 25]}
         component="div"
-        count={history.length}
+        count={filteredAndSortedData.length}
         rowsPerPage={rowsPerPage}
         page={page}
         onPageChange={handleChangePage}
