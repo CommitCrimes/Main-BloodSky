@@ -321,7 +321,7 @@ if (searchConfig.searchTerm) {
       });
 
       return result;
-    }, [historyData, filters, sortConfig, searchConfig]);
+    }, [history, filters, sortConfig, searchConfig]);
 
     const handleCloseDetail = () => {
       setSelectedDelivery(null);
