@@ -42,17 +42,5 @@ export const orderApi = {
   cancelOrder: async (deliveryId: number): Promise<{ success: boolean; message: string }> => {
     const response = await api.post(`/blood/cancel-order/${deliveryId}`);
     return response.data;
-  },
-
-// PUT: Met à jour le statut et la date d'une livraison
-updateDeliveryStatus: async (
-  deliveryId: number,
-  update: { deliveryStatus: string; dteValidation?: string }
-): Promise<{ success: boolean; message: string }> => {
-  const response = await api.put(`/deliveries/${deliveryId}`, update);
-  return response.data;
-
-}
-
-
+  }
 };

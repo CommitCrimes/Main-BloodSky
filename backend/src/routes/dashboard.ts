@@ -37,8 +37,7 @@ dashboardRouter.get("/delivery-stats", async (c) => {
     } else if (centerUser.length > 0 && centerUser[0].centerId !== null) {
       whereCondition = eq(deliveries.centerId, centerUser[0].centerId);
     } else {
-      // Pour les dronistes, on retourne toutes les livraisons
-      whereCondition = sql`1=1`;
+      return c.json({ error: "Utilisateur non associé à une entité" }, 400);
     }
 
     const statusStats = await db
