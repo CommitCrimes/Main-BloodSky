@@ -114,7 +114,7 @@
     });
     const [selectedDelivery, setSelectedDelivery] = useState<DeliveryHistory | null>(null);
     const [showDetailDialog, setShowDetailDialog] = useState(false);
-    const [, setHistoryData] = useState<DeliveryHistory[]>([]);
+    const [historyData, setHistoryData] = useState<DeliveryHistory[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -321,7 +321,7 @@ if (searchConfig.searchTerm) {
       });
 
       return result;
-    }, [history, filters, sortConfig, searchConfig]);
+    }, [historyData, filters, sortConfig, searchConfig]);
 
     const handleCloseDetail = () => {
       setSelectedDelivery(null);
