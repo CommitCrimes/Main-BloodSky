@@ -38,7 +38,29 @@ import 'leaflet/dist/leaflet.css';
 import droneTopViewImage from '../assets/drone_TopView.png';
 import BloodHouseIcon from '../assets/drop_of_blood.png';
 import HopitalIcon from '../assets/Hopital.png';
-import { dronesApi, type DroneMission, type DroneWaypoint, type FlightInfo as ApiFlightInfo } from '@/api/drone';
+import { dronesApi, type DroneMission, type DroneWaypoint, type FlightInfo as ApiFlightInfo, type Drone as ApiDrone } from '@/api/drone';
+import { donationCenterApi } from '@/api/donation_center';
+import { hospitalApi } from '@/api/hospital';
+
+type DonationCenterRaw = {
+  centerId: number;
+  centerCity: string | null;
+  centerPostal: number | null;
+  centerAdress: string | null;        // orthographe DB
+  centerLatitude: string | null;      // decimal → string
+  centerLongitude: string | null;     // decimal → string
+};
+
+type HospitalUI = {
+  hospitalId: number;
+  hospitalName: string;
+  hospitalAdress: string;
+  hospitalCity: string;
+  hospitalPostal: string;
+  hospitalLatitude: string;
+  hospitalLongitude: string;
+};
+
 
 
 export interface Drone {
@@ -49,14 +71,6 @@ export interface Drone {
   droneStatus?: string;
 }
 
-export const donationCentersApi = {
-  getAll: async () => {
-    const response = await fetch("http://localhost:3000/api/donation-centers");
-    if (!response.ok) throw new Error("Erreur lors de la récupération des centres de don");
-    return response.json();
-  }
-};
-
 // Fix for default markers in react-leaflet
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
@@ -66,6 +80,7 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createDroneIcon = (heading: number, movementTrack: number, isMoving: boolean) => {
   //let headingDiff = movementTrack - heading;
   //if (headingDiff < -180) headingDiff -= 360;
@@ -115,14 +130,14 @@ const createBloodHouseIcon = () =>
   L.icon({
     iconUrl: BloodHouseIcon,
     iconSize: [40, 60],
-    iconAnchor: [20, 40],
+    iconAnchor: [20, 30],
     popupAnchor: [0, -40],
   });
 const createHopitalIcon = () =>
   L.icon({
     iconUrl:HopitalIcon,
     iconSize: [60, 60],
-    iconAnchor: [20, 40],
+    iconAnchor: [30, 30],
     popupAnchor: [0, -40],
   })
 interface DroneDetailViewProps {
@@ -138,6 +153,7 @@ type Mission = DroneMission;
 
 const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) => {
   const [flightInfo, setFlightInfo] = useState<DroneFlightInfo | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [missionDialogOpen, setMissionDialogOpen] = useState(false);
@@ -156,24 +172,12 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     lon: 0,
     alt: 0
   });
-  const [hospitals, setHospitals] = useState<Array<{
-    hospitalId: number;
-    hospitalName: string;
-    hospitalAdress: string;
-    hospitalCity: string;
-    hospitalPostal: string;
-    hospitalLatitude: string;
-    hospitalLongitude: string;
-  }>>([]);
-  const [hospitalsDialogOpen, setHospitalsDialogOpen] = useState(false);
+const [hospitals, setHospitals] = useState<HospitalUI[]>([]);
+const [hospitalsDialogOpen, setHospitalsDialogOpen] = useState(false);
 
-  const [donationCenters, setDonationCenters] = useState<Array<{
-    centerId: number;
-    centerCity: string;
-    centerAdress: string;
-    centerLatitude: string;
-    centerLongitude: string;
-  }>>([]);
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const [drone, setDrone] = useState<ApiDrone | null>(null);
+const [donationCenter, setDonationCenter] = useState<DonationCenterRaw | null>(null);
 
 
 const fetchFlightInfo = async () => {
@@ -278,22 +282,55 @@ const handleModifyMission = async () => {
     });
   };
 
-  const fetchHospitals = async () => {
-    try {
-      console.log('Fetching hospitals...');
-      const response = await fetch('http://localhost:3000/api/hospitals');
-      console.log('Response status:', response.status);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Hospitals data:', data);
-        setHospitals(data);
-      } else {
-        console.error('Response not ok:', response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error('Error fetching hospitals:', error);
+const fetchHospitalsByCity = async (city: string) => {
+  try {
+    const hs = await hospitalApi.getByCity(city);
+    const normalized: HospitalUI[] = hs.map(h => ({
+      hospitalId: h.hospitalId,
+      hospitalName: h.hospitalName,
+      hospitalAdress: h.hospitalAdress ?? '',
+      hospitalCity: h.hospitalCity ?? '',
+      hospitalPostal: h.hospitalPostal != null ? String(h.hospitalPostal) : '',
+      hospitalLatitude: h.hospitalLatitude ?? '',
+      hospitalLongitude: h.hospitalLongitude ?? '',
+    }));
+    setHospitals(normalized);
+  } catch (err) {
+    console.error('getByCity error:', err);
+    setHospitals([]);
+  }
+};
+
+const loadStaticData = async (id: number) => {
+  try {
+    const d = await dronesApi.getById(id);
+    setDrone(d);
+
+    if (!d?.centerId) {
+      setDonationCenter(null);
+      setHospitals([]);
+      return;
     }
-  };
+
+    const center = await donationCenterApi.getCenterById(d.centerId);
+    const dc = center as unknown as DonationCenterRaw;
+    setDonationCenter(dc);
+
+    const city = (dc.centerCity ?? '').trim();
+    if (city) {
+      await fetchHospitalsByCity(city);
+    } else {
+      setHospitals([]);
+    }
+  } catch (err) {
+    console.error('loadStaticData error:', err);
+    setDonationCenter(null);
+    setHospitals([]);
+  }
+};
+
+
+
 
 // Création d’une mission vers un hôpital via /mission/create
 const createMissionToHospital = async (hospital: {
@@ -343,33 +380,26 @@ const createMissionToHospital = async (hospital: {
 
 
   useEffect(() => {
-    const loadData = async () => {
-      await fetchFlightInfo();
-      await fetchHospitals();
-      try {
-        const centers = await donationCentersApi.getAll();
-        setDonationCenters(centers);
-      } catch (e) {
-        console.error(e);
-      }
-    };
+  let cancelled = false;
 
-    loadData();
-    
-    // Refresh flight info every 5 seconds
-    const interval = setInterval(() => {
-      fetchFlightInfo();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [droneId]);
+  const init = async () => {
+    await Promise.all([fetchFlightInfo(), loadStaticData(droneId)]);
+    if (cancelled) return;
+  };
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  init();
+
+  const interval = setInterval(() => {
+    fetchFlightInfo();
+  }, 5000);
+
+  return () => {
+    cancelled = true;
+    clearInterval(interval);
+  };
+}, [droneId]);
+
+
 
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -497,26 +527,27 @@ const createMissionToHospital = async (hospital: {
               attribution='&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Source: Esri'
             />
             <MapClickHandler />
-            {donationCenters.map((c) => {
-              const lat = parseFloat(c.centerLatitude);
-              const lon = parseFloat(c.centerLongitude);
-              if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
+           {donationCenter &&
+            donationCenter.centerLatitude !== null &&
+            donationCenter.centerLongitude !== null &&
+            !isNaN(Number(donationCenter.centerLatitude)) &&
+            !isNaN(Number(donationCenter.centerLongitude)) && (
+            <Marker
+              position={[
+                Number(donationCenter.centerLatitude),
+                Number(donationCenter.centerLongitude)
+              ]}
+              icon={createBloodHouseIcon()}
+              zIndexOffset={0}
+            >
+              <Popup>
+                <strong>Centre de don</strong><br />
+                {donationCenter.centerAdress}<br />
+                {donationCenter.centerPostal} {donationCenter.centerCity}
+              </Popup>
+            </Marker>
+          )}
 
-              return (
-                <Marker
-                  key={c.centerId}
-                  position={[lat, lon]}
-                  icon={createBloodHouseIcon()}
-                  zIndexOffset={0}
-                >
-                  <Popup>
-                    <strong>Centre de don</strong><br />
-                    {c.centerCity}<br />
-                    {c.centerAdress}
-                  </Popup>
-                </Marker>
-              );
-            })}
             {hospitals.map((h) => {
               const lat = parseFloat(h.hospitalLatitude);
               const lon = parseFloat(h.hospitalLongitude);
