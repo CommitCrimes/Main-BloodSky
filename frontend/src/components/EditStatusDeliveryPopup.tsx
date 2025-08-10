@@ -93,8 +93,6 @@ const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
     const dateToSend =
       status === 'pending' && newDate
         ? new Date(newDate)
-        : status === 'cancelled'
-        ? new Date()
         : undefined;
 
     await onSave(status, dateToSend);
