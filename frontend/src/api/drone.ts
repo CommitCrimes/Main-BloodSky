@@ -189,14 +189,14 @@ export const dronesApi = {
       method: "POST",
       body: JSON.stringify(params),
     }),
-/** POST /drones/:id/mission/send (JSON avec filename) */
-sendMissionFile: (id: number, filename: string) => {
-  return fetchJson(`/drones/${id}/mission/send`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ filename }),
-  });
-},
+    /** POST /drones/:id/mission/send (JSON avec filename) */
+    sendMissionFile: (id: number, filename: string) => {
+      return fetchJson(`/drones/${id}/mission/send`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filename }),
+      });
+    },
 
 
 

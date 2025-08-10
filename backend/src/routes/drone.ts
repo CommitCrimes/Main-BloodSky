@@ -236,27 +236,18 @@ droneRouter.post('/:id/command', async (c) => {
 });
 
 // POST /drones/:id/mission/send - Send mission file
+// routes/drone.router.ts
 droneRouter.post('/:id/mission/send', async (c) => {
   const id = Number(c.req.param('id'));
   if (isNaN(id)) return c.text('Invalid ID', 400);
-  
-  const formData = await c.req.formData();
-  const file = formData.get('file') as File;
-  
-  if (!file) {
-    return c.json({ error: 'No file provided' }, 400);
+
+  const { filename } = await c.req.json();
+  if (!filename || typeof filename !== 'string' || !filename.endsWith('.waypoints')) {
+    return c.json({ error: "Missing or invalid 'filename' (.waypoints)" }, 400);
   }
-  
-  if (!file.name.endsWith('.waypoints')) {
-    return c.json({ error: 'File must have .waypoints extension' }, 400);
-  }
-  
-  const result = await droneControlService.sendMissionFile(id, file);
-  
-  if (result.error) {
-    return c.json({ error: result.error }, 400);
-  }
-  
+
+  const result = await droneControlService.sendMissionFile(id, filename);
+  if ((result as any).error) return c.json(result, 400);
   return c.json(result);
 });
 
