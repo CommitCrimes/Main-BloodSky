@@ -106,18 +106,18 @@ const createDroneIcon = (heading: number, movementTrack: number, isMoving: boole
           transform: rotate(${heading}deg);
           filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
         " />
-        <div style="
-          position: absolute;
+        // <div style="
+        //   position: absolute;
           
-          left: 50%;
-          transform: translateX(-50%) rotate(${movementTrack - heading}deg);
-          width: 0;
-          height: 0;
-          border-left: 10px solid transparent;
-          border-right: 10px solid transparent;
-          border-bottom: 20px solid;
-          filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.66));
-        "></div>
+        //   left: 50%;
+        //   transform: translateX(-50%) rotate(${movementTrack - heading}deg);
+        //   width: 0;
+        //   height: 0;
+        //   border-left: 10px solid transparent;
+        //   border-right: 10px solid transparent;
+        //   border-bottom: 20px solid;
+        //   filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.66));
+        // "></div>
       </div>
     `,
     className: 'drone-marker',
@@ -179,6 +179,8 @@ const [hospitalsDialogOpen, setHospitalsDialogOpen] = useState(false);
 const [drone, setDrone] = useState<ApiDrone | null>(null);
 const [donationCenter, setDonationCenter] = useState<DonationCenterRaw | null>(null);
 
+const toNum = (s: string | null) =>
+  s != null ? Number(String(s).trim().replace(',', '.')) : NaN;
 
 const fetchFlightInfo = async () => {
   try {
@@ -206,14 +208,22 @@ const handleStartMission = async () => {
 
 const handleReturnHome = async () => {
   try {
-    await dronesApi.returnHome(droneId);
-    alert('Drone retourne à la base !');
+    if (flightInfo?.is_armed) {
+      // En vol → RTL
+      await dronesApi.returnHome(droneId);
+      alert('RTL envoyé, retour automatique.');
+    } else {
+      // Au sol → mission “donation center” (décollage + vol + atterrissage)
+      await createMissionToDonationCenter();
+      alert('Mission vers le centre créée et démarrée !');
+    }
     await fetchFlightInfo();
   } catch (err) {
-    console.error('Error returning home:', err);
-    alert(`Erreur lors du retour à la base: ${err}`);
+    console.error('Error returning home / creating center mission:', err);
+    alert(`Erreur: ${err}`);
   }
 };
+
 
   const handleCreateMission = async () => {
   try {
@@ -375,6 +385,33 @@ const createMissionToHospital = async (hospital: {
     alert(`Erreur: ${error}`);
   }
 };
+
+const createMissionToDonationCenter = async () => {
+  if (!donationCenter) {
+    alert("Centre de don inconnu.");
+    return;
+  }
+
+  const lat = toNum(donationCenter.centerLatitude);
+  const lon = toNum(donationCenter.centerLongitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    alert("Coordonnées du centre de don invalides.");
+    return;
+  }
+
+  const ALT = 50;
+  const mission: Mission = {
+    filename: `return_center_${droneId}_${Date.now()}.waypoints`,
+    altitude_takeoff: ALT,
+    mode: 'auto',
+    waypoints: [{ lat, lon, alt: ALT }],
+  };
+
+  await dronesApi.createMission(droneId, mission);
+  await dronesApi.sendMissionFile(droneId, mission.filename);
+  await dronesApi.startMission(droneId);
+};
+
 
 
 
