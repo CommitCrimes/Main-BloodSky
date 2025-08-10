@@ -37,9 +37,19 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import droneTopViewImage from '../assets/drone_TopView.png';
 import BloodHouseIcon from '../assets/drop_of_blood.png';
+import HopitalIcon from '../assets/Hopital.png';
+
+export const donationCentersApi = {
+  getAll: async () => {
+    const response = await fetch("http://localhost:3000/api/donation-centers");
+    if (!response.ok) throw new Error("Erreur lors de la récupération des centres de don");
+    return response.json();
+  }
+};
 
 // Fix for default markers in react-leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
@@ -94,12 +104,17 @@ const createDroneIcon = (heading: number, movementTrack: number, isMoving: boole
 const createBloodHouseIcon = () =>
   L.icon({
     iconUrl: BloodHouseIcon,
-    iconSize: [40, 40],
+    iconSize: [40, 60],
     iconAnchor: [20, 40],
     popupAnchor: [0, -40],
   });
-
-
+const createHopitalIcon = () =>
+  L.icon({
+    iconUrl:HopitalIcon,
+    iconSize: [60, 60],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -40],
+  })
 interface DroneDetailViewProps {
   droneId: number;
   onBack: () => void;
@@ -171,6 +186,15 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     hospitalLongitude: string;
   }>>([]);
   const [hospitalsDialogOpen, setHospitalsDialogOpen] = useState(false);
+
+  const [donationCenters, setDonationCenters] = useState<Array<{
+    centerId: number;
+    centerCity: string;
+    centerAdress: string;
+    centerLatitude: string;
+    centerLongitude: string;
+  }>>([]);
+
 
   const fetchFlightInfo = async () => {
     try {
@@ -380,8 +404,14 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     const loadData = async () => {
       await fetchFlightInfo();
       await fetchHospitals();
+      try {
+        const centers = await donationCentersApi.getAll();
+        setDonationCenters(centers);
+      } catch (e) {
+        console.error(e);
+      }
     };
-    
+
     loadData();
     
     // Refresh flight info every 5 seconds
@@ -525,6 +555,47 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
               attribution='&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Source: Esri'
             />
             <MapClickHandler />
+            {donationCenters.map((c) => {
+              const lat = parseFloat(c.centerLatitude);
+              const lon = parseFloat(c.centerLongitude);
+              if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
+
+              return (
+                <Marker
+                  key={c.centerId}
+                  position={[lat, lon]}
+                  icon={createBloodHouseIcon()}
+                  zIndexOffset={0}
+                >
+                  <Popup>
+                    <strong>Centre de don</strong><br />
+                    {c.centerCity}<br />
+                    {c.centerAdress}
+                  </Popup>
+                </Marker>
+              );
+            })}
+            {hospitals.map((h) => {
+              const lat = parseFloat(h.hospitalLatitude);
+              const lon = parseFloat(h.hospitalLongitude);
+              if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
+
+              return (
+                <Marker
+                  key={h.hospitalId}
+                  position={[lat, lon]}
+                  icon={createHopitalIcon()}
+                  zIndexOffset={0}
+                >
+                  <Popup>
+                    <strong>{h.hospitalName}</strong><br />
+                    {h.hospitalAdress}<br />
+                    {h.hospitalCity} — {h.hospitalPostal}
+                  </Popup>
+                </Marker>
+              );
+            })}
+
             <Marker 
               position={[flightInfo.latitude, flightInfo.longitude]}
               icon={createDroneIcon(
@@ -532,6 +603,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
                 flightInfo.movement_track_deg, 
                 flightInfo.horizontal_speed_m_s > 0.1
               )}
+              zIndexOffset={1}
             >
               <Popup>
                 <div>
@@ -550,6 +622,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
                 </div>
               </Popup>
             </Marker>
+            
             {waypoints.length > 0 && (
               <>
                 {waypoints.map((wp, index) => (
