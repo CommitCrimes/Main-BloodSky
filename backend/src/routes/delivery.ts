@@ -86,9 +86,15 @@ deliveryRouter.put("/:id", async (c) => {
   const id = Number(c.req.param("id"));
   if (isNaN(id)) return c.text("Invalid ID", 400);
   const body = await c.req.json();
-  await db.update(deliveries).set(body).where(eq(deliveries.deliveryId, id));
+
+  await db.update(deliveries).set({
+    deliveryStatus: body.deliveryStatus,
+    dteValidation: body.dteValidation ? new Date(body.dteValidation) : null
+  }).where(eq(deliveries.deliveryId, id));
+
   return c.text("Updated");
 });
+
 
 // DELETE delivery participation
 deliveryRouter.delete("/participation", async (c) => {

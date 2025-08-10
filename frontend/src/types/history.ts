@@ -13,6 +13,7 @@ interface BaseHistoryItem {
 }
 
 export interface DonationCenterHistory extends BaseHistoryItem {
+  sourceDonationCenter: any;
   type: 'delivery';
   destinationHospital: {
     hospitalId: number;
@@ -54,6 +55,18 @@ export interface HistorySortConfig {
   field: 'personIdentity' | 'destinationName' | 'sourceName' | 'requestDate' | 'deliveryId' | 'bloodType';
   direction: 'asc' | 'desc';
 }
+export interface DroneHistorySortConfig {
+  field:
+    | 'personIdentity'
+    | 'destinationName'
+    | 'sourceName'
+    | 'deliveryId'
+    | 'bloodType'
+    | 'deliveryDate'
+    | 'validationDate';
+  direction: 'asc' | 'desc';
+}
+
 
 export interface HistorySearchConfig {
   searchTerm: string;

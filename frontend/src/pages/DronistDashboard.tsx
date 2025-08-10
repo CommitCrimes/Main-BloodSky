@@ -10,6 +10,7 @@ import {
   ContactSupportOutlined,
   FlightTakeoffOutlined
 } from '@mui/icons-material';
+import HistoryManagementDrone from '@/components/HistoryManagementDrone';
 
 const DronistDashboard = () => {
   const auth = useAuth();
@@ -35,6 +36,7 @@ const DronistDashboard = () => {
     customDashboardComponent: (setActiveView: (view: string) => void) => (
       <DronistDashboardContent onNavigate={setActiveView} />
     ),
+        historyManagementComponent: <HistoryManagementDrone />,
   };
 
   return <DashboardLayout config={dashboardConfig} />;
