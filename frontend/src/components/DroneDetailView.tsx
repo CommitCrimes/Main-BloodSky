@@ -36,23 +36,59 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from '
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import droneTopViewImage from '../assets/drone_TopView.png';
+import BloodHouseIcon from '../assets/drop_of_blood.png';
+import HopitalIcon from '../assets/Hopital.png';
+import { dronesApi, type DroneMission, type DroneWaypoint, type FlightInfo as ApiFlightInfo, type Drone as ApiDrone } from '@/api/drone';
+import { donationCenterApi } from '@/api/donation_center';
+import { hospitalApi } from '@/api/hospital';
+
+type DonationCenterRaw = {
+  centerId: number;
+  centerCity: string | null;
+  centerPostal: number | null;
+  centerAdress: string | null;        // orthographe DB
+  centerLatitude: string | null;      // decimal → string
+  centerLongitude: string | null;     // decimal → string
+};
+
+type HospitalUI = {
+  hospitalId: number;
+  hospitalName: string;
+  hospitalAdress: string;
+  hospitalCity: string;
+  hospitalPostal: string;
+  hospitalLatitude: string;
+  hospitalLongitude: string;
+};
+
+
+
+export interface Drone {
+  droneId: number;
+  droneName: string;
+  centerId: number | null;
+  droneImage?: string;
+  droneStatus?: string;
+}
 
 // Fix for default markers in react-leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const createDroneIcon = (heading: number, movementTrack: number, isMoving: boolean) => {
-  let headingDiff = movementTrack - heading;
-  if (headingDiff > 180) headingDiff -= 360;
-  if (headingDiff < -180) headingDiff += 360;
+  //let headingDiff = movementTrack - heading;
+  //if (headingDiff < -180) headingDiff -= 360;
+  //if (headingDiff > 180) headingDiff += 360;
   
-  const isMovingForward = Math.abs(headingDiff) < 90;
-  const arrowColor = isMovingForward ? '#f4f5f4ff' : '#f3e9daff';
-  const arrowPosition = isMovingForward ? 'top: -15px;' : 'bottom: -15px;';
+  //const isMovingForward = Math.abs(headingDiff) > 90;
+  //const arrowColor = isMovingForward ? '#f4f5f4ff' : '#f3e9daff';
+  //const arrowPosition = isMovingForward ? 'top: -15px;' : 'bottom: -15px;';
   
   return L.divIcon({
     html: `
@@ -70,18 +106,18 @@ const createDroneIcon = (heading: number, movementTrack: number, isMoving: boole
           transform: rotate(${heading}deg);
           filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
         " />
-        <div style="
-          position: absolute;
-          ${arrowPosition}
-          left: 50%;
-          transform: translateX(-50%) rotate(${movementTrack - heading}deg);
-          width: 0;
-          height: 0;
-          border-left: 10px solid transparent;
-          border-right: 10px solid transparent;
-          border-bottom: 20px solid ${isMoving ? arrowColor : 'white'};
-          filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.66));
-        "></div>
+        // <div style="
+        //   position: absolute;
+          
+        //   left: 50%;
+        //   transform: translateX(-50%) rotate(${movementTrack - heading}deg);
+        //   width: 0;
+        //   height: 0;
+        //   border-left: 10px solid transparent;
+        //   border-right: 10px solid transparent;
+        //   border-bottom: 20px solid;
+        //   filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.66));
+        // "></div>
       </div>
     `,
     className: 'drone-marker',
@@ -90,49 +126,34 @@ const createDroneIcon = (heading: number, movementTrack: number, isMoving: boole
   });
 };
 
+const createBloodHouseIcon = () =>
+  L.icon({
+    iconUrl: BloodHouseIcon,
+    iconSize: [40, 60],
+    iconAnchor: [20, 30],
+    popupAnchor: [0, -40],
+  });
+const createHopitalIcon = () =>
+  L.icon({
+    iconUrl:HopitalIcon,
+    iconSize: [60, 60],
+    iconAnchor: [30, 30],
+    popupAnchor: [0, -40],
+  })
 interface DroneDetailViewProps {
   droneId: number;
   onBack: () => void;
 }
 
-interface DroneFlightInfo {
-  drone_id: string;
-  is_armed: boolean;
-  flight_mode: string;
-  latitude: number;
-  longitude: number;
-  altitude_m: number;
-  horizontal_speed_m_s: number;
-  vertical_speed_m_s: number;
-  heading_deg: number;
-  movement_track_deg: number;
-  battery_remaining_percent: number;
-}
+type DroneFlightInfo = ApiFlightInfo;
 
-interface MissionWaypoint {
-  seq?: number;
-  current?: number;
-  frame?: number;
-  command?: number;
-  param1?: number;
-  param2?: number;
-  param3?: number;
-  param4?: number;
-  lat: number;
-  lon: number;
-  alt: number;
-  autoContinue?: number;
-}
+type MissionWaypoint = DroneWaypoint;
 
-interface Mission {
-  filename: string;
-  altitude_takeoff: number;
-  mode: 'auto' | 'man';
-  waypoints: MissionWaypoint[];
-}
+type Mission = DroneMission;
 
 const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) => {
   const [flightInfo, setFlightInfo] = useState<DroneFlightInfo | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [missionDialogOpen, setMissionDialogOpen] = useState(false);
@@ -151,126 +172,91 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     lon: 0,
     alt: 0
   });
-  const [hospitals, setHospitals] = useState<Array<{
-    hospitalId: number;
-    hospitalName: string;
-    hospitalAdress: string;
-    hospitalCity: string;
-    hospitalPostal: string;
-    hospitalLatitude: string;
-    hospitalLongitude: string;
-  }>>([]);
-  const [hospitalsDialogOpen, setHospitalsDialogOpen] = useState(false);
+const [hospitals, setHospitals] = useState<HospitalUI[]>([]);
+const [hospitalsDialogOpen, setHospitalsDialogOpen] = useState(false);
 
-  const fetchFlightInfo = async () => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/drones/${droneId}/flight_info`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch flight info');
-      }
-      const data = await response.json();
-      
-      setFlightInfo(data);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching flight info:', err);
-      setError('Impossible de récupérer les informations de vol');
-    } finally {
-      setLoading(false);
-    }
-  };
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const [drone, setDrone] = useState<ApiDrone | null>(null);
+const [donationCenter, setDonationCenter] = useState<DonationCenterRaw | null>(null);
 
-  const handleStartMission = async () => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/drones/${droneId}/mission/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to start mission');
-      }
-      
-      alert('Mission démarrée avec succès !');
-      await fetchFlightInfo();
-    } catch (err) {
-      console.error('Error starting mission:', err);
-      alert(`Erreur lors du démarrage de la mission: ${err}`);
-    }
-  };
+const toNum = (s: string | null) =>
+  s != null ? Number(String(s).trim().replace(',', '.')) : NaN;
 
-  const handleReturnHome = async () => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/drones/${droneId}/return-home`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to return home');
-      }
-      
-      alert('Drone retourne à la base !');
-      await fetchFlightInfo();
-    } catch (err) {
-      console.error('Error returning home:', err);
-      alert(`Erreur lors du retour à la base: ${err}`);
+const fetchFlightInfo = async () => {
+  try {
+    const data = await dronesApi.getFlightInfo(droneId);
+    setFlightInfo(data);
+    setError(null);
+  } catch (err) {
+    console.error('Error fetching flight info:', err);
+    setError('Impossible de récupérer les informations de vol');
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleStartMission = async () => {
+  try {
+    await dronesApi.startMission(droneId);
+    alert('Mission démarrée avec succès !');
+    await fetchFlightInfo();
+  } catch (err) {
+    console.error('Error starting mission:', err);
+    alert(`Erreur lors du démarrage de la mission: ${err}`);
+  }
+};
+
+const handleReturnHome = async () => {
+  try {
+    if (flightInfo?.is_armed) {
+      // En vol → RTL
+      await dronesApi.returnHome(droneId);
+      alert('RTL envoyé, retour automatique.');
+    } else {
+      // Au sol → mission “donation center” (décollage + vol + atterrissage)
+      await createMissionToDonationCenter();
+      alert('Mission vers le centre créée et démarrée !');
     }
-  };
+    await fetchFlightInfo();
+  } catch (err) {
+    console.error('Error returning home / creating center mission:', err);
+    alert(`Erreur: ${err}`);
+  }
+};
+
 
   const handleCreateMission = async () => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/drones/${droneId}/mission/create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(missionData)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create mission');
-      }
-      
-      alert('Mission créée avec succès !');
-      setMissionDialogOpen(false);
-      await fetchFlightInfo();
-    } catch (err) {
-      console.error('Error creating mission:', err);
-      alert(`Erreur lors de la création de la mission: ${err}`);
-    }
-  };
+  try {
+    await dronesApi.createMission(droneId, missionData);
+    alert('Mission créée avec succès !');
+    setMissionDialogOpen(false);
+    await fetchFlightInfo();
+  } catch (err) {
+    console.error('Error creating mission:', err);
+    alert(`Erreur lors de la création de la mission: ${err}`);
+  }
+};
 
-  const handleModifyMission = async () => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/drones/${droneId}/mission/modify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          filename: modifyData.filename,
-          seq: modifyData.seq,
-          updates: {
-            lat: modifyData.lat,
-            lon: modifyData.lon,
-            alt: modifyData.alt
-          }
-        })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to modify mission');
-      }
-      
-      alert('Mission modifiée avec succès !');
-      setModifyDialogOpen(false);
-      await fetchFlightInfo();
-    } catch (err) {
-      console.error('Error modifying mission:', err);
-      alert(`Erreur lors de la modification de la mission: ${err}`);
-    }
-  };
+const handleModifyMission = async () => {
+  try {
+    await dronesApi.modifyMission(droneId, {
+      filename: modifyData.filename,
+      seq: modifyData.seq,
+      updates: {
+        lat: modifyData.lat,
+        lon: modifyData.lon,
+        alt: modifyData.alt,
+      },
+    });
+    alert('Mission modifiée avec succès !');
+    setModifyDialogOpen(false);
+    await fetchFlightInfo();
+  } catch (err) {
+    console.error('Error modifying mission:', err);
+    alert(`Erreur lors de la modification de la mission: ${err}`);
+  }
+};
+
 
   const addWaypoint = (lat: number, lon: number) => {
     const newWaypoint: MissionWaypoint = {
@@ -306,88 +292,151 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     });
   };
 
-  const fetchHospitals = async () => {
-    try {
-      console.log('Fetching hospitals...');
-      const response = await fetch('http://localhost:3000/api/hospitals');
-      console.log('Response status:', response.status);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Hospitals data:', data);
-        setHospitals(data);
-      } else {
-        console.error('Response not ok:', response.status, response.statusText);
-      }
-    } catch (error) {
-      console.error('Error fetching hospitals:', error);
+const fetchHospitalsByCity = async (city: string) => {
+  try {
+    const hs = await hospitalApi.getByCity(city);
+    const normalized: HospitalUI[] = hs.map(h => ({
+      hospitalId: h.hospitalId,
+      hospitalName: h.hospitalName,
+      hospitalAdress: h.hospitalAdress ?? '',
+      hospitalCity: h.hospitalCity ?? '',
+      hospitalPostal: h.hospitalPostal != null ? String(h.hospitalPostal) : '',
+      hospitalLatitude: h.hospitalLatitude ?? '',
+      hospitalLongitude: h.hospitalLongitude ?? '',
+    }));
+    setHospitals(normalized);
+  } catch (err) {
+    console.error('getByCity error:', err);
+    setHospitals([]);
+  }
+};
+
+const loadStaticData = async (id: number) => {
+  try {
+    const d = await dronesApi.getById(id);
+    setDrone(d);
+
+    if (!d?.centerId) {
+      setDonationCenter(null);
+      setHospitals([]);
+      return;
     }
+
+    const center = await donationCenterApi.getCenterById(d.centerId);
+    const dc = center as unknown as DonationCenterRaw;
+    setDonationCenter(dc);
+
+    const city = (dc.centerCity ?? '').trim();
+    if (city) {
+      await fetchHospitalsByCity(city);
+    } else {
+      setHospitals([]);
+    }
+  } catch (err) {
+    console.error('loadStaticData error:', err);
+    setDonationCenter(null);
+    setHospitals([]);
+  }
+};
+
+
+
+
+// Création d’une mission vers un hôpital via /mission/create
+const createMissionToHospital = async (hospital: {
+  hospitalId: number;
+  hospitalName: string;
+  hospitalLatitude: string;
+  hospitalLongitude: string;
+}) => {
+  try {
+    // parse robuste (gère virgules FR)
+    const toNum = (s: string) => Number(String(s).trim().replace(',', '.'));
+    const deliveryLat = toNum(hospital.hospitalLatitude);
+    const deliveryLon = toNum(hospital.hospitalLongitude);
+
+    if (Number.isNaN(deliveryLat) || Number.isNaN(deliveryLon)) {
+      alert(`Coordonnées invalides pour ${hospital.hospitalName}`);
+      return;
+    }
+
+    setWaypoints([]);
+    setMissionData(prev => ({ ...prev, waypoints: [] }));
+
+    const ALT = 50;
+    const mission: Mission = {
+      filename: `delivery_${droneId}_${Date.now()}.waypoints`,
+      altitude_takeoff: ALT,
+      mode: 'auto',
+      waypoints: [
+        { lat: deliveryLat, lon: deliveryLon, alt: ALT },
+      ],
+    };
+
+    await dronesApi.createMission(droneId, mission);
+    await dronesApi.sendMissionFile(droneId, mission.filename);
+    await dronesApi.startMission(droneId);
+
+    alert(`Mission créée et démarrée vers ${hospital.hospitalName} !`);
+    setHospitalsDialogOpen(false);
+    await fetchFlightInfo();
+  } catch (error) {
+    console.error('Mission error:', error);
+    alert(`Erreur: ${error}`);
+  }
+};
+
+const createMissionToDonationCenter = async () => {
+  if (!donationCenter) {
+    alert("Centre de don inconnu.");
+    return;
+  }
+
+  const lat = toNum(donationCenter.centerLatitude);
+  const lon = toNum(donationCenter.centerLongitude);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+    alert("Coordonnées du centre de don invalides.");
+    return;
+  }
+
+  const ALT = 50;
+  const mission: Mission = {
+    filename: `return_center_${droneId}_${Date.now()}.waypoints`,
+    altitude_takeoff: ALT,
+    mode: 'auto',
+    waypoints: [{ lat, lon, alt: ALT }],
   };
 
-  const createMissionToHospital = async (hospital: {
-    hospitalId: number;
-    hospitalName: string;
-    hospitalLatitude: string;
-    hospitalLongitude: string;
-  }) => {
-    try {
-      // Créer la mission de livraison
-      const missionResponse = await fetch(`http://localhost:3000/api/drones/${droneId}/delivery-mission`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pickupLat: 47.2098952,  // Position du centre de donation (Nantes)
-          pickupLon: -1.5513221,
-          deliveryLat: parseFloat(hospital.hospitalLatitude),
-          deliveryLon: parseFloat(hospital.hospitalLongitude),
-          altitude: 50
-        })
-      });
+  await dronesApi.createMission(droneId, mission);
+  await dronesApi.sendMissionFile(droneId, mission.filename);
+  await dronesApi.startMission(droneId);
+};
 
-      if (missionResponse.ok) {
-        // Démarrer la mission
-        const startResponse = await fetch(`http://localhost:3000/api/drones/${droneId}/mission/start`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (startResponse.ok) {
-          alert(`Mission créée et démarrée vers ${hospital.hospitalName}!`);
-          setHospitalsDialogOpen(false);
-          await fetchFlightInfo();
-        } else {
-          throw new Error('Erreur lors du démarrage de la mission');
-        }
-      } else {
-        throw new Error('Erreur lors de la création de la mission');
-      }
-    } catch (error) {
-      console.error('Mission error:', error);
-      alert(`Erreur: ${error}`);
-    }
-  };
+
+
+
 
   useEffect(() => {
-    const loadData = async () => {
-      await fetchFlightInfo();
-      await fetchHospitals();
-    };
-    
-    loadData();
-    
-    // Refresh flight info every 5 seconds
-    const interval = setInterval(() => {
-      fetchFlightInfo();
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [droneId]);
+  let cancelled = false;
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const init = async () => {
+    await Promise.all([fetchFlightInfo(), loadStaticData(droneId)]);
+    if (cancelled) return;
+  };
+
+  init();
+
+  const interval = setInterval(() => {
+    fetchFlightInfo();
+  }, 5000);
+
+  return () => {
+    cancelled = true;
+    clearInterval(interval);
+  };
+}, [droneId]);
+
+
 
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -515,6 +564,48 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
               attribution='&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Source: Esri'
             />
             <MapClickHandler />
+           {donationCenter &&
+            donationCenter.centerLatitude !== null &&
+            donationCenter.centerLongitude !== null &&
+            !isNaN(Number(donationCenter.centerLatitude)) &&
+            !isNaN(Number(donationCenter.centerLongitude)) && (
+            <Marker
+              position={[
+                Number(donationCenter.centerLatitude),
+                Number(donationCenter.centerLongitude)
+              ]}
+              icon={createBloodHouseIcon()}
+              zIndexOffset={0}
+            >
+              <Popup>
+                <strong>Centre de don</strong><br />
+                {donationCenter.centerAdress}<br />
+                {donationCenter.centerPostal} {donationCenter.centerCity}
+              </Popup>
+            </Marker>
+          )}
+
+            {hospitals.map((h) => {
+              const lat = parseFloat(h.hospitalLatitude);
+              const lon = parseFloat(h.hospitalLongitude);
+              if (Number.isNaN(lat) || Number.isNaN(lon)) return null;
+
+              return (
+                <Marker
+                  key={h.hospitalId}
+                  position={[lat, lon]}
+                  icon={createHopitalIcon()}
+                  zIndexOffset={0}
+                >
+                  <Popup>
+                    <strong>{h.hospitalName}</strong><br />
+                    {h.hospitalAdress}<br />
+                    {h.hospitalCity} — {h.hospitalPostal}
+                  </Popup>
+                </Marker>
+              );
+            })}
+
             <Marker 
               position={[flightInfo.latitude, flightInfo.longitude]}
               icon={createDroneIcon(
@@ -522,6 +613,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
                 flightInfo.movement_track_deg, 
                 flightInfo.horizontal_speed_m_s > 0.1
               )}
+              zIndexOffset={1}
             >
               <Popup>
                 <div>
@@ -540,6 +632,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
                 </div>
               </Popup>
             </Marker>
+            
             {waypoints.length > 0 && (
               <>
                 {waypoints.map((wp, index) => (
