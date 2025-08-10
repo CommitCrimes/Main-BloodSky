@@ -38,6 +38,16 @@ import 'leaflet/dist/leaflet.css';
 import droneTopViewImage from '../assets/drone_TopView.png';
 import BloodHouseIcon from '../assets/drop_of_blood.png';
 import HopitalIcon from '../assets/Hopital.png';
+import { dronesApi, type DroneMission, type DroneWaypoint, type FlightInfo as ApiFlightInfo } from '@/api/drone';
+
+
+export interface Drone {
+  droneId: number;
+  droneName: string;
+  centerId: number | null;
+  droneImage?: string;
+  droneStatus?: string;
+}
 
 export const donationCentersApi = {
   getAll: async () => {
@@ -120,41 +130,11 @@ interface DroneDetailViewProps {
   onBack: () => void;
 }
 
-interface DroneFlightInfo {
-  drone_id: string;
-  is_armed: boolean;
-  flight_mode: string;
-  latitude: number;
-  longitude: number;
-  altitude_m: number;
-  horizontal_speed_m_s: number;
-  vertical_speed_m_s: number;
-  heading_deg: number;
-  movement_track_deg: number;
-  battery_remaining_percent: number;
-}
+type DroneFlightInfo = ApiFlightInfo;
 
-interface MissionWaypoint {
-  seq?: number;
-  current?: number;
-  frame?: number;
-  command?: number;
-  param1?: number;
-  param2?: number;
-  param3?: number;
-  param4?: number;
-  lat: number;
-  lon: number;
-  alt: number;
-  autoContinue?: number;
-}
+type MissionWaypoint = DroneWaypoint;
 
-interface Mission {
-  filename: string;
-  altitude_takeoff: number;
-  mode: 'auto' | 'man';
-  waypoints: MissionWaypoint[];
-}
+type Mission = DroneMission;
 
 const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) => {
   const [flightInfo, setFlightInfo] = useState<DroneFlightInfo | null>(null);
@@ -196,115 +176,73 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   }>>([]);
 
 
-  const fetchFlightInfo = async () => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/drones/${droneId}/flight_info`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch flight info');
-      }
-      const data = await response.json();
-      
-      setFlightInfo(data);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching flight info:', err);
-      setError('Impossible de récupérer les informations de vol');
-    } finally {
-      setLoading(false);
-    }
-  };
+const fetchFlightInfo = async () => {
+  try {
+    const data = await dronesApi.getFlightInfo(droneId);
+    setFlightInfo(data);
+    setError(null);
+  } catch (err) {
+    console.error('Error fetching flight info:', err);
+    setError('Impossible de récupérer les informations de vol');
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const handleStartMission = async () => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/drones/${droneId}/mission/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to start mission');
-      }
-      
-      alert('Mission démarrée avec succès !');
-      await fetchFlightInfo();
-    } catch (err) {
-      console.error('Error starting mission:', err);
-      alert(`Erreur lors du démarrage de la mission: ${err}`);
-    }
-  };
+const handleStartMission = async () => {
+  try {
+    await dronesApi.startMission(droneId);
+    alert('Mission démarrée avec succès !');
+    await fetchFlightInfo();
+  } catch (err) {
+    console.error('Error starting mission:', err);
+    alert(`Erreur lors du démarrage de la mission: ${err}`);
+  }
+};
 
-  const handleReturnHome = async () => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/drones/${droneId}/return-home`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to return home');
-      }
-      
-      alert('Drone retourne à la base !');
-      await fetchFlightInfo();
-    } catch (err) {
-      console.error('Error returning home:', err);
-      alert(`Erreur lors du retour à la base: ${err}`);
-    }
-  };
+const handleReturnHome = async () => {
+  try {
+    await dronesApi.returnHome(droneId);
+    alert('Drone retourne à la base !');
+    await fetchFlightInfo();
+  } catch (err) {
+    console.error('Error returning home:', err);
+    alert(`Erreur lors du retour à la base: ${err}`);
+  }
+};
 
   const handleCreateMission = async () => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/drones/${droneId}/mission/create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(missionData)
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create mission');
-      }
-      
-      alert('Mission créée avec succès !');
-      setMissionDialogOpen(false);
-      await fetchFlightInfo();
-    } catch (err) {
-      console.error('Error creating mission:', err);
-      alert(`Erreur lors de la création de la mission: ${err}`);
-    }
-  };
+  try {
+    await dronesApi.createMission(droneId, missionData);
+    alert('Mission créée avec succès !');
+    setMissionDialogOpen(false);
+    await fetchFlightInfo();
+  } catch (err) {
+    console.error('Error creating mission:', err);
+    alert(`Erreur lors de la création de la mission: ${err}`);
+  }
+};
 
-  const handleModifyMission = async () => {
-    try {
-      const response = await fetch(`http://localhost:3000/api/drones/${droneId}/mission/modify`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          filename: modifyData.filename,
-          seq: modifyData.seq,
-          updates: {
-            lat: modifyData.lat,
-            lon: modifyData.lon,
-            alt: modifyData.alt
-          }
-        })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to modify mission');
-      }
-      
-      alert('Mission modifiée avec succès !');
-      setModifyDialogOpen(false);
-      await fetchFlightInfo();
-    } catch (err) {
-      console.error('Error modifying mission:', err);
-      alert(`Erreur lors de la modification de la mission: ${err}`);
-    }
-  };
+const handleModifyMission = async () => {
+  try {
+    await dronesApi.modifyMission(droneId, {
+      filename: modifyData.filename,
+      seq: modifyData.seq,
+      updates: {
+        lat: modifyData.lat,
+        lon: modifyData.lon,
+        alt: modifyData.alt,
+      },
+    });
+    alert('Mission modifiée avec succès !');
+    setModifyDialogOpen(false);
+    await fetchFlightInfo();
+  } catch (err) {
+    console.error('Error modifying mission:', err);
+    alert(`Erreur lors de la modification de la mission: ${err}`);
+  }
+};
+
 
   const addWaypoint = (lat: number, lon: number) => {
     const newWaypoint: MissionWaypoint = {
@@ -357,48 +295,52 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     }
   };
 
-  const createMissionToHospital = async (hospital: {
-    hospitalId: number;
-    hospitalName: string;
-    hospitalLatitude: string;
-    hospitalLongitude: string;
-  }) => {
-    try {
-      // Créer la mission de livraison
-      const missionResponse = await fetch(`http://localhost:3000/api/drones/${droneId}/delivery-mission`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pickupLat: 47.2098952,  // Position du centre de donation (Nantes)
-          pickupLon: -1.5513221,
-          deliveryLat: parseFloat(hospital.hospitalLatitude),
-          deliveryLon: parseFloat(hospital.hospitalLongitude),
-          altitude: 50
-        })
-      });
+// Création d’une mission vers un hôpital via /mission/create
+const createMissionToHospital = async (hospital: {
+  hospitalId: number;
+  hospitalName: string;
+  hospitalLatitude: string;
+  hospitalLongitude: string;
+}) => {
+  try {
+    // parse robuste (gère virgules FR)
+    const toNum = (s: string) => Number(String(s).trim().replace(',', '.'));
+    const deliveryLat = toNum(hospital.hospitalLatitude);
+    const deliveryLon = toNum(hospital.hospitalLongitude);
 
-      if (missionResponse.ok) {
-        // Démarrer la mission
-        const startResponse = await fetch(`http://localhost:3000/api/drones/${droneId}/mission/start`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
-        if (startResponse.ok) {
-          alert(`Mission créée et démarrée vers ${hospital.hospitalName}!`);
-          setHospitalsDialogOpen(false);
-          await fetchFlightInfo();
-        } else {
-          throw new Error('Erreur lors du démarrage de la mission');
-        }
-      } else {
-        throw new Error('Erreur lors de la création de la mission');
-      }
-    } catch (error) {
-      console.error('Mission error:', error);
-      alert(`Erreur: ${error}`);
+    if (Number.isNaN(deliveryLat) || Number.isNaN(deliveryLon)) {
+      alert(`Coordonnées invalides pour ${hospital.hospitalName}`);
+      return;
     }
-  };
+
+    setWaypoints([]);
+    setMissionData(prev => ({ ...prev, waypoints: [] }));
+
+    const ALT = 50;
+    const mission: Mission = {
+      filename: `delivery_${droneId}_${Date.now()}.waypoints`,
+      altitude_takeoff: ALT,
+      mode: 'auto',
+      waypoints: [
+        { lat: deliveryLat, lon: deliveryLon, alt: ALT },
+      ],
+    };
+
+    await dronesApi.createMission(droneId, mission);
+    await dronesApi.sendMissionFile(droneId, mission.filename);
+    await dronesApi.startMission(droneId);
+
+    alert(`Mission créée et démarrée vers ${hospital.hospitalName} !`);
+    setHospitalsDialogOpen(false);
+    await fetchFlightInfo();
+  } catch (error) {
+    console.error('Mission error:', error);
+    alert(`Erreur: ${error}`);
+  }
+};
+
+
+
 
   useEffect(() => {
     const loadData = async () => {
