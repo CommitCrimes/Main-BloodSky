@@ -41,6 +41,8 @@ import HopitalIcon from '../assets/Hopital.png';
 import { dronesApi, type DroneMission, type DroneWaypoint, type FlightInfo as ApiFlightInfo, type Drone as ApiDrone } from '@/api/drone';
 import { donationCenterApi } from '@/api/donation_center';
 import { hospitalApi } from '@/api/hospital';
+import AssignDeliveryDialog from '@/components/AssignDeliveryDialog'; // ajuste le chemin si besoin
+
 
 type DonationCenterRaw = {
   centerId: number;
@@ -174,6 +176,8 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   });
 const [hospitals, setHospitals] = useState<HospitalUI[]>([]);
 const [hospitalsDialogOpen, setHospitalsDialogOpen] = useState(false);
+const [assignOpen, setAssignOpen] = useState(false);
+
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const [drone, setDrone] = useState<ApiDrone | null>(null);
@@ -469,6 +473,14 @@ const createMissionToDonationCenter = async () => {
           >
             Hôpitaux
           </Button>
+          <Button
+            variant="contained"
+            onClick={() => setAssignOpen(true)}
+            sx={{ bgcolor: '#1976d2', '&:hover': { bgcolor: '#125ea0' } }}
+          >
+            Assigner livraison
+          </Button>
+
         </Box>
       </Paper>
 
@@ -910,6 +922,18 @@ const createMissionToDonationCenter = async () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <AssignDeliveryDialog
+        open={assignOpen}
+        onClose={() => setAssignOpen(false)}
+        centerId={donationCenter?.centerId ?? null}
+        droneId={droneId}
+        statusFilter="pending"
+        onAssigned={async () => {
+          setAssignOpen(false);
+          await fetchFlightInfo(); // optionnel: rafraîchir l’UI
+        }}
+      />
+
     </Box>
   );
 };
