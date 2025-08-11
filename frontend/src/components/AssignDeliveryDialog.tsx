@@ -4,32 +4,34 @@ import {
   Button, Paper, Box, Typography, Chip, CircularProgress, Alert,
   Checkbox, FormControlLabel
 } from '@mui/material';
-import { PriorityHigh } from '@mui/icons-material';
+import { PriorityHigh, CheckCircle, DirectionsCar, Pending, Cancel } from '@mui/icons-material';
 
 import { deliveryApi } from '@/api/delivery';
 import { donationCenterApi } from '@/api/donation_center';
 import { hospitalApi } from '@/api/hospital';
+import { dronesApi } from '@/api/drone';
 
 import type { DeliveryWithParticipants, DeliveryStatus } from '@/types/delivery';
 import type { DonationCenter } from '@/types/order';
+import type { DroneMission } from '@/types/drone';
 
+// ----------------- Props -----------------
 type Props = {
   open: boolean;
   onClose: () => void;
   centerId?: number | null;
   droneId: number;
-  statusFilter?: DeliveryStatus;          // défaut: 'pending'
+  statusFilter?: DeliveryStatus;
   onAssigned?: (deliveryId: number) => void;
+  onMissionReady?: (payload: { deliveryId: number; filename: string }) => void;
 };
 
-type HospitalLite = { hospitalId: number; hospitalName: string | null };
-
-// Helpers
+// ----------------- Helpers -----------------
 const parseDate = (s?: string | null) => (s ? new Date(s) : null);
 const toDay = (d: Date | null) => (d ? new Date(d.getFullYear(), d.getMonth(), d.getDate()) : null);
+
 type UrgentShape = { isUrgent?: boolean; deliveryUrgent?: boolean };
-const isUrgentFlag = (x: UrgentShape) =>
-  x.isUrgent === true || x.deliveryUrgent === true;
+const isUrgentFlag = (x: UrgentShape) => x.isUrgent === true || x.deliveryUrgent === true;
 
 const formatFrDay = (s?: string | null) =>
   s ? new Date(s).toLocaleDateString('fr-FR', { year: 'numeric', month: '2-digit', day: '2-digit' }) : 'Date non définie';
@@ -39,7 +41,7 @@ const compareByPlannedDateThenUrgency = (a: DeliveryWithParticipants, b: Deliver
   const db = toDay(parseDate(b.dteValidation ?? null));
   if (da && db) {
     const diff = da.getTime() - db.getTime();
-    if (diff !== 0) return diff; // plus tôt en premier
+    if (diff !== 0) return diff;
   } else if (da && !db) return -1;
   else if (!da && db) return 1;
 
@@ -50,15 +52,56 @@ const compareByPlannedDateThenUrgency = (a: DeliveryWithParticipants, b: Deliver
   return a.deliveryId - b.deliveryId;
 };
 
+const getStatusColor = (status: DeliveryStatus) => {
+  switch (status) {
+    case 'delivered':  return '#10b981';
+    case 'in_transit': return '#f59e0b';
+    case 'pending':    return '#6b7280';
+    case 'cancelled':  return '#ef4444';
+    default:           return '#6b7280';
+  }
+};
+const getStatusLabel = (status: DeliveryStatus) => {
+  switch (status) {
+    case 'delivered':  return 'Livré';
+    case 'in_transit': return 'En transit';
+    case 'pending':    return 'En attente';
+    case 'cancelled':  return 'Annulé';
+    default:           return 'Inconnu';
+  }
+};
+const getStatusIcon = (status: DeliveryStatus) => {
+  switch (status) {
+    case 'delivered':  return <CheckCircle />;
+    case 'in_transit': return <DirectionsCar />;
+    case 'pending':    return <Pending />;
+    case 'cancelled':  return <Cancel />;
+    default:           return <Pending />;
+  }
+};
+
+type HospitalLite = {
+  hospitalId: number;
+  hospitalName?: string | null;
+  hospitalLatitude?: string | null;
+  hospitalLongitude?: string | null;
+};
+
+const toNum = (s?: string | null) => Number(String(s ?? '').trim().replace(',', '.'));
+
+// ----------------- Component -----------------
 const AssignDeliveryDialog: React.FC<Props> = ({
-  open, onClose, centerId, droneId, statusFilter = 'pending', onAssigned
+  open, onClose, centerId, droneId, statusFilter = 'pending', onAssigned, onMissionReady
 }) => {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error,   setError]   = useState<string | null>(null);
 
-  // Tableau maître chargé une fois
+  // Données
   const [all, setAll] = useState<DeliveryWithParticipants[]>([]);
   const [includeUnassigned, setIncludeUnassigned] = useState(false);
+
+  // spinner par ligne
+  const [sendingId, setSendingId] = useState<number | null>(null);
 
   // Caches libellés
   const [centerMap, setCenterMap] = useState<Record<number, string>>({});
@@ -89,14 +132,14 @@ const AssignDeliveryDialog: React.FC<Props> = ({
       if (centers.length) {
         setCenterMap(prev => {
           const next = { ...prev };
-          centers.forEach(c => { if (c.city) next[c.id] = c.city; });
+          centers.forEach(c => { if (c.city) next[c.id] = c.city!; });
           return next;
         });
       }
       if (hospitals.length) {
         setHospitalMap(prev => {
           const next = { ...prev };
-          hospitals.forEach(h => { if (h.name) next[h.id] = h.name; });
+          hospitals.forEach(h => { if (h.name) next[h.id] = h.name!; });
           return next;
         });
       }
@@ -125,26 +168,58 @@ const AssignDeliveryDialog: React.FC<Props> = ({
       setLoading(false);
     }
   };
+
   useEffect(() => { if (open) { void load(); } }, [open, centerId]);
 
   // Filtrage
   const items = useMemo(() => {
-    const filtered = all
+    return all
       .filter(d => d.deliveryStatus === statusFilter)
       .filter(d => includeUnassigned ? (d.droneId === droneId || d.droneId == null) : d.droneId === droneId)
       .slice()
       .sort(compareByPlannedDateThenUrgency);
-    return filtered;
   }, [all, statusFilter, includeUnassigned, droneId]);
 
-  const handleAssign = async (deliveryId: number) => {
+  // Charger la mission pour une livraison
+  const handleLoadMission = async (d: DeliveryWithParticipants) => {
     try {
-      await deliveryApi.update(deliveryId, { droneId } as unknown as { droneId: number });
-      setAll(prev => prev.map(d => d.deliveryId === deliveryId ? { ...d, droneId } : d));
-      onAssigned?.(deliveryId);
+      setSendingId(d.deliveryId);
+
+      // 1) s’assurer que la livraison est bien liée au drone
+      if (d.droneId !== droneId) {
+        await deliveryApi.update(d.deliveryId, { droneId } as unknown as { droneId: number });
+        setAll(prev => prev.map(x => x.deliveryId === d.deliveryId ? { ...x, droneId } : x));
+        onAssigned?.(d.deliveryId);
+      }
+
+      // 2) récupérer les coords hôpital
+      if (!d.hospitalId) throw new Error('Hôpital manquant pour cette livraison');
+      const h = await hospitalApi.getById(d.hospitalId) as HospitalLite;
+      const lat = toNum(h?.hospitalLatitude);
+      const lon = toNum(h?.hospitalLongitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error('Coordonnées hôpital invalides');
+
+      // 3) créer + envoyer la mission
+      const ALT = 50;
+      const filename = `delivery_${droneId}_${Date.now()}.waypoints`;
+      const mission: DroneMission = {
+        filename,
+        altitude_takeoff: ALT,
+        mode: 'auto',
+        waypoints: [{ lat, lon, alt: ALT }],
+      };
+
+      await dronesApi.createMission(droneId, mission);
+      await dronesApi.sendMissionFile(droneId, filename);
+
+      // 4) prévenir le parent → il pourra activer ▶️ et mémoriser deliveryId
+      onMissionReady?.({ deliveryId: d.deliveryId, filename });
+
     } catch (e) {
       console.error(e);
-      setError('Échec de l’assignation du drone.');
+      setError('Échec de la création/envoi de mission.');
+    } finally {
+      setSendingId(null);
     }
   };
 
@@ -180,11 +255,12 @@ const AssignDeliveryDialog: React.FC<Props> = ({
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {items.map(d => {
-              const centerCity = centerMap[d.centerId] ?? `Centre #${d.centerId}`;
+              const centerCity   = centerMap[d.centerId] ?? `Centre #${d.centerId}`;
               const hospitalName = hospitalMap[d.hospitalId] ?? `Hôpital #${d.hospitalId}`;
-              const urgent = isUrgentFlag(d) && d.isUrgent;
-              const dateLabel = formatFrDay(d.dteValidation ?? null);
+              const urgent       = isUrgentFlag(d);
+              const dateLabel    = formatFrDay(d.dteValidation ?? null);
               const isUnassigned = d.droneId == null;
+              const busy         = sendingId === d.deliveryId;
 
               return (
                 <Paper
@@ -196,11 +272,9 @@ const AssignDeliveryDialog: React.FC<Props> = ({
                     alignItems: 'center',
                     position: 'relative',
                     ...(isUnassigned && {
-                      bgcolor: (t) =>
-                        t.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : t.palette.grey[200],
+                      bgcolor: (t) => t.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : t.palette.grey[200],
                       border: '1px solid',
-                      borderColor: (t) =>
-                        t.palette.mode === 'dark' ? t.palette.grey[700] : t.palette.grey[300],
+                      borderColor: (t) => t.palette.mode === 'dark' ? t.palette.grey[700] : t.palette.grey[300],
                     }),
                     ...(urgent && {
                       borderLeft: '6px solid #d32f2f',
@@ -218,7 +292,6 @@ const AssignDeliveryDialog: React.FC<Props> = ({
                     />
                   )}
 
-                  {/* ✅ texte un peu atténué si non assigné */}
                   <Box sx={isUnassigned ? { color: 'text.secondary' } : undefined}>
                     <Typography variant="subtitle1" fontWeight="bold">
                       Livraison #{d.deliveryId}
@@ -229,16 +302,25 @@ const AssignDeliveryDialog: React.FC<Props> = ({
                     <Typography variant="body2" sx={{ mt: 0.5 }}>
                       Date prévue : {dateLabel}
                     </Typography>
+
                     <Chip
-                      size="small"
-                      label={d.deliveryStatus}
-                      color={d.deliveryStatus === 'pending' ? 'warning' : 'default'}
-                      sx={{ mt: 1 }}
+                      icon={getStatusIcon(d.deliveryStatus)}
+                      label={getStatusLabel(d.deliveryStatus)}
+                      sx={{
+                        mt: 1,
+                        backgroundColor: getStatusColor(d.deliveryStatus),
+                        color: 'white',
+                        fontFamily: 'Share Tech, monospace'
+                      }}
                     />
                   </Box>
 
-                  <Button variant="contained" onClick={() => handleAssign(d.deliveryId)}>
-                    Assigner à ce drone
+                  <Button
+                    variant="contained"
+                    disabled={busy}
+                    onClick={() => handleLoadMission(d)}
+                  >
+                    {busy ? (<><CircularProgress size={18} sx={{ mr: 1 }} /> Envoi…</>) : 'Charger Mission'}
                   </Button>
                 </Paper>
               );
