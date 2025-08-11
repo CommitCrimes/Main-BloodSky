@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -23,17 +23,31 @@ import {
   Paper
 } from '@mui/material';
 import { format } from 'date-fns';
+
 import { getForecastByDate } from '../api/weather';
+import type { ForecastEntry } from '@/types/weather';
+import type { DeliveryStatus } from '@/types/delivery';
+
+type Coordinates = { lat: number; lon: number };
 
 interface EditStatusPopupProps {
   open: boolean;
   onClose: () => void;
-  onSave: (status: string, newDate?: Date) => void;
+  onSave: (status: DeliveryStatus, newDate?: Date) => void;
   onUpdate?: () => void;
-  currentStatus: string;
+  currentStatus: DeliveryStatus;
   currentDate?: Date;
-  coordinates?: { lat: number; lon: number };
+  coordinates?: Coordinates;
 }
+
+const STATUS_LABEL: Record<DeliveryStatus, string> = {
+  pending: 'Programmer',
+  in_transit: 'En transit',
+  delivered: 'Livré',
+  cancelled: 'Annuler',
+};
+
+const ALL_STATUSES: DeliveryStatus[] = ['pending', 'in_transit', 'delivered', 'cancelled'];
 
 const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
   open,
@@ -44,40 +58,56 @@ const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
   currentDate,
   coordinates
 }) => {
-  const [status, setStatus] = useState(currentStatus === 'pending' ? 'pending' : 'cancelled');
-  const [newDate, setNewDate] = useState(currentDate ? format(currentDate, 'yyyy-MM-dd') : '');
-  const [forecastData, setForecastData] = useState<any[]>([]);
-  const [loadingWeather, setLoadingWeather] = useState(false);
-
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
+
+  const [status, setStatus] = useState<DeliveryStatus>(currentStatus);
+  const [newDate, setNewDate] = useState<string>(
+    currentStatus === 'pending' && currentDate ? format(currentDate, 'yyyy-MM-dd') : ''
+  );
+  const [forecastData, setForecastData] = useState<ForecastEntry[]>([]);
+  const [loadingWeather, setLoadingWeather] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (!open) return;
+    setStatus(currentStatus);
+    setNewDate(currentStatus === 'pending' && currentDate ? format(currentDate, 'yyyy-MM-dd') : '');
+  }, [open, currentStatus, currentDate]);
 
   const isDateRequired = status === 'pending';
   const isSaveDisabled = isDateRequired && !newDate;
 
+  // météo :
+  // - Programmer (pending) -> météo au "newDate"
+  // - Annuler (cancelled) -> météo au "currentDate"
   useEffect(() => {
     const fetchWeather = async () => {
-      if (!coordinates) return;
-      setLoadingWeather(true);
+      if (!coordinates) {
+        setForecastData([]);
+        return;
+      }
 
+      const isPendingWithDate = status === 'pending' && !!newDate;
+      const isCancelWithCurrent = status === 'cancelled' && !!currentDate;
+
+      if (!isPendingWithDate && !isCancelWithCurrent) {
+        setForecastData([]);
+        return;
+      }
+
+      const dateToUse = isPendingWithDate
+        ? new Date(newDate)
+        : (isCancelWithCurrent ? currentDate! : null);
+
+      if (!dateToUse) {
+        setForecastData([]);
+        return;
+      }
+
+      setLoadingWeather(true);
       try {
-        if (status === 'pending' && newDate) {
-          const forecastList = await getForecastByDate(
-            coordinates.lat,
-            coordinates.lon,
-            new Date(newDate)
-          );
-          setForecastData(forecastList);
-        } else if (status === 'cancelled' && currentDate) {
-          const forecastList = await getForecastByDate(
-            coordinates.lat,
-            coordinates.lon,
-            currentDate
-          );
-          setForecastData(forecastList);
-        } else {
-          setForecastData([]);
-        }
+        const list = await getForecastByDate(coordinates.lat, coordinates.lon, dateToUse);
+        setForecastData(list);
       } catch (err) {
         console.error('Erreur chargement météo:', err);
         setForecastData([]);
@@ -86,14 +116,12 @@ const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
       }
     };
 
-    fetchWeather();
-  }, [status, newDate, coordinates]);
+    void fetchWeather();
+  }, [status, newDate, currentDate, coordinates?.lat, coordinates?.lon]);
 
   const handleSave = async () => {
     const dateToSend =
-      status === 'pending' && newDate
-        ? new Date(newDate)
-        : undefined;
+      status === 'pending' && newDate ? new Date(newDate) : undefined;
 
     await onSave(status, dateToSend);
     if (onUpdate) await onUpdate();
@@ -105,34 +133,33 @@ const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
       <DialogTitle sx={{ fontFamily: 'Share Tech, monospace' }}>
         Modifier le statut de la livraison
       </DialogTitle>
+
       <DialogContent>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={4}>
           <Stack spacing={3} flex={0.6}>
-<FormControl fullWidth sx={{ mt: 2 }}>
-  <InputLabel
-    id="statut-label"
-    sx={{
-      fontFamily: 'Share Tech, monospace',
-      paddingTop: '8px' // Ajoutez du padding au label
-    }}
-    shrink
-  >
-    Statut
-  </InputLabel>
-  <Select
-    labelId="statut-label"
-    value={status}
-    label="Statut"
-    onChange={(e) => setStatus(e.target.value)}
-    sx={{
-      fontFamily: 'Share Tech, monospace',
-      marginTop: '4px'
-    }}
-  >
-    <MenuItem value="cancelled">Annuler</MenuItem>
-    <MenuItem value="pending">Programmer</MenuItem>
-  </Select>
-</FormControl>
+            <FormControl fullWidth sx={{ mt: 2 }}>
+              <InputLabel
+                id="statut-label"
+                sx={{ fontFamily: 'Share Tech, monospace', paddingTop: '8px' }}
+                shrink
+              >
+                Statut
+              </InputLabel>
+              <Select
+                labelId="statut-label"
+                value={status}
+                label="Statut"
+                onChange={(e) => setStatus(e.target.value as DeliveryStatus)}
+                sx={{ fontFamily: 'Share Tech, monospace', marginTop: '4px' }}
+              >
+                {ALL_STATUSES.map((s) => (
+                  <MenuItem key={s} value={s}>
+                    {STATUS_LABEL[s]}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
             {isDateRequired && (
               <TextField
                 type="date"
@@ -147,7 +174,9 @@ const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
 
           <Stack spacing={2} flex={1}>
             {loadingWeather ? (
-              <Typography sx={{ fontFamily: 'Share Tech, monospace' }}>Chargement...</Typography>
+              <Typography sx={{ fontFamily: 'Share Tech, monospace' }}>
+                Chargement...
+              </Typography>
             ) : forecastData.length > 0 ? (
               <TableContainer component={Paper} sx={{ maxHeight: 300 }}>
                 <Table size="small" stickyHeader>

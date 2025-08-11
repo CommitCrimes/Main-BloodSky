@@ -41,6 +41,10 @@ import HopitalIcon from '../assets/Hopital.png';
 import { dronesApi, type DroneMission, type DroneWaypoint, type FlightInfo as ApiFlightInfo, type Drone as ApiDrone } from '@/api/drone';
 import { donationCenterApi } from '@/api/donation_center';
 import { hospitalApi } from '@/api/hospital';
+import AssignDeliveryDialog from '@/components/AssignDeliveryDialog'; // ajuste le chemin si besoin
+import { deliveryApi } from '@/api/delivery';
+import type { DeliveryStatus } from '@/types/delivery';
+
 
 type DonationCenterRaw = {
   centerId: number;
@@ -85,11 +89,11 @@ const createDroneIcon = (heading: number, movementTrack: number, isMoving: boole
   //let headingDiff = movementTrack - heading;
   //if (headingDiff < -180) headingDiff -= 360;
   //if (headingDiff > 180) headingDiff += 360;
-  
+
   //const isMovingForward = Math.abs(headingDiff) > 90;
   //const arrowColor = isMovingForward ? '#f4f5f4ff' : '#f3e9daff';
   //const arrowPosition = isMovingForward ? 'top: -15px;' : 'bottom: -15px;';
-  
+
   return L.divIcon({
     html: `
       <div style="
@@ -135,7 +139,7 @@ const createBloodHouseIcon = () =>
   });
 const createHopitalIcon = () =>
   L.icon({
-    iconUrl:HopitalIcon,
+    iconUrl: HopitalIcon,
     iconSize: [60, 60],
     iconAnchor: [30, 30],
     popupAnchor: [0, -40],
@@ -159,6 +163,18 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const [missionDialogOpen, setMissionDialogOpen] = useState(false);
   const [modifyDialogOpen, setModifyDialogOpen] = useState(false);
   const [waypoints, setWaypoints] = useState<MissionWaypoint[]>([]);
+  const [missionReady, setMissionReady] = useState(false);
+  const [missionRunning, setMissionRunning] = useState(false);
+  const [, setMissionUploading] = useState(false);  // Indicateur de chargement de mission
+  const withBusy = async <T,>(fn: () => Promise<T>) => {
+    setMissionUploading(true);
+    try {
+      return await fn();
+    } finally {
+      setMissionUploading(false);
+    }
+  };
+
   const [missionData, setMissionData] = useState<Mission>({
     filename: `mission_drone_${droneId}_${Date.now()}.waypoints`,
     altitude_takeoff: 30,
@@ -172,32 +188,46 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     lon: 0,
     alt: 0
   });
-const [hospitals, setHospitals] = useState<HospitalUI[]>([]);
-const [hospitalsDialogOpen, setHospitalsDialogOpen] = useState(false);
+  const [hospitals, setHospitals] = useState<HospitalUI[]>([]);
+  const [hospitalsDialogOpen, setHospitalsDialogOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(false);
+  const [sendingHospitalId, setSendingHospitalId] = useState<number | null>(null);
+  const [currentDeliveryId, setCurrentDeliveryId] = useState<number | null>(null);
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const [drone, setDrone] = useState<ApiDrone | null>(null);
-const [donationCenter, setDonationCenter] = useState<DonationCenterRaw | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [drone, setDrone] = useState<ApiDrone | null>(null);
+  const [donationCenter, setDonationCenter] = useState<DonationCenterRaw | null>(null);
 
-const toNum = (s: string | null) =>
-  s != null ? Number(String(s).trim().replace(',', '.')) : NaN;
+  const toNum = (s: string | null) =>
+    s != null ? Number(String(s).trim().replace(',', '.')) : NaN;
 
-const fetchFlightInfo = async () => {
-  try {
-    const data = await dronesApi.getFlightInfo(droneId);
-    setFlightInfo(data);
-    setError(null);
-  } catch (err) {
-    console.error('Error fetching flight info:', err);
-    setError('Impossible de récupérer les informations de vol');
-  } finally {
-    setLoading(false);
-  }
-};
+  const fetchFlightInfo = async () => {
+    try {
+      const data = await dronesApi.getFlightInfo(droneId);
+      setFlightInfo(data);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching flight info:', err);
+      setError('Impossible de récupérer les informations de vol');
+    } finally {
+      setLoading(false);
+    }
+  };
 
 const handleStartMission = async () => {
   try {
     await dronesApi.startMission(droneId);
+    setMissionRunning(true);
+    setMissionReady(false);
+
+    if (currentDeliveryId != null) {
+      try {
+        await deliveryApi.update(currentDeliveryId, { deliveryStatus: 'in_transit' as DeliveryStatus });
+      } catch (e) {
+        console.warn('Maj statut in_transit échouée:', e);
+      }
+    }
+
     alert('Mission démarrée avec succès !');
     await fetchFlightInfo();
   } catch (err) {
@@ -206,56 +236,55 @@ const handleStartMission = async () => {
   }
 };
 
-const handleReturnHome = async () => {
-  try {
-    if (flightInfo?.is_armed) {
-      // En vol → RTL
-      await dronesApi.returnHome(droneId);
-      alert('RTL envoyé, retour automatique.');
-    } else {
-      // Au sol → mission “donation center” (décollage + vol + atterrissage)
-      await createMissionToDonationCenter();
-      alert('Mission vers le centre créée et démarrée !');
+
+  const handleReturnHome = async () => {
+    try {
+      if (flightInfo?.is_armed) {
+        // En vol → RTL
+        await dronesApi.returnHome(droneId);
+        alert('RTL envoyé, retour automatique.');
+      } else {
+        // Au sol → mission “donation center” (décollage + vol + atterrissage)
+        await createMissionToDonationCenter();
+        alert('Mission vers le centre créée et chargée !');
+      }
+      await fetchFlightInfo();
+    } catch (err) {
+      console.error('Error returning home / creating center mission:', err);
+      alert(`Erreur: ${err}`);
     }
-    await fetchFlightInfo();
-  } catch (err) {
-    console.error('Error returning home / creating center mission:', err);
-    alert(`Erreur: ${err}`);
-  }
-};
+  };
 
 
   const handleCreateMission = async () => {
-  try {
-    await dronesApi.createMission(droneId, missionData);
-    alert('Mission créée avec succès !');
-    setMissionDialogOpen(false);
-    await fetchFlightInfo();
-  } catch (err) {
-    console.error('Error creating mission:', err);
-    alert(`Erreur lors de la création de la mission: ${err}`);
-  }
-};
-
-const handleModifyMission = async () => {
-  try {
-    await dronesApi.modifyMission(droneId, {
-      filename: modifyData.filename,
-      seq: modifyData.seq,
-      updates: {
-        lat: modifyData.lat,
-        lon: modifyData.lon,
-        alt: modifyData.alt,
-      },
+    await withBusy(async () => {
+      await dronesApi.createMission(droneId, missionData);
+      await dronesApi.sendMissionFile(droneId, missionData.filename);
+      alert('Mission créée avec succès !');
+      setMissionDialogOpen(false);
+      await fetchFlightInfo();
     });
-    alert('Mission modifiée avec succès !');
-    setModifyDialogOpen(false);
-    await fetchFlightInfo();
-  } catch (err) {
-    console.error('Error modifying mission:', err);
-    alert(`Erreur lors de la modification de la mission: ${err}`);
-  }
-};
+  };
+
+  const handleModifyMission = async () => {
+    try {
+      await dronesApi.modifyMission(droneId, {
+        filename: modifyData.filename,
+        seq: modifyData.seq,
+        updates: {
+          lat: modifyData.lat,
+          lon: modifyData.lon,
+          alt: modifyData.alt,
+        },
+      });
+      alert('Mission modifiée avec succès !');
+      setModifyDialogOpen(false);
+      await fetchFlightInfo();
+    } catch (err) {
+      console.error('Error modifying mission:', err);
+      alert(`Erreur lors de la modification de la mission: ${err}`);
+    }
+  };
 
 
   const addWaypoint = (lat: number, lon: number) => {
@@ -292,149 +321,162 @@ const handleModifyMission = async () => {
     });
   };
 
-const fetchHospitalsByCity = async (city: string) => {
-  try {
-    const hs = await hospitalApi.getByCity(city);
-    const normalized: HospitalUI[] = hs.map(h => ({
-      hospitalId: h.hospitalId,
-      hospitalName: h.hospitalName,
-      hospitalAdress: h.hospitalAdress ?? '',
-      hospitalCity: h.hospitalCity ?? '',
-      hospitalPostal: h.hospitalPostal != null ? String(h.hospitalPostal) : '',
-      hospitalLatitude: h.hospitalLatitude ?? '',
-      hospitalLongitude: h.hospitalLongitude ?? '',
-    }));
-    setHospitals(normalized);
-  } catch (err) {
-    console.error('getByCity error:', err);
-    setHospitals([]);
-  }
-};
+  const fetchHospitalsByCity = async (city: string) => {
+    try {
+      const hs = await hospitalApi.getByCity(city);
+      const normalized: HospitalUI[] = hs.map(h => ({
+        hospitalId: h.hospitalId,
+        hospitalName: h.hospitalName,
+        hospitalAdress: h.hospitalAdress ?? '',
+        hospitalCity: h.hospitalCity ?? '',
+        hospitalPostal: h.hospitalPostal != null ? String(h.hospitalPostal) : '',
+        hospitalLatitude: h.hospitalLatitude ?? '',
+        hospitalLongitude: h.hospitalLongitude ?? '',
+      }));
+      setHospitals(normalized);
+    } catch (err) {
+      console.error('getByCity error:', err);
+      setHospitals([]);
+    }
+  };
 
-const loadStaticData = async (id: number) => {
-  try {
-    const d = await dronesApi.getById(id);
-    setDrone(d);
+  const loadStaticData = async (id: number) => {
+    try {
+      const d = await dronesApi.getById(id);
+      setDrone(d);
 
-    if (!d?.centerId) {
+      if (!d?.centerId) {
+        setDonationCenter(null);
+        setHospitals([]);
+        return;
+      }
+
+      const center = await donationCenterApi.getCenterById(d.centerId);
+      const dc = center as unknown as DonationCenterRaw;
+      setDonationCenter(dc);
+
+      const city = (dc.centerCity ?? '').trim();
+      if (city) {
+        await fetchHospitalsByCity(city);
+      } else {
+        setHospitals([]);
+      }
+    } catch (err) {
+      console.error('loadStaticData error:', err);
       setDonationCenter(null);
       setHospitals([]);
-      return;
     }
-
-    const center = await donationCenterApi.getCenterById(d.centerId);
-    const dc = center as unknown as DonationCenterRaw;
-    setDonationCenter(dc);
-
-    const city = (dc.centerCity ?? '').trim();
-    if (city) {
-      await fetchHospitalsByCity(city);
-    } else {
-      setHospitals([]);
-    }
-  } catch (err) {
-    console.error('loadStaticData error:', err);
-    setDonationCenter(null);
-    setHospitals([]);
-  }
-};
+  };
 
 
 
 
-// Création d’une mission vers un hôpital via /mission/create
+  // Création d’une mission vers un hôpital via /mission/create
 const createMissionToHospital = async (hospital: {
   hospitalId: number;
   hospitalName: string;
   hospitalLatitude: string;
   hospitalLongitude: string;
 }) => {
-  try {
-    // parse robuste (gère virgules FR)
-    const toNum = (s: string) => Number(String(s).trim().replace(',', '.'));
-    const deliveryLat = toNum(hospital.hospitalLatitude);
-    const deliveryLon = toNum(hospital.hospitalLongitude);
-
-    if (Number.isNaN(deliveryLat) || Number.isNaN(deliveryLon)) {
-      alert(`Coordonnées invalides pour ${hospital.hospitalName}`);
-      return;
-    }
-
-    setWaypoints([]);
-    setMissionData(prev => ({ ...prev, waypoints: [] }));
-
-    const ALT = 50;
-    const mission: Mission = {
-      filename: `delivery_${droneId}_${Date.now()}.waypoints`,
-      altitude_takeoff: ALT,
-      mode: 'auto',
-      waypoints: [
-        { lat: deliveryLat, lon: deliveryLon, alt: ALT },
-      ],
-    };
-
-    await dronesApi.createMission(droneId, mission);
-    await dronesApi.sendMissionFile(droneId, mission.filename);
-    await dronesApi.startMission(droneId);
-
-    alert(`Mission créée et démarrée vers ${hospital.hospitalName} !`);
-    setHospitalsDialogOpen(false);
-    await fetchFlightInfo();
-  } catch (error) {
-    console.error('Mission error:', error);
-    alert(`Erreur: ${error}`);
-  }
-};
-
-const createMissionToDonationCenter = async () => {
-  if (!donationCenter) {
-    alert("Centre de don inconnu.");
+  const toNum = (s: string) => Number(String(s).trim().replace(',', '.'));
+  const deliveryLat = toNum(hospital.hospitalLatitude);
+  const deliveryLon = toNum(hospital.hospitalLongitude);
+  if (Number.isNaN(deliveryLat) || Number.isNaN(deliveryLon)) {
+    alert(`Coordonnées invalides pour ${hospital.hospitalName}`);
     return;
   }
 
-  const lat = toNum(donationCenter.centerLatitude);
-  const lon = toNum(donationCenter.centerLongitude);
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-    alert("Coordonnées du centre de don invalides.");
-    return;
-  }
+  setWaypoints([]);
+  setMissionData(prev => ({ ...prev, waypoints: [] }));
 
   const ALT = 50;
   const mission: Mission = {
-    filename: `return_center_${droneId}_${Date.now()}.waypoints`,
+    filename: `delivery_${droneId}_${Date.now()}.waypoints`,
     altitude_takeoff: ALT,
     mode: 'auto',
-    waypoints: [{ lat, lon, alt: ALT }],
+    waypoints: [{ lat: deliveryLat, lon: deliveryLon, alt: ALT }],
   };
 
   await dronesApi.createMission(droneId, mission);
   await dronesApi.sendMissionFile(droneId, mission.filename);
-  await dronesApi.startMission(droneId);
+
+  setMissionReady(true);
+  setMissionRunning(false);
+
+  alert(`Mission créée et chargée vers ${hospital.hospitalName} !`);
+  setHospitalsDialogOpen(false);
+  await fetchFlightInfo();
 };
+
+  const createMissionToDonationCenter = async () => {
+    if (!donationCenter) {
+      alert("Centre de don inconnu.");
+      return;
+    }
+    await withBusy(async () => {
+      const lat = toNum(donationCenter.centerLatitude);
+      const lon = toNum(donationCenter.centerLongitude);
+      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+        alert("Coordonnées du centre de don invalides.");
+        return;
+      }
+
+      const ALT = 50;
+      const mission: Mission = {
+        filename: `return_center_${droneId}_${Date.now()}.waypoints`,
+        altitude_takeoff: ALT,
+        mode: 'auto',
+        waypoints: [{ lat, lon, alt: ALT }],
+      };
+
+      await dronesApi.createMission(droneId, mission);
+      await dronesApi.sendMissionFile(droneId, mission.filename);
+
+      setMissionReady(true);
+      setMissionRunning(false);
+    });
+  };
 
 
 
 
 
   useEffect(() => {
-  let cancelled = false;
+    let cancelled = false;
 
-  const init = async () => {
-    await Promise.all([fetchFlightInfo(), loadStaticData(droneId)]);
-    if (cancelled) return;
-  };
+    const init = async () => {
+      await Promise.all([fetchFlightInfo(), loadStaticData(droneId)]);
+      if (cancelled) return;
+    };
 
-  init();
+    init();
 
-  const interval = setInterval(() => {
-    fetchFlightInfo();
-  }, 5000);
+    const interval = setInterval(() => {
+      fetchFlightInfo();
+    }, 5000);
 
-  return () => {
-    cancelled = true;
-    clearInterval(interval);
-  };
-}, [droneId]);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [droneId]);
+
+  useEffect(() => {
+    if (!flightInfo) return;
+    if (!missionRunning) return;
+
+    const mode = (flightInfo.flight_mode || '').toUpperCase();
+    const disarmed = !flightInfo.is_armed;
+    const nearGround = flightInfo.altitude_m < 2;
+    const still = Math.abs(flightInfo.horizontal_speed_m_s) < 0.3 && Math.abs(flightInfo.vertical_speed_m_s) < 0.3;
+    const notAuto = mode !== 'AUTO';
+
+    if (disarmed || (nearGround && still && notAuto)) {
+      setMissionRunning(false);
+      // missionReady reste false : le bouton se désactive tant qu'on n’a pas renvoyé un nouveau fichier
+    }
+  }, [flightInfo, missionRunning]);
+
 
 
 
@@ -469,6 +511,14 @@ const createMissionToDonationCenter = async () => {
           >
             Hôpitaux
           </Button>
+          <Button
+            variant="contained"
+            onClick={() => setAssignOpen(true)}
+            sx={{ bgcolor: '#1976d2', '&:hover': { bgcolor: '#125ea0' } }}
+          >
+            Assigner livraison
+          </Button>
+
         </Box>
       </Paper>
 
@@ -564,26 +614,26 @@ const createMissionToDonationCenter = async () => {
               attribution='&copy; <a href="https://www.esri.com/">Esri</a> &mdash; Source: Esri'
             />
             <MapClickHandler />
-           {donationCenter &&
-            donationCenter.centerLatitude !== null &&
-            donationCenter.centerLongitude !== null &&
-            !isNaN(Number(donationCenter.centerLatitude)) &&
-            !isNaN(Number(donationCenter.centerLongitude)) && (
-            <Marker
-              position={[
-                Number(donationCenter.centerLatitude),
-                Number(donationCenter.centerLongitude)
-              ]}
-              icon={createBloodHouseIcon()}
-              zIndexOffset={0}
-            >
-              <Popup>
-                <strong>Centre de don</strong><br />
-                {donationCenter.centerAdress}<br />
-                {donationCenter.centerPostal} {donationCenter.centerCity}
-              </Popup>
-            </Marker>
-          )}
+            {donationCenter &&
+              donationCenter.centerLatitude !== null &&
+              donationCenter.centerLongitude !== null &&
+              !isNaN(Number(donationCenter.centerLatitude)) &&
+              !isNaN(Number(donationCenter.centerLongitude)) && (
+                <Marker
+                  position={[
+                    Number(donationCenter.centerLatitude),
+                    Number(donationCenter.centerLongitude)
+                  ]}
+                  icon={createBloodHouseIcon()}
+                  zIndexOffset={0}
+                >
+                  <Popup>
+                    <strong>Centre de don</strong><br />
+                    {donationCenter.centerAdress}<br />
+                    {donationCenter.centerPostal} {donationCenter.centerCity}
+                  </Popup>
+                </Marker>
+              )}
 
             {hospitals.map((h) => {
               const lat = parseFloat(h.hospitalLatitude);
@@ -606,11 +656,11 @@ const createMissionToDonationCenter = async () => {
               );
             })}
 
-            <Marker 
+            <Marker
               position={[flightInfo.latitude, flightInfo.longitude]}
               icon={createDroneIcon(
-                flightInfo.heading_deg, 
-                flightInfo.movement_track_deg, 
+                flightInfo.heading_deg,
+                flightInfo.movement_track_deg,
                 flightInfo.horizontal_speed_m_s > 0.1
               )}
               zIndexOffset={1}
@@ -625,14 +675,14 @@ const createMissionToDonationCenter = async () => {
                   Déplacement: {flightInfo.movement_track_deg?.toFixed(0) || 'N/A'}°<br />
                   Batterie: {flightInfo.battery_remaining_percent?.toFixed(0) || 'N/A'}%<br />
                   {flightInfo.horizontal_speed_m_s > 0.1 ? (
-                    <span style={{color: '#00ff00'}}>🡹 En mouvement</span>
+                    <span style={{ color: '#00ff00' }}>🡹 En mouvement</span>
                   ) : (
-                    <span style={{color: '#999'}}>⏸ Stationnaire</span>
+                    <span style={{ color: '#999' }}>⏸ Stationnaire</span>
                   )}
                 </div>
               </Popup>
             </Marker>
-            
+
             {waypoints.length > 0 && (
               <>
                 {waypoints.map((wp, index) => (
@@ -677,7 +727,7 @@ const createMissionToDonationCenter = async () => {
             color="secondary"
             onClick={handleStartMission}
             size="small"
-            disabled={!flightInfo?.is_armed}
+            disabled={!missionReady || missionRunning}
           >
             <PlayArrow />
           </Fab>
@@ -726,7 +776,7 @@ const createMissionToDonationCenter = async () => {
                 <MenuItem value="man">Manuel (waypoints seulement)</MenuItem>
               </Select>
             </FormControl>
-            
+
             <Typography variant="subtitle2">
               Waypoints ({waypoints.length})
             </Typography>
@@ -773,7 +823,7 @@ const createMissionToDonationCenter = async () => {
                 </Button>
               </Box>
             ))}
-            
+
             <Button
               onClick={() => {
                 if (flightInfo) {
@@ -785,7 +835,7 @@ const createMissionToDonationCenter = async () => {
             >
               Ajouter un waypoint
             </Button>
-            
+
             <Typography variant="caption" color="text.secondary">
               Conseil: Cliquez sur la carte pour ajouter des waypoints visuellement
             </Typography>
@@ -867,40 +917,52 @@ const createMissionToDonationCenter = async () => {
                 </Typography>
               </Box>
             ) : (
-              hospitals.map((hospital) => (
-              <Paper 
-                key={hospital.hospitalId}
-                sx={{ 
-                  p: 2, 
-                  cursor: 'pointer',
-                  '&:hover': { 
-                    bgcolor: 'grey.100',
-                    boxShadow: 2
-                  }
-                }}
-                onClick={() => createMissionToHospital(hospital)}
-              >
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f44336' }}>
-                      {hospital.hospitalName}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {hospital.hospitalAdress}, {hospital.hospitalCity} - {hospital.hospitalPostal}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Lat: {parseFloat(hospital.hospitalLatitude).toFixed(6)}, 
-                      Lon: {parseFloat(hospital.hospitalLongitude).toFixed(6)}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant="body2" color="primary">
-                      Cliquer pour créer mission
-                    </Typography>
-                  </Box>
-                </Box>
-              </Paper>
-              ))
+              hospitals.map((hospital) => {
+  const busy = sendingHospitalId === hospital.hospitalId;
+
+  return (
+    <Paper
+      key={hospital.hospitalId}
+      sx={{
+        p: 2,
+        cursor: busy ? 'default' : 'pointer',
+        opacity: busy ? 0.6 : 1,
+        pointerEvents: busy ? 'none' : 'auto',
+        position: 'relative',
+        '&:hover': { bgcolor: busy ? undefined : 'grey.100', boxShadow: busy ? 0 : 2 },
+      }}
+      onClick={async () => {
+        setSendingHospitalId(hospital.hospitalId);
+        try {
+          await createMissionToHospital(hospital);
+        } finally {
+          setSendingHospitalId(null);
+        }
+      }}
+    >
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box>
+          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f44336' }}>
+            {hospital.hospitalName}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {hospital.hospitalAdress}, {hospital.hospitalCity} - {hospital.hospitalPostal}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            Lat: {parseFloat(hospital.hospitalLatitude).toFixed(6)}, Lon: {parseFloat(hospital.hospitalLongitude).toFixed(6)}
+          </Typography>
+        </Box>
+
+        <Box sx={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography variant="body2" color="primary">
+            Cliquer pour créer mission
+          </Typography>
+          {busy && <CircularProgress size={16} />} {/* spinner uniquement pour CET hôpital */}
+        </Box>
+      </Box>
+    </Paper>
+  );
+})
             )}
           </Box>
         </DialogContent>
@@ -910,6 +972,21 @@ const createMissionToDonationCenter = async () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <AssignDeliveryDialog
+        open={assignOpen}
+        onClose={() => setAssignOpen(false)}
+        centerId={donationCenter?.centerId ?? null}
+        droneId={droneId}
+        statusFilter="pending"
+        onMissionReady={async ({ deliveryId }) => {
+          setAssignOpen(false);
+          setMissionReady(true);
+          setMissionRunning(false);
+          setCurrentDeliveryId(deliveryId);
+          await fetchFlightInfo();
+        }}
+      />
+
     </Box>
   );
 };

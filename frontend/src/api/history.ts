@@ -122,6 +122,23 @@ export const historyApi = {
         bloodType: blood?.bloodType,
         droneId: drone?.droneId,
         droneName: drone?.droneName,
+        sourceDonationCenter: currentCenter
+          ? {
+              centerId: currentCenter.centerId,
+              centerCity: currentCenter.centerCity,
+              centerName: currentCenter.centerCity, // fallback if no name property
+              centerAddress: currentCenter.centerAdress,
+              latitude: parseFloat(currentCenter.centerLatitude),
+              longitude: parseFloat(currentCenter.centerLongitude)
+            }
+          : {
+              centerId: 0,
+              centerCity: '',
+              centerName: '',
+              centerAddress: '',
+              latitude: 0,
+              longitude: 0
+            },
         destinationHospital: {
           hospitalId: hospital.hospitalId,
           hospitalName: hospital.hospitalName,
