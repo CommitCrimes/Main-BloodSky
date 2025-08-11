@@ -68,7 +68,6 @@ const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
   const [forecastData, setForecastData] = useState<ForecastEntry[]>([]);
   const [loadingWeather, setLoadingWeather] = useState<boolean>(false);
 
-  // sync quand la popup s’ouvre / change de contexte
   useEffect(() => {
     if (!open) return;
     setStatus(currentStatus);
@@ -80,7 +79,7 @@ const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
 
   // météo :
   // - Programmer (pending) -> météo au "newDate"
-  // - Annuler (cancelled) -> météo au "currentDate" (comme avant)
+  // - Annuler (cancelled) -> météo au "currentDate"
   useEffect(() => {
     const fetchWeather = async () => {
       if (!coordinates) {

@@ -185,21 +185,18 @@ const AssignDeliveryDialog: React.FC<Props> = ({
     try {
       setSendingId(d.deliveryId);
 
-      // 1) s’assurer que la livraison est bien liée au drone
       if (d.droneId !== droneId) {
         await deliveryApi.update(d.deliveryId, { droneId } as unknown as { droneId: number });
         setAll(prev => prev.map(x => x.deliveryId === d.deliveryId ? { ...x, droneId } : x));
         onAssigned?.(d.deliveryId);
       }
 
-      // 2) récupérer les coords hôpital
       if (!d.hospitalId) throw new Error('Hôpital manquant pour cette livraison');
       const h = await hospitalApi.getById(d.hospitalId) as HospitalLite;
       const lat = toNum(h?.hospitalLatitude);
       const lon = toNum(h?.hospitalLongitude);
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error('Coordonnées hôpital invalides');
 
-      // 3) créer + envoyer la mission
       const ALT = 50;
       const filename = `delivery_${droneId}_${Date.now()}.waypoints`;
       const mission: DroneMission = {
@@ -211,8 +208,6 @@ const AssignDeliveryDialog: React.FC<Props> = ({
 
       await dronesApi.createMission(droneId, mission);
       await dronesApi.sendMissionFile(droneId, filename);
-
-      // 4) prévenir le parent → il pourra activer ▶️ et mémoriser deliveryId
       onMissionReady?.({ deliveryId: d.deliveryId, filename });
 
     } catch (e) {
