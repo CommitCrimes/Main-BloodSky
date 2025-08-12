@@ -110,7 +110,7 @@ const createDroneIcon = (heading: number, movementTrack: number, isMoving: boole
           transform: rotate(${heading}deg);
           filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.5));
         " />
-        // <div style="
+         <div style="
         //   position: absolute;
           
         //   left: 50%;
@@ -121,7 +121,7 @@ const createDroneIcon = (heading: number, movementTrack: number, isMoving: boole
         //   border-right: 10px solid transparent;
         //   border-bottom: 20px solid;
         //   filter: drop-shadow(1px 1px 2px rgba(0, 0, 0, 0.66));
-        // "></div>
+         "></div>
       </div>
     `,
     className: 'drone-marker',
@@ -214,27 +214,27 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     }
   };
 
-const handleStartMission = async () => {
-  try {
-    await dronesApi.startMission(droneId);
-    setMissionRunning(true);
-    setMissionReady(false);
+  const handleStartMission = async () => {
+    try {
+      await dronesApi.startMission(droneId);
+      setMissionRunning(true);
+      setMissionReady(false);
 
-    if (currentDeliveryId != null) {
-      try {
-        await deliveryApi.update(currentDeliveryId, { deliveryStatus: 'in_transit' as DeliveryStatus });
-      } catch (e) {
-        console.warn('Maj statut in_transit échouée:', e);
+      if (currentDeliveryId != null) {
+        try {
+          await deliveryApi.update(currentDeliveryId, { deliveryStatus: 'in_transit' as DeliveryStatus });
+        } catch (e) {
+          console.warn('Maj statut in_transit échouée:', e);
+        }
       }
-    }
 
-    alert('Mission démarrée avec succès !');
-    await fetchFlightInfo();
-  } catch (err) {
-    console.error('Error starting mission:', err);
-    alert(`Erreur lors du démarrage de la mission: ${err}`);
-  }
-};
+      alert('Mission démarrée avec succès !');
+      await fetchFlightInfo();
+    } catch (err) {
+      console.error('Error starting mission:', err);
+      alert(`Erreur lors du démarrage de la mission: ${err}`);
+    }
+  };
 
 
   const handleReturnHome = async () => {
@@ -372,41 +372,41 @@ const handleStartMission = async () => {
 
 
   // Création d’une mission vers un hôpital via /mission/create
-const createMissionToHospital = async (hospital: {
-  hospitalId: number;
-  hospitalName: string;
-  hospitalLatitude: string;
-  hospitalLongitude: string;
-}) => {
-  const toNum = (s: string) => Number(String(s).trim().replace(',', '.'));
-  const deliveryLat = toNum(hospital.hospitalLatitude);
-  const deliveryLon = toNum(hospital.hospitalLongitude);
-  if (Number.isNaN(deliveryLat) || Number.isNaN(deliveryLon)) {
-    alert(`Coordonnées invalides pour ${hospital.hospitalName}`);
-    return;
-  }
+  const createMissionToHospital = async (hospital: {
+    hospitalId: number;
+    hospitalName: string;
+    hospitalLatitude: string;
+    hospitalLongitude: string;
+  }) => {
+    const toNum = (s: string) => Number(String(s).trim().replace(',', '.'));
+    const deliveryLat = toNum(hospital.hospitalLatitude);
+    const deliveryLon = toNum(hospital.hospitalLongitude);
+    if (Number.isNaN(deliveryLat) || Number.isNaN(deliveryLon)) {
+      alert(`Coordonnées invalides pour ${hospital.hospitalName}`);
+      return;
+    }
 
-  setWaypoints([]);
-  setMissionData(prev => ({ ...prev, waypoints: [] }));
+    setWaypoints([]);
+    setMissionData(prev => ({ ...prev, waypoints: [] }));
 
-  const ALT = 50;
-  const mission: Mission = {
-    filename: `delivery_${droneId}_${Date.now()}.waypoints`,
-    altitude_takeoff: ALT,
-    mode: 'auto',
-    waypoints: [{ lat: deliveryLat, lon: deliveryLon, alt: ALT }],
+    const ALT = 50;
+    const mission: Mission = {
+      filename: `delivery_${droneId}_${Date.now()}.waypoints`,
+      altitude_takeoff: ALT,
+      mode: 'auto',
+      waypoints: [{ lat: deliveryLat, lon: deliveryLon, alt: ALT }],
+    };
+
+    await dronesApi.createMission(droneId, mission);
+    await dronesApi.sendMissionFile(droneId, mission.filename);
+
+    setMissionReady(true);
+    setMissionRunning(false);
+
+    alert(`Mission créée et chargée vers ${hospital.hospitalName} !`);
+    setHospitalsDialogOpen(false);
+    await fetchFlightInfo();
   };
-
-  await dronesApi.createMission(droneId, mission);
-  await dronesApi.sendMissionFile(droneId, mission.filename);
-
-  setMissionReady(true);
-  setMissionRunning(false);
-
-  alert(`Mission créée et chargée vers ${hospital.hospitalName} !`);
-  setHospitalsDialogOpen(false);
-  await fetchFlightInfo();
-};
 
   const createMissionToDonationCenter = async () => {
     if (!donationCenter) {
@@ -918,51 +918,51 @@ const createMissionToHospital = async (hospital: {
               </Box>
             ) : (
               hospitals.map((hospital) => {
-  const busy = sendingHospitalId === hospital.hospitalId;
+                const busy = sendingHospitalId === hospital.hospitalId;
 
-  return (
-    <Paper
-      key={hospital.hospitalId}
-      sx={{
-        p: 2,
-        cursor: busy ? 'default' : 'pointer',
-        opacity: busy ? 0.6 : 1,
-        pointerEvents: busy ? 'none' : 'auto',
-        position: 'relative',
-        '&:hover': { bgcolor: busy ? undefined : 'grey.100', boxShadow: busy ? 0 : 2 },
-      }}
-      onClick={async () => {
-        setSendingHospitalId(hospital.hospitalId);
-        try {
-          await createMissionToHospital(hospital);
-        } finally {
-          setSendingHospitalId(null);
-        }
-      }}
-    >
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box>
-          <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f44336' }}>
-            {hospital.hospitalName}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {hospital.hospitalAdress}, {hospital.hospitalCity} - {hospital.hospitalPostal}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Lat: {parseFloat(hospital.hospitalLatitude).toFixed(6)}, Lon: {parseFloat(hospital.hospitalLongitude).toFixed(6)}
-          </Typography>
-        </Box>
+                return (
+                  <Paper
+                    key={hospital.hospitalId}
+                    sx={{
+                      p: 2,
+                      cursor: busy ? 'default' : 'pointer',
+                      opacity: busy ? 0.6 : 1,
+                      pointerEvents: busy ? 'none' : 'auto',
+                      position: 'relative',
+                      '&:hover': { bgcolor: busy ? undefined : 'grey.100', boxShadow: busy ? 0 : 2 },
+                    }}
+                    onClick={async () => {
+                      setSendingHospitalId(hospital.hospitalId);
+                      try {
+                        await createMissionToHospital(hospital);
+                      } finally {
+                        setSendingHospitalId(null);
+                      }
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f44336' }}>
+                          {hospital.hospitalName}
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {hospital.hospitalAdress}, {hospital.hospitalCity} - {hospital.hospitalPostal}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Lat: {parseFloat(hospital.hospitalLatitude).toFixed(6)}, Lon: {parseFloat(hospital.hospitalLongitude).toFixed(6)}
+                        </Typography>
+                      </Box>
 
-        <Box sx={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="body2" color="primary">
-            Cliquer pour créer mission
-          </Typography>
-          {busy && <CircularProgress size={16} />} {/* spinner uniquement pour CET hôpital */}
-        </Box>
-      </Box>
-    </Paper>
-  );
-})
+                      <Box sx={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography variant="body2" color="primary">
+                          Cliquer pour créer mission
+                        </Typography>
+                        {busy && <CircularProgress size={16} />} {/* spinner uniquement pour CET hôpital */}
+                      </Box>
+                    </Box>
+                  </Paper>
+                );
+              })
             )}
           </Box>
         </DialogContent>

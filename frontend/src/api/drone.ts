@@ -97,6 +97,13 @@ export type DroneHistoryItem = {
   centerCity: string | null;
 };
 
+// ⛔️ Drones de test à ignorer côté UI
+const IGNORE_DRONE_IDS = new Set<number>([2]);
+
+function filterDrones<T extends { droneId?: number }>(arr: T[]): T[] {
+  return arr.filter(d => !(typeof d?.droneId === 'number' && IGNORE_DRONE_IDS.has(d.droneId)));
+}
+
 /* =========================
  * Helper HTTP minimaliste
  * ========================= */
@@ -132,16 +139,27 @@ export const dronesApi = {
   // --- CRUD / listings ---
 
   /** GET /drones */
-  list: () => fetchJson<Drone[]>("/drones"),
+  list: async () => filterDrones(await fetchJson<Drone[]>("/drones")),
 
   /** GET /drones/status */
-  getStatus: () => fetchJson<DronesStatus>("/drones/status"),
+  getStatus: async () => {
+    const status = await fetchJson<DronesStatus>("/drones/status");
+    // Si c'est un tableau d'objets ayant droneId, on filtre; sinon on renvoie tel quel
+    if (Array.isArray(status)) {
+      return status.filter((s: { droneId?: number }) => !(s && typeof s.droneId === 'number' && IGNORE_DRONE_IDS.has(s.droneId)));
+    }
+    return status;
+  },
 
   /** GET /drones/history */
-  getHistory: () => fetchJson<DroneHistoryItem[]>("/drones/history"),
+  getHistory: async () => {
+    const rows = await fetchJson<DroneHistoryItem[]>("/drones/history");
+    return rows.filter(r => !(typeof r?.droneId === 'number' && IGNORE_DRONE_IDS.has(r.droneId)));
+  },
 
   /** GET /drones/center/:centerId */
-  getByCenter: (centerId: number) => fetchJson<Drone[]>(`/drones/center/${centerId}`),
+  getByCenter: async (centerId: number) =>
+    filterDrones(await fetchJson<Drone[]>(`/drones/center/${centerId}`)),
 
   /** GET /drones/:id */
   getById: (id: number) => fetchJson<Drone>(`/drones/${id}`),
