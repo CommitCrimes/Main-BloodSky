@@ -13,6 +13,7 @@ import { donationCenterAdminRouter } from './donation-center-admin.routes';
 import { profileRouter } from './profile.routes';
 import { notificationRouter } from './notification';
 import { dashboardRouter } from './dashboard';
+
 import { swaggerUI } from '@hono/swagger-ui';
 import { bloodSwagger } from '@/swagger/blood-swagger';
 import { userSwagger } from '@/swagger/user-swagger';
@@ -715,6 +716,8 @@ export const createRouter = () => {
     
     // Routes dashboard
     api.route('/dashboard', dashboardRouter);
+
+
 
   api.get('/swagger', swaggerUI({ url: '/api/docs' }));
   

@@ -14,6 +14,7 @@ Une application web moderne avec un frontend React TypeScript et un backend Hono
 ```bash
 cd frontend
 bun install
+npm install @emailjs/browser
 bun run dev
 ```
 
