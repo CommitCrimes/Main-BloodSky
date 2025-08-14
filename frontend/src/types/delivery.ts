@@ -40,3 +40,30 @@ export type UpdateDeliveryRequest = Partial<{
     dteValidation: string | null;
     droneId: number | null;
 }>;
+
+export type DroneDelivery = {
+  deliveryId: number;
+  deliveryStatus: string;
+  deliveryUrgent: boolean;
+  dteDelivery: string;
+  dteValidation: string;
+  hospitalName: string;
+  hospitalCity: string;
+}
+
+export type DroneHistory = {
+  droneId: number;
+  droneName: string;
+  droneStatus: string;
+  droneImage: string;
+  deliveryId: number;
+  deliveryStatus: string;
+  deliveryUrgent: boolean;
+  dteDelivery: string;
+  dteValidation: string;
+  hospitalName: string;
+  hospitalCity: string;
+  centerCity: string;
+  deliveries?: DroneDelivery[];
+}
+

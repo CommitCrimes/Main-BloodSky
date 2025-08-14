@@ -23,7 +23,7 @@ type Props = {
   droneId: number;
   statusFilter?: DeliveryStatus;
   onAssigned?: (deliveryId: number) => void;
-  onMissionReady?: (payload: { deliveryId: number; filename: string }) => void;
+  onMissionReady?: (payload: { deliveryId: number; filename: string; hospitalId: number; lat: number; lon: number }) => void;
 };
 
 // ----------------- Helpers -----------------
@@ -95,14 +95,11 @@ const AssignDeliveryDialog: React.FC<Props> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
-
   // Données
   const [all, setAll] = useState<DeliveryWithParticipants[]>([]);
   const [includeUnassigned, setIncludeUnassigned] = useState(false);
-
   // spinner par ligne
   const [sendingId, setSendingId] = useState<number | null>(null);
-
   // Caches libellés
   const [centerMap, setCenterMap] = useState<Record<number, string>>({});
   const [hospitalMap, setHospitalMap] = useState<Record<number, string>>({});
@@ -208,8 +205,13 @@ const AssignDeliveryDialog: React.FC<Props> = ({
 
       await dronesApi.createMission(droneId, mission);
       await dronesApi.sendMissionFile(droneId, filename);
-      onMissionReady?.({ deliveryId: d.deliveryId, filename });
-
+      onMissionReady?.({
+        deliveryId: d.deliveryId,
+        filename,
+        hospitalId: d.hospitalId,
+        lat,
+        lon,
+      });
     } catch (e) {
       console.error(e);
       setError('Échec de la création/envoi de mission.');
@@ -315,7 +317,7 @@ const AssignDeliveryDialog: React.FC<Props> = ({
                     disabled={busy}
                     onClick={() => handleLoadMission(d)}
                   >
-                    {busy ? (<><CircularProgress size={18} sx={{ mr: 1 }} /> Envoi…</>) : 'Charger Mission'}
+                    {busy ? (<><CircularProgress size={18} sx={{ mr: 1 }} /> Envoi…</>) : 'Creer Mission'}
                   </Button>
                 </Paper>
               );

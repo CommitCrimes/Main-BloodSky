@@ -34,52 +34,9 @@ import {
 } from '@mui/icons-material';
 import DroneDetailView from './DroneDetailView';
 import { dronesApi } from '@/api/drone';
-
-interface DroneDelivery {
-  deliveryId: number;
-  deliveryStatus: string;
-  deliveryUrgent: boolean;
-  dteDelivery: string;
-  dteValidation: string;
-  hospitalName: string;
-  hospitalCity: string;
-}
-
-interface DroneHistory {
-  droneId: number;
-  droneName: string;
-  droneStatus: string;
-  droneImage: string;
-  deliveryId: number;
-  deliveryStatus: string;
-  deliveryUrgent: boolean;
-  dteDelivery: string;
-  dteValidation: string;
-  hospitalName: string;
-  hospitalCity: string;
-  centerCity: string;
-  deliveries?: DroneDelivery[];
-}
-
-interface DroneFlightInfo {
-  drone_id: string;
-  is_armed: boolean;
-  flight_mode: string;
-  latitude: number;
-  longitude: number;
-  altitude_m: number;
-  horizontal_speed_m_s: number;
-  vertical_speed_m_s: number;
-  heading_deg: number;
-  movement_track_deg: number;
-  battery_remaining_percent: number;
-}
-
-interface DroneStatus {
-  droneId: number;
-  isOnline: boolean;
-  lastSyncAt: string;
-}
+import type { FlightInfo as DroneFlightInfo } from '@/types/drone';
+import type { DroneHistory } from '@/types/delivery';
+import type { DroneStatus } from '@/types/drone';
 
 const DroneManagement: React.FC = () => {
   const [dronesHistory, setDronesHistory] = useState<DroneHistory[]>([]);
@@ -176,12 +133,13 @@ const DroneManagement: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (dronesHistory.length === 0) return;
+  if (dronesHistory.length === 0) return;
+  if (detailViewDroneId) return; // pause
+  fetchAllDronesFlightInfo();
+  const id = setInterval(fetchAllDronesFlightInfo, 5000);
+  return () => clearInterval(id);
+}, [dronesHistory, detailViewDroneId]);
 
-    fetchAllDronesFlightInfo();
-    const interval = setInterval(fetchAllDronesFlightInfo, 5000);
-    return () => clearInterval(interval);
-  }, [dronesHistory]);
 
   const getStatusColor = (status: string): string => {
     switch (status?.toLowerCase()) {

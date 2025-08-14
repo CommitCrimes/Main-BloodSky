@@ -13,7 +13,7 @@ interface BaseHistoryItem {
 }
 
 export interface DonationCenterHistory extends BaseHistoryItem {
-  sourceDonationCenter: any;
+  sourceDonationCenter: unknown;
   type: 'delivery';
   destinationHospital: {
     hospitalId: number;
@@ -71,3 +71,4 @@ export interface DroneHistorySortConfig {
 export interface HistorySearchConfig {
   searchTerm: string;
 }
+
