@@ -1,5 +1,14 @@
 export type MissionMode = 'auto' | 'man';
 
+export interface Drone {
+  droneId: number;
+  droneName: string;
+  centerId: number | null;
+  droneImage?: string;
+  droneStatus?: string;
+}
+
+
 export interface DroneWaypoint {
   lat: number;
   lon: number;
@@ -13,8 +22,8 @@ export interface DroneMission {
   waypoints: DroneWaypoint[];
 }
 
-// Aligne avec ce que renvoie ton API drones
 export interface FlightInfo {
+  drone_id: string;
   latitude: number;
   longitude: number;
   altitude_m: number;
@@ -26,3 +35,10 @@ export interface FlightInfo {
   is_armed: boolean;
   battery_remaining_percent?: number;
 }
+
+export type DroneStatus = {
+  droneId: number;
+  isOnline: boolean;
+  lastSyncAt: string;
+}
+
