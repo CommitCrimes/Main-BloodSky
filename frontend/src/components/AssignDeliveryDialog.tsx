@@ -195,7 +195,7 @@ const AssignDeliveryDialog: React.FC<Props> = ({
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error('Coordonnées hôpital invalides');
 
       const ALT = 50;
-      const filename = `delivery_${droneId}_${Date.now()}.waypoints`;
+      const filename = `DEFAULT_Delivery_DroneID_${droneId}_HopitalID:${d.hospitalId}.waypoints`;
       const mission: DroneMission = {
         filename,
         altitude_takeoff: ALT,

@@ -146,13 +146,13 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
       if (flightInfo?.is_armed) {
         // En vol → RTL
         await dronesApi.returnHome(droneId);
+        setTarget(null);
         //alert('RTL envoyé, retour automatique.');
       } else {
         // Au sol → mission “donation center” (décollage + vol + atterrissage)
         await createMissionToDonationCenter();
         //alert('Mission vers le centre créée et chargée !');
       }
-      setTarget(null);
       await fetchFlightInfo();
     } catch (err) {
       console.error('Error returning home / creating center mission:', err);
@@ -296,7 +296,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
 
     const ALT = 50;
     const mission: Mission = {
-      filename: `delivery_${droneId}_${Date.now()}.waypoints`,
+      filename: `DEFAULT_Hopital_DroneID:${droneId}_HopitalID:${hospital.hospitalId}.waypoints`,
       altitude_takeoff: ALT,
       mode: 'auto',
       waypoints: [{ lat: deliveryLat, lon: deliveryLon, alt: ALT }],
@@ -330,7 +330,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
 
       const ALT = 50;
       const mission: Mission = {
-        filename: `return_center_${droneId}_${Date.now()}.waypoints`,
+        filename: `DEFAULT_ReturnCenter_DroneID:${droneId}_CenterID:${donationCenter.centerId}.waypoints`,
         altitude_takeoff: ALT,
         mode: 'auto',
         waypoints: [{ lat, lon, alt: ALT }],
@@ -361,7 +361,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
 
     const interval = setInterval(() => {
       fetchFlightInfo();
-    }, 2000);
+    }, 1000);
 
     return () => {
       cancelled = true;
