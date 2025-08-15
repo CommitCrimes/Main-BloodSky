@@ -50,6 +50,13 @@ export interface Blood {
   deliveryId?: number;
 }
 
+// ⛔️ drones de test à ignorer
+const IGNORE_DRONE_IDS = new Set<number>([2]);
+
+const filterOutTestDrones = <T extends { droneId?: number | string }>(list: T[]): T[] =>
+  list.filter(d => !IGNORE_DRONE_IDS.has(Number(d.droneId)));
+
+
 // API pour récupérer les données d'historique
 export const historyApi = {
   // Récupérer tous les hôpitaux
@@ -73,7 +80,7 @@ export const historyApi = {
   // Récupérer les drones
   getDrones: async (): Promise<Drone[]> => {
     const response = await api.get('/drones');
-    return response.data;
+    return filterOutTestDrones(response.data as Drone[]);
   },
 
   // Récupérer les types de sang
@@ -81,6 +88,8 @@ export const historyApi = {
     const response = await api.get('/blood');
     return response.data;
   },
+
+
 
   // Récupérer l'historique pour un centre de donation
   getDonationCenterHistory: async (centerId: number): Promise<DonationCenterHistory[]> => {
@@ -120,6 +129,23 @@ export const historyApi = {
         bloodType: blood?.bloodType,
         droneId: drone?.droneId,
         droneName: drone?.droneName,
+        sourceDonationCenter: currentCenter
+          ? {
+            centerId: currentCenter.centerId,
+            centerCity: currentCenter.centerCity,
+            centerName: currentCenter.centerCity, // fallback if no name property
+            centerAddress: currentCenter.centerAdress,
+            latitude: parseFloat(currentCenter.centerLatitude),
+            longitude: parseFloat(currentCenter.centerLongitude)
+          }
+          : {
+            centerId: 0,
+            centerCity: '',
+            centerName: '',
+            centerAddress: '',
+            latitude: 0,
+            longitude: 0
+          },
         destinationHospital: {
           hospitalId: hospital.hospitalId,
           hospitalName: hospital.hospitalName,
@@ -187,5 +213,58 @@ export const historyApi = {
         }
       };
     });
+  },
+
+  getDroneDeliveryHistory: async (): Promise<DonationCenterHistory[]> => {
+    const [deliveries, hospitals, donationCenters, drones, bloodTypes] = await Promise.all([
+      historyApi.getDeliveries(),
+      historyApi.getHospitals(),
+      historyApi.getDonationCenters(),
+      historyApi.getDrones(),
+      historyApi.getBloodTypes()
+    ]);
+
+    return deliveries.map(delivery => {
+      const drone = drones.find(d => d.droneId === delivery.droneId);
+      const center = donationCenters.find(c => c.centerId === delivery.centerId);
+      const hospital = hospitals.find(h => h.hospitalId === delivery.hospitalId);
+      const blood = bloodTypes.find(b => b.deliveryId === delivery.deliveryId);
+
+      return {
+        id: delivery.deliveryId.toString(),
+        deliveryId: delivery.deliveryId,
+        type: 'delivery',
+        requestDate: delivery.dteDelivery ? new Date(delivery.dteDelivery) : new Date(),
+        deliveryDate: delivery.dteValidation ? new Date(delivery.dteValidation) : null,
+        validationDate: delivery.dteValidation ? new Date(delivery.dteValidation) : null,
+        personIdentity: 'Système',
+        deliveryStatus: delivery.deliveryStatus as any,
+        isUrgent: delivery.deliveryUrgent,
+        bloodType: blood?.bloodType ?? 'Inconnu',
+        droneId: drone?.droneId,
+        droneName: drone?.droneName ?? 'Non assigné',
+        sourceDonationCenter: {
+          centerId: center?.centerId ?? 0,
+          centerCity: center?.centerCity ?? 'Inconnu',
+          centerName: center?.centerCity ?? 'Inconnu', // fallback s'il n'y a pas de nom
+          centerAddress: center?.centerAdress ?? '',
+          latitude: parseFloat(center?.centerLatitude ?? '0'),
+          longitude: parseFloat(center?.centerLongitude ?? '0')
+        },
+        destinationHospital: {
+          hospitalId: hospital?.hospitalId ?? 0,
+          hospitalName: hospital?.hospitalName ?? 'Inconnu',
+          hospitalCity: hospital?.hospitalCity ?? '',
+          hospitalAddress: hospital?.hospitalAdress ?? '',
+          latitude: parseFloat(hospital?.hospitalLatitude ?? '0'),
+          longitude: parseFloat(hospital?.hospitalLongitude ?? '0')
+        },
+        departureCoordinates: {
+          latitude: parseFloat(center?.centerLatitude ?? '0'),
+          longitude: parseFloat(center?.centerLongitude ?? '0')
+        }
+      };
+    });
   }
+
 };

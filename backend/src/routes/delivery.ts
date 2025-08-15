@@ -31,6 +31,32 @@ deliveryRouter.get("/:id", async (c) => {
   return c.json({ ...delivery, participants });
 });
 
+// GET by center ID (and include participants for each delivery)
+deliveryRouter.get('/center/:centerId', async (c) => {
+  const centerId = Number(c.req.param('centerId'));
+  if (isNaN(centerId)) return c.text('Invalid center ID', 400);
+
+  const deliveriesData = await db
+    .select()
+    .from(deliveries)
+    .where(eq(deliveries.centerId, centerId));
+
+  if (deliveriesData.length === 0) return c.notFound();
+
+  const withParticipants = await Promise.all(
+    deliveriesData.map(async (delivery) => {
+      const participants = await db
+        .select()
+        .from(deliveryParticipations)
+        .where(eq(deliveryParticipations.deliveryId, delivery.deliveryId));
+      return { ...delivery, participants };
+    })
+  );
+
+  return c.json(withParticipants);
+});
+
+
 // GET by drone ID (and include participants for each delivery)
 deliveryRouter.get("/drone/:droneId", async (c) => {
   const droneId = Number(c.req.param("droneId"));
@@ -81,14 +107,39 @@ deliveryRouter.post("/participation", async (c) => {
   }
 });
 
-// PUT update delivery
+// PUT update delivery (MAJ partielle: status, dteValidation, droneId)
 deliveryRouter.put("/:id", async (c) => {
   const id = Number(c.req.param("id"));
   if (isNaN(id)) return c.text("Invalid ID", 400);
-  const body = await c.req.json();
-  await db.update(deliveries).set(body).where(eq(deliveries.deliveryId, id));
+
+  const body = await c.req.json() as Partial<{
+    deliveryStatus: string;
+    dteValidation: string | null;
+    droneId: number | null;
+  }>;
+  const patch: Record<string, unknown> = {};
+  if (typeof body.deliveryStatus === "string") {
+    patch.deliveryStatus = body.deliveryStatus;
+  }
+  // ne modifier la date que si la clé est bien présente dans le body
+  if (Object.prototype.hasOwnProperty.call(body, "dteValidation")) {
+    patch.dteValidation =
+      body.dteValidation === null
+        ? null
+        : (body.dteValidation !== undefined ? new Date(body.dteValidation) : undefined);
+  }
+  // assignation / désassignation du drone
+  if (Object.prototype.hasOwnProperty.call(body, "droneId")) {
+    patch.droneId = body.droneId === null ? null : Number(body.droneId);
+  }
+  if (Object.keys(patch).length === 0) {
+    return c.text("No fields to update", 400);
+  }
+  await db.update(deliveries).set(patch).where(eq(deliveries.deliveryId, id));
   return c.text("Updated");
 });
+
+
 
 // DELETE delivery participation
 deliveryRouter.delete("/participation", async (c) => {
