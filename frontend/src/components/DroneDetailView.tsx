@@ -67,6 +67,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const [, setMissionUploading] = useState(false);
   const heading = flightInfo?.heading_deg ?? 0;
   const droneIcon = useMemo(() => createDroneIcon(heading), [heading]);
+  const targetStorageKey = useMemo(() => `drone:${droneId}:target`, [droneId]);
 
   const withBusy = async <T,>(fn: () => Promise<T>) => {
     setMissionUploading(true);
@@ -406,6 +407,34 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   useEffect(() => {
     patchLeafletDefaultIcons();
   }, []);
+  useEffect(() => {
+  try {
+    if (typeof window === 'undefined') return;
+    const raw = localStorage.getItem(targetStorageKey);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as { id: number; lat: number; lon: number };
+    if (
+      typeof parsed?.id === 'number' &&
+      Number.isFinite(parsed?.lat) &&
+      Number.isFinite(parsed?.lon)
+    ) {
+      setTarget(parsed);
+    }
+  } catch {
+    // ignore
+  }
+}, [targetStorageKey]);
+useEffect(() => {
+  try {
+    if (typeof window === 'undefined') return;
+    if (target) localStorage.setItem(targetStorageKey, JSON.stringify(target));
+    else localStorage.removeItem(targetStorageKey);
+  } catch {
+    // ignore
+  }
+}, [targetStorageKey, target]);
+
+
 
 
 
