@@ -30,7 +30,8 @@ import {
 } from '@/components/map/leafletIcons';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { dronesApi, type DroneMission, type DroneWaypoint, type FlightInfo as ApiFlightInfo, type Drone as ApiDrone } from '@/api/drone';
+import { dronesApi } from '@/api/drone';
+import type { DroneMission, DroneWaypoint, FlightInfo as ApiFlightInfo, Drone as ApiDrone } from '@/types/drone';
 import { donationCenterApi } from '@/api/donation_center';
 import { hospitalApi } from '@/api/hospital';
 import AssignDeliveryDialog from '@/components/AssignDeliveryDialog'; // ajuste le chemin si besoin
@@ -163,10 +164,23 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
 
   const handleCreateMission = async () => {
     await withBusy(async () => {
-      await dronesApi.createMission(droneId, missionData);
-      await dronesApi.sendMissionFile(droneId, missionData.filename);
-      //alert('Mission créée avec succès !');
+      const payload: Mission = {
+        ...missionData,
+        ...(flightInfo
+          ? {
+            startlat: flightInfo.latitude,
+            startlon: flightInfo.longitude,
+            startalt: missionData.altitude_takeoff,
+          }
+          : {}),
+      };
+
+      const res = await dronesApi.createMission(droneId, payload);
+      await dronesApi.sendMissionFile(droneId, res.filename);
+
       setMissionDialogOpen(false);
+      setMissionReady(true);
+      setMissionRunning(false);
       await fetchFlightInfo();
     });
   };
@@ -286,13 +300,13 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     const toNum = (s: string) => Number(String(s).trim().replace(',', '.'));
     const deliveryLat = toNum(hospital.hospitalLatitude);
     const deliveryLon = toNum(hospital.hospitalLongitude);
-    if (Number.isNaN(deliveryLat) || Number.isNaN(deliveryLon)) {
-      alert(`Coordonnées invalides pour ${hospital.hospitalName}`);
+    if (!Number.isFinite(deliveryLat) || !Number.isFinite(deliveryLon)) {
+      console.warn(`Coordonnées invalides pour ${hospital.hospitalName}`);
       return;
     }
 
     setWaypoints([]);
-    setMissionData(prev => ({ ...prev, waypoints: [] }));
+    setMissionData((prev: Mission) => ({ ...prev, waypoints: [] }));
 
     const ALT = 50;
     const mission: Mission = {
@@ -300,50 +314,54 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
       altitude_takeoff: ALT,
       mode: 'auto',
       waypoints: [{ lat: deliveryLat, lon: deliveryLon, alt: ALT }],
+      ...(flightInfo
+        ? { startlat: flightInfo.latitude, startlon: flightInfo.longitude, startalt: ALT }
+        : {}),
     };
 
-    await dronesApi.createMission(droneId, mission);
-    await dronesApi.sendMissionFile(droneId, mission.filename);
+    const res = await dronesApi.createMission(droneId, mission);
+    await dronesApi.sendMissionFile(droneId, res.filename);
+
     setTarget({ id: hospital.hospitalId, lat: deliveryLat, lon: deliveryLon });
     setMissionReady(true);
     setMissionRunning(false);
-
-    //alert(`Mission créée et chargée vers ${hospital.hospitalName} !`);
     setHospitalsDialogOpen(false);
     await fetchFlightInfo();
   };
 
   const createMissionToDonationCenter = async () => {
-    if (!donationCenter) {
-      //alert("Centre de don inconnu.");
-      console.warn("Centre de don inconnu.");
+  if (!donationCenter) {
+    console.warn('Centre de don inconnu.');
+    return;
+  }
+  await withBusy(async () => {
+    const lat = toNum(donationCenter.centerLatitude);
+    const lon = toNum(donationCenter.centerLongitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      console.warn('Coordonnées du centre de don invalides.');
       return;
     }
-    await withBusy(async () => {
-      const lat = toNum(donationCenter.centerLatitude);
-      const lon = toNum(donationCenter.centerLongitude);
-      if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-        //alert("Coordonnées du centre de don invalides.");
-        console.warn("Coordonnées du centre de don invalides.");
-        return;
-      }
 
-      const ALT = 50;
-      const mission: Mission = {
-        filename: `DEFAULT_ReturnCenter_DroneID:${droneId}_CenterID:${donationCenter.centerId}.waypoints`,
-        altitude_takeoff: ALT,
-        mode: 'auto',
-        waypoints: [{ lat, lon, alt: ALT }],
-      };
+    const ALT = 50;
+    const mission: Mission = {
+      filename: `DEFAULT_ReturnCenter_DroneID:${droneId}_CenterID:${donationCenter.centerId}.waypoints`,
+      altitude_takeoff: ALT,
+      mode: 'auto',
+      waypoints: [{ lat, lon, alt: ALT }],
+      ...(flightInfo
+        ? { startlat: flightInfo.latitude, startlon: flightInfo.longitude, startalt: ALT }
+        : {}),
+    };
 
-      await dronesApi.createMission(droneId, mission);
-      await dronesApi.sendMissionFile(droneId, mission.filename);
-      setTarget({ id: donationCenter.centerId, lat: lat, lon: lon });
+    const res = await dronesApi.createMission(droneId, mission);
+    await dronesApi.sendMissionFile(droneId, res.filename);
 
-      setMissionReady(true);
-      setMissionRunning(false);
-    });
-  };
+    setTarget({ id: donationCenter.centerId, lat, lon });
+    setMissionReady(true);
+    setMissionRunning(false);
+  });
+};
+
 
 
 

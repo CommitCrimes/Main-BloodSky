@@ -139,15 +139,23 @@ droneRouter.delete('/:id', async (c) => {
 droneRouter.post('/:id/mission/create', async (c) => {
   const id = Number(c.req.param('id'));
   if (isNaN(id)) return c.text('Invalid ID', 400);
-  
-  const mission: DroneMission = await c.req.json();
-  const result = await droneControlService.createMission(id, mission);
-  
-  if (result.error) {
-    return c.json({ error: result.error }, 400);
+
+  const mission = await c.req.json() as DroneMission & {
+    startlat?: number; startlon?: number; startalt?: number;
+  };
+
+  const hasLat = mission.startlat !== undefined && mission.startlat !== null;
+  const hasLon = mission.startlon !== undefined && mission.startlon !== null;
+  if (hasLat !== hasLon) {
+    return c.json({ error: "Provide 'startlat' and 'startlon' together, or none." }, 400);
   }
-  
-  return c.json(result);
+
+  const result = await droneControlService.createMission(id, mission);
+
+  if ((result as any).error) {
+    return c.json(result, 400);
+  }
+  return c.json(result, 201);
 });
 
 // POST /drones/:id/mission/start - Start mission

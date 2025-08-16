@@ -168,7 +168,6 @@ const AssignDeliveryDialog: React.FC<Props> = ({
 
   useEffect(() => { if (open) { void load(); } }, [open, centerId]);
 
-  // Filtrage
   const items = useMemo(() => {
     return all
       .filter(d => d.deliveryStatus === statusFilter)
@@ -177,49 +176,58 @@ const AssignDeliveryDialog: React.FC<Props> = ({
       .sort(compareByPlannedDateThenUrgency);
   }, [all, statusFilter, includeUnassigned, droneId]);
 
-  // Charger la mission pour une livraison
-  const handleLoadMission = async (d: DeliveryWithParticipants) => {
-    try {
-      setSendingId(d.deliveryId);
+const handleLoadMission = async (d: DeliveryWithParticipants) => {
+  try {
+    setSendingId(d.deliveryId);
 
-      if (d.droneId !== droneId) {
-        await deliveryApi.update(d.deliveryId, { droneId } as unknown as { droneId: number });
-        setAll(prev => prev.map(x => x.deliveryId === d.deliveryId ? { ...x, droneId } : x));
-        onAssigned?.(d.deliveryId);
-      }
-
-      if (!d.hospitalId) throw new Error('Hôpital manquant pour cette livraison');
-      const h = await hospitalApi.getById(d.hospitalId) as HospitalLite;
-      const lat = toNum(h?.hospitalLatitude);
-      const lon = toNum(h?.hospitalLongitude);
-      if (!Number.isFinite(lat) || !Number.isFinite(lon)) throw new Error('Coordonnées hôpital invalides');
-
-      const ALT = 50;
-      const filename = `DEFAULT_Delivery_DroneID_${droneId}_HopitalID:${d.hospitalId}.waypoints`;
-      const mission: DroneMission = {
-        filename,
-        altitude_takeoff: ALT,
-        mode: 'auto',
-        waypoints: [{ lat, lon, alt: ALT }],
-      };
-
-      await dronesApi.createMission(droneId, mission);
-      await dronesApi.sendMissionFile(droneId, filename);
-      onMissionReady?.({
-        deliveryId: d.deliveryId,
-        filename,
-        hospitalId: d.hospitalId,
-        lat,
-        lon,
-      });
-    } catch (e) {
-      console.error(e);
-      setError('Échec de la création/envoi de mission.');
-    } finally {
-      setSendingId(null);
+    if (d.droneId !== droneId) {
+      await deliveryApi.update(d.deliveryId, { droneId } as unknown as { droneId: number });
+      setAll((prev: DeliveryWithParticipants[]) =>
+        prev.map(x => (x.deliveryId === d.deliveryId ? { ...x, droneId } : x))
+      );
+      onAssigned?.(d.deliveryId);
     }
-  };
 
+    if (!d.hospitalId) throw new Error('Hôpital manquant pour cette livraison');
+    const h = (await hospitalApi.getById(d.hospitalId)) as HospitalLite;
+    const lat = toNum(h?.hospitalLatitude);
+    const lon = toNum(h?.hospitalLongitude);
+    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+      throw new Error('Coordonnées hôpital invalides');
+    }
+
+    const ALT = 50;
+    const filename = `DEFAULT_Delivery_DroneID_${droneId}_HopitalID:${d.hospitalId}.waypoints`;
+
+    const fi = await dronesApi.getFlightInfo(droneId).catch(() => null);
+
+    const mission: DroneMission = {
+      filename,
+      altitude_takeoff: ALT,
+      mode: 'auto',
+      waypoints: [{ lat, lon, alt: ALT }],
+      ...(fi
+        ? { startlat: fi.latitude, startlon: fi.longitude, startalt: ALT }
+        : {}),
+    };
+
+    const res = await dronesApi.createMission(droneId, mission);
+    await dronesApi.sendMissionFile(droneId, res.filename);
+
+    onMissionReady?.({
+      deliveryId: d.deliveryId,
+      filename: res.filename,
+      hospitalId: d.hospitalId,
+      lat,
+      lon,
+    });
+  } catch (e) {
+    console.error(e);
+    setError('Échec de la création/envoi de mission.');
+  } finally {
+    setSendingId(null);
+  }
+};
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>Livraisons en attente</DialogTitle>
