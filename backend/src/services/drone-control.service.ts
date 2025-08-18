@@ -3,6 +3,12 @@ import { drones } from '../schemas/drone';
 import { eq } from 'drizzle-orm';
 import { DroneMission, DroneApiResponse, DroneWaypoint } from '../types/drone.types';
 
+// Optionnel : petit type pour structurer la réponse "current mission"
+type MissionCurrentPayload = {
+  count: number;
+  items: DroneWaypoint[];
+};
+
 export class DroneControlService {
   private static instance: DroneControlService;
 
@@ -313,7 +319,37 @@ async sendMissionFile(droneId: number, filename: string): Promise<DroneApiRespon
 
     return await this.createMission(droneId, mission);
   }
+  async getMissionCurrent(droneId: number): Promise<{ data?: MissionCurrentPayload; error?: string }> {
+  const apiUrl = await this.getDroneApiUrl(droneId);
+  if (!apiUrl) {
+    return { error: 'Drone API URL not configured' };
+  }
+
+  try {
+    const res = await fetch(`${apiUrl}/mission/current`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!res.ok) {
+      let msg = `HTTP ${res.status}: ${res.statusText}`;
+      try {
+        const j = await res.json();
+        msg = j?.error || msg;
+      } catch { /* ignore */ }
+      return { error: msg };
+    }
+
+    const data = (await res.json()) as MissionCurrentPayload; // { count, items }
+    return { data };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Unknown error' };
+  }
 }
+
+}
+
 
 // Export singleton instance
 export const droneControlService = DroneControlService.getInstance();

@@ -259,4 +259,12 @@ droneRouter.post('/:id/mission/send', async (c) => {
   return c.json(result);
 });
 
+// GET /drones/:id/mission/current - take the current mission
+droneRouter.get('/:id/mission/current', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (isNaN(id)) return c.text('Invalid ID', 400);
 
+  const result = await droneControlService.getMissionCurrent(id);
+  if (result.error) return c.json({ error: result.error }, 400);
+  return c.json(result.data);
+});
