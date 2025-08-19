@@ -10,7 +10,7 @@ export const sendEmail = async (req: Request, res: Response) => {
     
     try {
         // Option 1: Utiliser un service webhook gratuit (webhook.site)
-        const webhookUrl = "https://webhook.site/votre-url-unique";
+        const webhookUrl = "https://webhook.site/b84ed089-c87d-4d75-ad23-3e21ba031208";
         
         const response = await fetch(webhookUrl, {
             method: 'POST',
@@ -49,4 +49,5 @@ export const sendEmail = async (req: Request, res: Response) => {
         });
     }
 };
+
 
