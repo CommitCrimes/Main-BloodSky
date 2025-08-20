@@ -11,9 +11,24 @@ interface BaseHistoryItem {
   droneId?: number;
   droneName?: string;
 }
+export interface CenterRef {
+  centerId: number;
+  centerCity: string;
+  centerAddress: string; // ⚠ aligne avec le back (pas "centerAdress")
+  latitude: number;
+  longitude: number;
+}
+export interface HospitalRef {
+  hospitalId: number;
+  hospitalName: string;
+  hospitalCity: string;
+  hospitalAddress: string;
+  latitude: number;
+  longitude: number;
+}
 
 export interface DonationCenterHistory extends BaseHistoryItem {
-  sourceDonationCenter: unknown;
+  sourceDonationCenter: CenterRef;
   type: 'delivery';
   destinationHospital: {
     hospitalId: number;
@@ -32,7 +47,7 @@ export interface DonationCenterHistory extends BaseHistoryItem {
 export interface HospitalHistory extends BaseHistoryItem {
   type: 'order';
   sourceDonationCenter: {
-    centerId: number;
+    centerId: CenterRef;
     centerCity: string;
     centerAddress: string;
     latitude: number;
