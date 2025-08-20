@@ -140,7 +140,7 @@ bloodRouter.post("/order", async (c) => {
     const deliveryResult = await db
       .insert(deliveries)
       .values({
-        droneId: 1, // Drone par défaut
+        droneId: null, // Drone par défaut
         bloodId: null,
         hospitalId,
         centerId,

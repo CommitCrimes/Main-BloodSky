@@ -139,15 +139,23 @@ droneRouter.delete('/:id', async (c) => {
 droneRouter.post('/:id/mission/create', async (c) => {
   const id = Number(c.req.param('id'));
   if (isNaN(id)) return c.text('Invalid ID', 400);
-  
-  const mission: DroneMission = await c.req.json();
-  const result = await droneControlService.createMission(id, mission);
-  
-  if (result.error) {
-    return c.json({ error: result.error }, 400);
+
+  const mission = await c.req.json() as DroneMission & {
+    startlat?: number; startlon?: number; startalt?: number;
+  };
+
+  const hasLat = mission.startlat !== undefined && mission.startlat !== null;
+  const hasLon = mission.startlon !== undefined && mission.startlon !== null;
+  if (hasLat !== hasLon) {
+    return c.json({ error: "Provide 'startlat' and 'startlon' together, or none." }, 400);
   }
-  
-  return c.json(result);
+
+  const result = await droneControlService.createMission(id, mission);
+
+  if ((result as any).error) {
+    return c.json(result, 400);
+  }
+  return c.json(result, 201);
 });
 
 // POST /drones/:id/mission/start - Start mission
@@ -168,13 +176,13 @@ droneRouter.post('/:id/mission/start', async (c) => {
 droneRouter.post('/:id/return-home', async (c) => {
   const id = Number(c.req.param('id'));
   if (isNaN(id)) return c.text('Invalid ID', 400);
-  
-  const result = await droneControlService.returnToHome(id);
-  
+
+  // Appelle le service générique de changement de mode avec "RTL"
+  const result = await droneControlService.changeFlightMode(id, 'RTL');
+
   if (result.error) {
     return c.json({ error: result.error }, 400);
   }
-  
   return c.json(result);
 });
 
@@ -236,27 +244,27 @@ droneRouter.post('/:id/command', async (c) => {
 });
 
 // POST /drones/:id/mission/send - Send mission file
+// routes/drone.router.ts
 droneRouter.post('/:id/mission/send', async (c) => {
   const id = Number(c.req.param('id'));
   if (isNaN(id)) return c.text('Invalid ID', 400);
-  
-  const formData = await c.req.formData();
-  const file = formData.get('file') as File;
-  
-  if (!file) {
-    return c.json({ error: 'No file provided' }, 400);
+
+  const { filename } = await c.req.json();
+  if (!filename || typeof filename !== 'string' || !filename.endsWith('.waypoints')) {
+    return c.json({ error: "Missing or invalid 'filename' (.waypoints)" }, 400);
   }
-  
-  if (!file.name.endsWith('.waypoints')) {
-    return c.json({ error: 'File must have .waypoints extension' }, 400);
-  }
-  
-  const result = await droneControlService.sendMissionFile(id, file);
-  
-  if (result.error) {
-    return c.json({ error: result.error }, 400);
-  }
-  
+
+  const result = await droneControlService.sendMissionFile(id, filename);
+  if ((result as any).error) return c.json(result, 400);
   return c.json(result);
 });
 
+// GET /drones/:id/mission/current - take the current mission
+droneRouter.get('/:id/mission/current', async (c) => {
+  const id = Number(c.req.param('id'));
+  if (isNaN(id)) return c.text('Invalid ID', 400);
+
+  const result = await droneControlService.getMissionCurrent(id);
+  if (result.error) return c.json({ error: result.error }, 400);
+  return c.json(result.data);
+});

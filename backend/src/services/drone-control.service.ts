@@ -3,6 +3,12 @@ import { drones } from '../schemas/drone';
 import { eq } from 'drizzle-orm';
 import { DroneMission, DroneApiResponse, DroneWaypoint } from '../types/drone.types';
 
+// Optionnel : petit type pour structurer la réponse "current mission"
+type MissionCurrentPayload = {
+  count: number;
+  items: DroneWaypoint[];
+};
+
 export class DroneControlService {
   private static instance: DroneControlService;
 
@@ -187,42 +193,33 @@ export class DroneControlService {
   /**
    * Send a mission file to drone
    */
-  async sendMissionFile(droneId: number, missionFile: File): Promise<DroneApiResponse> {
-    const apiUrl = await this.getDroneApiUrl(droneId);
-    if (!apiUrl) {
-      return { error: 'Drone API URL not configured' };
-    }
+// services/drone-control.service.ts
+async sendMissionFile(droneId: number, filename: string): Promise<DroneApiResponse> {
+  const apiUrl = await this.getDroneApiUrl(droneId);
+  if (!apiUrl) return { error: 'Drone API URL not configured' };
 
-    try {
-      const formData = new FormData();
-      formData.append('file', missionFile);
+  try {
+    const response = await fetch(`${apiUrl}/mission/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ filename }),
+      signal: AbortSignal.timeout(10000),
+    });
 
-      const response = await fetch(`${apiUrl}/mission/send`, {
-        method: 'POST',
-        body: formData,
-        signal: AbortSignal.timeout(10000)
-      });
+    if (!response.ok) throw new Error(`HTTP ${response.status}: ${response.statusText}`);
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
+    const result = await response.json();
 
-      const result = await response.json();
-      
-      // Update mission status in database
-      await db
-        .update(drones)
-        .set({ 
-          droneStatus: 'uploaded'
-        })
-        .where(eq(drones.droneId, droneId));
+    await db.update(drones)
+      .set({ droneStatus: 'uploaded' })
+      .where(eq(drones.droneId, droneId));
 
-      return result;
-    } catch (error) {
-      console.error(`Failed to send mission file to drone ${droneId}:`, error);
-      return { error: error instanceof Error ? error.message : 'Unknown error' };
-    }
+    return result;
+  } catch (error: any) {
+    console.error(`Failed to send mission for drone ${droneId}:`, error);
+    return { error: error?.message || 'sendMissionFile failed' };
   }
+}
 
   /**
    * Change drone flight mode
@@ -322,7 +319,37 @@ export class DroneControlService {
 
     return await this.createMission(droneId, mission);
   }
+  async getMissionCurrent(droneId: number): Promise<{ data?: MissionCurrentPayload; error?: string }> {
+  const apiUrl = await this.getDroneApiUrl(droneId);
+  if (!apiUrl) {
+    return { error: 'Drone API URL not configured' };
+  }
+
+  try {
+    const res = await fetch(`${apiUrl}/mission/current`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!res.ok) {
+      let msg = `HTTP ${res.status}: ${res.statusText}`;
+      try {
+        const j = await res.json();
+        msg = j?.error || msg;
+      } catch { /* ignore */ }
+      return { error: msg };
+    }
+
+    const data = (await res.json()) as MissionCurrentPayload; // { count, items }
+    return { data };
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Unknown error' };
+  }
 }
+
+}
+
 
 // Export singleton instance
 export const droneControlService = DroneControlService.getInstance();
