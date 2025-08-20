@@ -154,6 +154,7 @@ const HistoryManagementDrone: React.FC = observer(() => {
     }
   };
 
+
   const closeDroneMenu = () => {
     setDroneMenuAnchor(null);
     setDroneMenuDeliveryId(null);
@@ -374,6 +375,7 @@ const HistoryManagementDrone: React.FC = observer(() => {
     setSelectedDelivery(null);
     setShowDetailDialog(false);
   };
+
 
   const handleChangePage = (_: unknown, newPage: number) => {
     setPage(newPage);
