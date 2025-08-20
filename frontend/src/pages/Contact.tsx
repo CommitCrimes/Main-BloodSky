@@ -1,12 +1,15 @@
 import React from 'react';
 import ContactWidget from '../components/SupportITEmailing';
-
+import Footer from '../components/Footer';
+import '../index.css';
 const Contact: React.FC = () => {
     return (
-        <div style={{
-            minHeight: '100vh',
+        <div className="cyber-grid" style={{
             backgroundColor: '#f9fafb',
-            padding: '40px 20px'
+            padding: '0px 0',
+            gap: '50px',
+            display: 'flex',
+            flexDirection: 'column',
         }}>
             <div style={{
                 maxWidth: '1200px',
@@ -14,13 +17,14 @@ const Contact: React.FC = () => {
             }}>
                 <div style={{
                     textAlign: 'center',
-                    marginBottom: '40px'
+                    marginBottom: '0px'
                 }}>
                     <h1 style={{
-                        fontSize: '36px',
+                        fontSize: '46px',
                         fontWeight: 'bold',
                         color: '#1f2937',
-                        marginBottom: '16px'
+                        marginBottom: '16px',
+                        marginTop: '1rem'
                     }}>
                         Nous contacter
                     </h1>
@@ -28,7 +32,8 @@ const Contact: React.FC = () => {
                         fontSize: '18px',
                         color: '#6b7280',
                         maxWidth: '600px',
-                        margin: '0 auto',
+                        margin: '15px auto',
+                        marginBottom: '30px',
                         lineHeight: '1.6'
                     }}>
                         Merci de consulter notre page de FAQ avant de nous contacter, 
@@ -37,6 +42,7 @@ const Contact: React.FC = () => {
                 </div>
                 <ContactWidget />
             </div>
+            <Footer />
         </div>
     );
 };

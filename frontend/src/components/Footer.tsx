@@ -20,7 +20,9 @@ const Footer: React.FC = () => {
         </div>
         {/* Colonne droite */}
         <div style={{ minWidth: 120, textAlign: 'right', marginBottom: '1rem' }}>
-          <div>Contact</div>
+          <div><Link to="/contact" style={{ color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>
+              Contact
+          </Link></div>
           <div style={{ marginTop: 8 }}><Link to="/legal-notice" style={{ color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>
               Mention Légale
           </Link></div>

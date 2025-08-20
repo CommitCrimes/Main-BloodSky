@@ -17,7 +17,6 @@ import timeIcon from '../assets/icon-home/fly.svg';
 import bloodIcon from '../assets/icon-home/heart1.svg';
 import { useNavigate } from 'react-router-dom';
 
-
 const Section1 = () => {
   const navigate = useNavigate();
 
