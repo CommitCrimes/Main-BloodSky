@@ -1,53 +1,32 @@
-import { Request, Response } from 'express';
+import nodemailer from 'nodemailer';
 
-// Version ultra-simple avec webhook gratuit
-export const sendEmail = async (req: Request, res: Response) => {
-    const { name, email, message } = req.body;
-    
-    if (!name || !email || !message) {
-        return res.status(400).json({ error: "Tous les champs sont obligatoires." });
-    }
-    
-    try {
-        // Option 1: Utiliser un service webhook gratuit (webhook.site)
-        const webhookUrl = "https://webhook.site/b84ed089-c87d-4d75-ad23-3e21ba031208";
-        
-        const response = await fetch(webhookUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                from: name,
-                email: email,
-                message: message,
-                timestamp: new Date().toISOString(),
-                subject: "Nouveau message de support BloodSky"
-            })
-        });
+type SupportPayload = { name: string; email: string; message: string };
 
-        if (response.ok) {
-            res.status(200).json({ success: true, message: "Message envoyé avec succès !" });
-        } else {
-            throw new Error("Erreur webhook");
-        }
-        
-    } catch (error) {
-        console.error("Erreur envoi message:", error);
-        
-        // Option 2: Fallback - juste logger le message
-        console.log("=== NOUVEAU MESSAGE DE SUPPORT ===");
-        console.log("Nom:", name);
-        console.log("Email:", email);
-        console.log("Message:", message);
-        console.log("Date:", new Date().toISOString());
-        console.log("==================================");
-        
-        res.status(200).json({ 
-            success: true, 
-            message: "Message reçu ! Nous vous répondrons bientôt." 
-        });
-    }
-};
+export async function sendSupportEmail({ name, email, message }: SupportPayload) {
+  const transporter = nodemailer.createTransport({
+    host: process.env.EMAIL_HOST,
+    port: Number(process.env.EMAIL_PORT),
+    secure: process.env.EMAIL_SECURE === 'true', // true si 465
+    auth: {
+      user: process.env.EMAIL_USER!,
+      pass: process.env.EMAIL_PASSWORD!,
+    },
+  });
 
-
+  // Pour la délivrabilité: expéditeur = ton domaine, l'utilisateur en replyTo
+  await transporter.sendMail({
+    from: `"BloodSky Support" <${process.env.EMAIL_USER}>`,
+    replyTo: `"${name}" <${email}>`,
+    to: process.env.SUPPORT_EMAIL!,
+    subject: 'Nouveau message de support BloodSky',
+    text: `Nom: ${name}\nEmail: ${email}\nMessage:\n${message}`,
+    html: `
+      <h3>Nouveau message de support</h3>
+      <p><b>Nom :</b> ${name}</p>
+      <p><b>Email :</b> ${email}</p>
+      <p><b>Message :</b><br/>${message.replace(/\n/g,'<br/>')}</p>
+      <hr/>
+      <small>Envoyé le ${new Date().toLocaleString()}</small>
+    `,
+  });
+}

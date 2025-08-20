@@ -26,6 +26,8 @@ import { profileSwagger } from '@/swagger/profile-swagger';
 import { adminSwagger } from '@/swagger/admin-swagger';
 import { dashboardSwagger } from '@/swagger/dashboard-swagger';
 
+import { emailRouter } from './email.routes';
+
 export const createRouter = () => {
   const api = new Hono();
 
@@ -716,6 +718,9 @@ export const createRouter = () => {
     
     // Routes dashboard
     api.route('/dashboard', dashboardRouter);
+
+    // Routes email
+    api.route('/email', emailRouter);
 
 
 
