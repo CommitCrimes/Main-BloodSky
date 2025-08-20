@@ -19,7 +19,6 @@ export async function getForecast(lat: number, lon: number, lang = 'fr') {
   );
   if (!response.ok) throw new Error('Erreur lors du chargement des prévisions');
   const data = await response.json();
-  // extraire un point météo par jour (toutes les 24h environ => 8 * 3h)
   return data.list.filter((_: unknown, i: number) => i % 8 === 0).slice(0, 7);
 }
 

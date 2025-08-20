@@ -1,8 +1,8 @@
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import droneTopViewImage from '@/assets/drone_TopView.png';
-import BloodHouseIcon from '@/assets/drop_of_blood.png';
-import HopitalIcon from '@/assets/Hopital.png';
+import BloodHouseIcon from '@/assets/point-depart.svg';
+import HopitalIcon from '@/assets/point-arrive.svg';
 
 // À exécuter UNE seule fois pour corriger les URLs par défaut
 let patched = false;
@@ -21,8 +21,8 @@ export function patchLeafletDefaultIcons() {
 // Icônes statiques réutilisables
 export const bloodHouseIcon = L.icon({
   iconUrl: BloodHouseIcon,
-  iconSize: [40, 60],
-  iconAnchor: [20, 30],
+  iconSize: [60, 140],
+  iconAnchor: [30, 70],
   popupAnchor: [0, -40],
 });
 
