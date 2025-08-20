@@ -1,101 +1,16 @@
 // src/api/drone.ts
 const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
-
-/* =========================
- * Types exposés côté front
- * ========================= */
-
-export type Drone = {
-  droneId: number;
-  droneName: string;
-  centerId: number | null;
-  droneImage?: string | null;
-  droneStatus?: string | null;
+import type{
+  Drone, DroneUpdate, DroneHistoryItem, DronesStatus,
+  FlightInfo, DroneMission, CommandMode,
+  DeliveryMissionParams, CreateMissionResponse,DroneWaypoint
+} from '@/types/drone';
+export type MissionCurrent = {
+  count: number;
+  items: DroneWaypoint[];
 };
 
-export type DroneUpdate = Partial<Pick<Drone, "droneName" | "centerId" | "droneImage" | "droneStatus">>;
 
-export type FlightInfo = {
-  drone_id: string;
-  is_armed: boolean;
-  flight_mode: string;
-  latitude: number;
-  longitude: number;
-  altitude_m: number;
-  horizontal_speed_m_s: number;
-  vertical_speed_m_s: number; // ⚠️ harmonisé
-  heading_deg: number;
-  movement_track_deg: number;
-  battery_remaining_percent: number;
-};
-
-export type DroneWaypoint = {
-  seq?: number;
-  current?: number;
-  frame?: number;
-  command?: number;
-  param1?: number;
-  param2?: number;
-  param3?: number;
-  param4?: number;
-  lat: number;
-  lon: number;
-  alt: number;
-  autoContinue?: number;
-};
-
-export type DroneMission = {
-  filename: string;
-  altitude_takeoff: number;
-  mode: "auto" | "man";
-  waypoints: DroneWaypoint[];
-};
-
-export type DeliveryMissionParams = {
-  pickupLat: number;
-  pickupLon: number;
-  deliveryLat: number;
-  deliveryLon: number;
-  altitude: number;
-};
-
-export type CommandMode =
-  | "RTL"
-  | "AUTO"
-  | "GUIDED"
-  | "LOITER"
-  | "LAND"
-  | "POSHOLD"
-  | "STABILIZE"
-  | "ALT_HOLD"
-  | "RETURN"
-  | string;
-
-// /drones/status → structure renvoyée par droneSyncService.getDronesStatus()
-// (garde `any` si tu ne connais pas la forme exacte)
-export type DronesStatus = unknown;
-
-// /drones/history → jointure drones + deliveries + hospitals + centers
-export type DroneHistoryItem = {
-  droneId: number;
-  droneName: string | null;
-  droneStatus: string | null;
-  droneImage: string | null;
-
-  // Delivery
-  deliveryId: number | null;
-  deliveryStatus: string | null;
-  deliveryUrgent: number | boolean | null;
-  dteDelivery: string | null;
-  dteValidation: string | null;
-
-  // Hospital
-  hospitalName: string | null;
-  hospitalCity: string | null;
-
-  // Center
-  centerCity: string | null;
-};
 
 // ⛔️ Drones de test à ignorer côté UI
 const IGNORE_DRONE_IDS = new Set<number>([2]);
@@ -187,7 +102,7 @@ export const dronesApi = {
 
   /** POST /drones/:id/mission/create */
   createMission: (id: number, mission: DroneMission) =>
-    fetchJson(`/drones/${id}/mission/create`, {
+    fetchJson<CreateMissionResponse>(`/drones/${id}/mission/create`, {
       method: "POST",
       body: JSON.stringify(mission),
     }),
@@ -240,4 +155,8 @@ export const dronesApi = {
   /** (Optionnel) Return to home via endpoint dédié back */
   returnHomeViaEndpoint: (id: number) =>
     fetchJson(`/drones/${id}/return-home`, { method: "POST" }),
+  /** GET /drones/:id/mission/current */
+  getMissionCurrent: (id: number) =>
+    fetchJson<MissionCurrent>(`/drones/${id}/mission/current`),
+
 };

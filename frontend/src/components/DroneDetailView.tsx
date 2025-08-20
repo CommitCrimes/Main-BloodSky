@@ -30,7 +30,8 @@ import {
 } from '@/components/map/leafletIcons';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { dronesApi, type DroneMission, type DroneWaypoint, type FlightInfo as ApiFlightInfo, type Drone as ApiDrone } from '@/api/drone';
+import { dronesApi, type MissionCurrent } from '@/api/drone';
+import type { DroneMission, DroneWaypoint, FlightInfo as ApiFlightInfo, Drone as ApiDrone } from '@/types/drone';
 import { donationCenterApi } from '@/api/donation_center';
 import { hospitalApi } from '@/api/hospital';
 import AssignDeliveryDialog from '@/components/AssignDeliveryDialog'; // ajuste le chemin si besoin
@@ -38,6 +39,29 @@ import { deliveryApi } from '@/api/delivery';
 import type { DeliveryStatus } from '@/types/delivery';
 import type { DonationCenter } from '@/types';
 import type { Hospital } from '@/types';
+
+type CurrentMission = {
+  count: number;
+  items: Array<{ seq: number; lat: number; lon: number; alt?: number; command?: number }>;
+};
+
+const normalizeCurrent = (raw: MissionCurrent): CurrentMission => {
+  const items = (raw.items ?? [])
+    .map((wp, i) => ({
+      seq: typeof wp.seq === 'number' ? wp.seq : i,
+      lat: Number(wp.lat),
+      lon: Number(wp.lon),
+      alt: typeof wp.alt === 'number' ? wp.alt : undefined,
+      command: typeof wp.command === 'number' ? wp.command : undefined,
+    }))
+    .filter(w => Number.isFinite(w.lat) && Number.isFinite(w.lon));
+
+  return {
+    count: typeof raw.count === 'number' ? raw.count : items.length,
+    items,
+  };
+};
+
 
 delete (L.Icon.Default.prototype as unknown as { _getIconUrl?: unknown })._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -66,6 +90,10 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const [, setMissionUploading] = useState(false);
   const heading = flightInfo?.heading_deg ?? 0;
   const droneIcon = useMemo(() => createDroneIcon(heading), [heading]);
+  const targetStorageKey = useMemo(() => `drone:${droneId}:target`, [droneId]);
+  const [currentMission, setCurrentMission] = useState<CurrentMission | null>(null);
+  const [homeBusy, setHomeBusy] = useState(false);
+
 
   const withBusy = async <T,>(fn: () => Promise<T>) => {
     setMissionUploading(true);
@@ -98,6 +126,8 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const [, setDrone] = useState<ApiDrone | null>(null);
   const [donationCenter, setDonationCenter] = useState<DonationCenter | null>(null);
   const [target, setTarget] = useState<{ id: number; lat: number; lon: number } | null>(null);
+  const missionIsLoaded = (currentMission?.count ?? 0) > 0;
+  const canStart = missionIsLoaded && !missionRunning;
 
   const toNum = (s: string | number | null | undefined): number => {
     if (typeof s === 'number') return s;
@@ -115,6 +145,24 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
       setError('Impossible de récupérer les informations de vol');
     } finally {
       setLoading(false);
+    }
+  };
+  const setCurrentMissionSafe = (next: CurrentMission | null) => {
+    setCurrentMission(prev => {
+      if (!next) return prev ?? null;
+      const hasItems = (next.items?.length ?? 0) > 0;
+      if (!hasItems) return prev ?? next;
+      return next;
+    });
+  };
+
+  const fetchCurrentMission = async () => {
+    try {
+      const raw = await dronesApi.getMissionCurrent(droneId);
+      setCurrentMissionSafe(normalizeCurrent(raw));
+    } catch (e) {
+      console.warn('getMissionCurrent failed:', e);
+
     }
   };
 
@@ -144,12 +192,11 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const handleReturnHome = async () => {
     try {
       if (flightInfo?.is_armed) {
-        // En vol → RTL
         await dronesApi.returnHome(droneId);
         setTarget(null);
         //alert('RTL envoyé, retour automatique.');
       } else {
-        // Au sol → mission “donation center” (décollage + vol + atterrissage)
+        setHomeBusy(true);
         await createMissionToDonationCenter();
         //alert('Mission vers le centre créée et chargée !');
       }
@@ -157,19 +204,45 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     } catch (err) {
       console.error('Error returning home / creating center mission:', err);
       //alert(`Erreur: ${err}`);
+    }finally{
+          setHomeBusy(false);
     }
   };
 
 
   const handleCreateMission = async () => {
     await withBusy(async () => {
-      await dronesApi.createMission(droneId, missionData);
-      await dronesApi.sendMissionFile(droneId, missionData.filename);
-      //alert('Mission créée avec succès !');
+      const payload: Mission = {
+        ...missionData,
+        ...(flightInfo
+          ? {
+            startlat: flightInfo.latitude,
+            startlon: flightInfo.longitude,
+            startalt: missionData.altitude_takeoff,
+          }
+          : {}),
+      };
+
+      const res = await dronesApi.createMission(droneId, payload);
+      await dronesApi.sendMissionFile(droneId, res.filename);
+      const wps = payload.waypoints || [];
+      if (wps.length > 0) {
+        const last = wps[wps.length - 1];
+        setTarget({
+          id: wps.length - 1,
+          lat: Number(last.lat),
+          lon: Number(last.lon),
+        });
+      } else {
+        setTarget(null);
+      }
+
       setMissionDialogOpen(false);
+      setMissionRunning(false);
       await fetchFlightInfo();
     });
   };
+
 
   const handleModifyMission = async () => {
     try {
@@ -273,9 +346,6 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     }
   };
 
-
-
-
   // Création d’une mission vers un hôpital via /mission/create
   const createMissionToHospital = async (hospital: {
     hospitalId: number;
@@ -286,13 +356,13 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     const toNum = (s: string) => Number(String(s).trim().replace(',', '.'));
     const deliveryLat = toNum(hospital.hospitalLatitude);
     const deliveryLon = toNum(hospital.hospitalLongitude);
-    if (Number.isNaN(deliveryLat) || Number.isNaN(deliveryLon)) {
-      alert(`Coordonnées invalides pour ${hospital.hospitalName}`);
+    if (!Number.isFinite(deliveryLat) || !Number.isFinite(deliveryLon)) {
+      console.warn(`Coordonnées invalides pour ${hospital.hospitalName}`);
       return;
     }
 
     setWaypoints([]);
-    setMissionData(prev => ({ ...prev, waypoints: [] }));
+    setMissionData((prev: Mission) => ({ ...prev, waypoints: [] }));
 
     const ALT = 50;
     const mission: Mission = {
@@ -300,31 +370,32 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
       altitude_takeoff: ALT,
       mode: 'auto',
       waypoints: [{ lat: deliveryLat, lon: deliveryLon, alt: ALT }],
+      ...(flightInfo
+        ? { startlat: flightInfo.latitude, startlon: flightInfo.longitude, startalt: ALT }
+        : {}),
     };
 
-    await dronesApi.createMission(droneId, mission);
-    await dronesApi.sendMissionFile(droneId, mission.filename);
-    setTarget({ id: hospital.hospitalId, lat: deliveryLat, lon: deliveryLon });
-    setMissionReady(true);
-    setMissionRunning(false);
+    const res = await dronesApi.createMission(droneId, mission);
+    await dronesApi.sendMissionFile(droneId, res.filename);
 
-    //alert(`Mission créée et chargée vers ${hospital.hospitalName} !`);
+    setTarget({ id: hospital.hospitalId, lat: deliveryLat, lon: deliveryLon });
+
+    setMissionRunning(false);
     setHospitalsDialogOpen(false);
     await fetchFlightInfo();
   };
 
+
   const createMissionToDonationCenter = async () => {
     if (!donationCenter) {
-      //alert("Centre de don inconnu.");
-      console.warn("Centre de don inconnu.");
+      console.warn('Centre de don inconnu.');
       return;
     }
     await withBusy(async () => {
       const lat = toNum(donationCenter.centerLatitude);
       const lon = toNum(donationCenter.centerLongitude);
       if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-        //alert("Coordonnées du centre de don invalides.");
-        console.warn("Coordonnées du centre de don invalides.");
+        console.warn('Coordonnées du centre de don invalides.');
         return;
       }
 
@@ -334,51 +405,86 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
         altitude_takeoff: ALT,
         mode: 'auto',
         waypoints: [{ lat, lon, alt: ALT }],
+        ...(flightInfo
+          ? { startlat: flightInfo.latitude, startlon: flightInfo.longitude, startalt: ALT }
+          : {}),
       };
 
-      await dronesApi.createMission(droneId, mission);
-      await dronesApi.sendMissionFile(droneId, mission.filename);
-      setTarget({ id: donationCenter.centerId, lat: lat, lon: lon });
-
-      setMissionReady(true);
+      const res = await dronesApi.createMission(droneId, mission);
+      await dronesApi.sendMissionFile(droneId, res.filename);
+      setTarget({ id: donationCenter.centerId, lat, lon });
       setMissionRunning(false);
+      await fetchFlightInfo();
     });
   };
 
+  const firstValid = <T extends { lat?: number; lon?: number }>(arr: T[]) =>
+    arr.find(w => Number.isFinite(w?.lat) && Number.isFinite(w?.lon)) ?? null;
 
+  const lastValid = <T extends { lat?: number; lon?: number }>(arr: T[]) =>
+    [...arr].reverse().find(w => Number.isFinite(w?.lat) && Number.isFinite(w?.lon)) ?? null;
 
+  // Lit la mission chargée et fixe le target selon le mode
+  const refreshTargetFromCurrentMission = async () => {
+    try {
+      const cur = await dronesApi.getMissionCurrent(droneId);
+      const items = cur?.items ?? [];
+      if (!items.length) {
+        setTarget(null);
+        return;
+      }
 
+      const mode = (flightInfo?.flight_mode || '').toUpperCase();
+      const isRTL = mode === 'RTL';
+
+      const chosen = isRTL ? firstValid(items) : lastValid(items);
+      if (chosen) {
+        setTarget({
+          id: typeof chosen.seq === 'number' ? chosen.seq : 0,
+          lat: Number(chosen.lat),
+          lon: Number(chosen.lon),
+        });
+      } else {
+        setTarget(null);
+      }
+    } catch (e) {
+      console.warn('getMissionCurrent failed:', e);
+    }
+  };
 
   useEffect(() => {
-    let cancelled = false;
+    void refreshTargetFromCurrentMission();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [droneId, missionReady, missionRunning, flightInfo?.flight_mode]);
 
+  useEffect(() => {
+    let stop = false;
     const init = async () => {
-      await Promise.all([fetchFlightInfo(), loadStaticData(droneId)]);
-      if (cancelled) return;
+      await Promise.all([
+        fetchFlightInfo(),
+        loadStaticData(droneId),
+        fetchCurrentMission(),
+      ]);
+      if (stop) return;
     };
-
     init();
-
-    const interval = setInterval(() => {
-      fetchFlightInfo();
-    }, 1000);
-
+    const flightInterval = setInterval(fetchFlightInfo, 1000);
+    const missionInterval = setInterval(fetchCurrentMission, 5000);
     return () => {
-      cancelled = true;
-      clearInterval(interval);
+      stop = true;
+      clearInterval(flightInterval);
+      clearInterval(missionInterval);
     };
   }, [droneId]);
 
   useEffect(() => {
     if (!flightInfo) return;
     if (!missionRunning) return;
-
     const mode = (flightInfo.flight_mode || '').toUpperCase();
     const disarmed = !flightInfo.is_armed;
     const nearGround = flightInfo.altitude_m < 2;
     const still = Math.abs(flightInfo.horizontal_speed_m_s) < 0.3 && Math.abs(flightInfo.vertical_speed_m_s) < 0.3;
     const notAuto = mode !== 'AUTO';
-
     if (disarmed || (nearGround && still && notAuto)) {
       setMissionRunning(false);
       // missionReady reste false : le bouton se désactive tant qu'on n’a pas renvoyé un nouveau fichier
@@ -388,10 +494,53 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   useEffect(() => {
     patchLeafletDefaultIcons();
   }, []);
-
-
-
-
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      const raw = localStorage.getItem(targetStorageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { id: number; lat: number; lon: number };
+      if (
+        typeof parsed?.id === 'number' &&
+        Number.isFinite(parsed?.lat) &&
+        Number.isFinite(parsed?.lon)
+      ) {
+        setTarget(parsed);
+      }
+    } catch (e) {
+      console.warn('Error reading target from localStorage:', e);
+    }
+  }, [targetStorageKey]);
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      if (target) localStorage.setItem(targetStorageKey, JSON.stringify(target));
+      else localStorage.removeItem(targetStorageKey);
+    } catch (e) {
+      console.warn('Error writing target to localStorage:', e);
+       }
+  }, [targetStorageKey, target]);
+  useEffect(() => {
+    const items = currentMission?.items ?? [];
+    if ((currentMission?.count ?? 0) === 0) {
+      setTarget(null);
+      setMissionReady(false);
+      return;
+    }
+    if (items.length === 0) {
+      setMissionReady(false);
+      return;
+    }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const valid = (w: any) => Number.isFinite(w?.lat) && Number.isFinite(w?.lon);
+    const mode = (flightInfo?.flight_mode || '').toUpperCase();
+    const isRTL = mode === 'RTL';
+    const chosen = isRTL ? items.find(valid) : [...items].reverse().find(valid);
+    if (chosen) {
+      setTarget({ id: chosen.seq, lat: chosen.lat, lon: chosen.lon });
+      setMissionReady(true);
+    }
+  }, [currentMission, flightInfo?.flight_mode]);
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
@@ -622,7 +771,6 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
             )}
           </MapContainer>
         )}
-
         {/* Control Buttons */}
         <Box sx={{ position: 'absolute', bottom: 16, right: 16, display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Fab
@@ -636,7 +784,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
             color="secondary"
             onClick={handleStartMission}
             size="small"
-            disabled={!missionReady || missionRunning}
+            disabled={!canStart}
           >
             <PlayArrow />
           </Fab>
@@ -644,8 +792,9 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
             color="default"
             onClick={handleReturnHome}
             size="small"
+            disabled={homeBusy}
           >
-            <Home />
+            {homeBusy ? <CircularProgress size={20} /> : <Home />}
           </Fab>
           <Fab
             color="inherit"
@@ -892,11 +1041,10 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
           setMissionReady(true);
           setMissionRunning(false);
           setCurrentDeliveryId(deliveryId);
-
-          // NEW: cible pour le halo
           setTarget({ id: hospitalId, lat, lon });
 
           await fetchFlightInfo();
+          await fetchCurrentMission();
         }}
       />
 
