@@ -17,7 +17,7 @@ export async function sendSupportEmail({ name, email, message }: SupportPayload)
   await transporter.sendMail({
     from: `"BloodSky Support" <${process.env.EMAIL_USER}>`,
     replyTo: `"${name}" <${email}>`,
-    to: process.env.SUPPORT_EMAIL!,
+    to: process.env.SUPPORT_EMAIL!|| 'admin@bloodsky.fr',
     subject: 'Nouveau message de support BloodSky',
     text: `Nom: ${name}\nEmail: ${email}\nMessage:\n${message}`,
     html: `

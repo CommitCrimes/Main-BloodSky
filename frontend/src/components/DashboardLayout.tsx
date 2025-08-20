@@ -69,6 +69,7 @@ interface DashboardConfig {
   historyManagementComponent?: ReactNode;
   orderBloodComponent?: ReactNode;
   customDashboardComponent?: ReactNode | ((setActiveView: (view: string) => void) => ReactNode);
+  contactComponent?: React.ReactNode;
   menuItems?: Array<{
     id: string;
     label: string;
@@ -917,6 +918,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
           ) : activeView === 'livraison' && config.orderBloodComponent ? (
             <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
               {config.orderBloodComponent}
+            </Box>
+          ) : activeView === 'contact' && config.contactComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.contactComponent}
             </Box>
           ) : activeView === 'drones' ? (
             <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
