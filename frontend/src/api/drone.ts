@@ -3,8 +3,12 @@ const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
 import type{
   Drone, DroneUpdate, DroneHistoryItem, DronesStatus,
   FlightInfo, DroneMission, CommandMode,
-  DeliveryMissionParams, CreateMissionResponse,
+  DeliveryMissionParams, CreateMissionResponse,DroneWaypoint
 } from '@/types/drone';
+export type MissionCurrent = {
+  count: number;
+  items: DroneWaypoint[];
+};
 
 
 
@@ -151,4 +155,8 @@ export const dronesApi = {
   /** (Optionnel) Return to home via endpoint dédié back */
   returnHomeViaEndpoint: (id: number) =>
     fetchJson(`/drones/${id}/return-home`, { method: "POST" }),
+  /** GET /drones/:id/mission/current */
+  getMissionCurrent: (id: number) =>
+    fetchJson<MissionCurrent>(`/drones/${id}/mission/current`),
+
 };
