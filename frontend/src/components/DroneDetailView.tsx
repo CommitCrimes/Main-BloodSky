@@ -700,8 +700,6 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
                   </Popup>
                 </Marker>
               )}
-
-           // Dans la carte
             {hospitals.map((h) => {
               const lat = toNum(h.hospitalLatitude);
               const lon = toNum(h.hospitalLongitude);

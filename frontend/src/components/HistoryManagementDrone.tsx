@@ -58,8 +58,8 @@ import { orderApi } from '../api/order';
 import type { DonationCenterHistory } from '@/types/history';
 import EditStatusDeliveryPopup from './EditStatusDeliveryPopup';
 import { deliveryApi } from '@/api/delivery';
-import { dronesApi, type Drone } from '@/api/drone';
-
+import { dronesApi} from '@/api/drone';
+import type { Drone } from '@/types';
 
 
 const commonStyles = {
