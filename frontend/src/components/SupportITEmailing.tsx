@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { emailApi} from "../api/email";
 
 const ContactWidget: React.FC = () => {
     const [name, setName] = useState("");
@@ -11,22 +12,16 @@ const ContactWidget: React.FC = () => {
         setStatus("Envoi en cours...");
         
         try {
-            // Version temporaire - simulation d'envoi
-            console.log("Message de contact :", {
-                name,
-                email,
-                message,
-                timestamp: new Date().toISOString()
-            });
-            
-            // Simuler un délai d'envoi
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            setStatus("Message envoyé avec succès !");
-            setName("");
-            setEmail("");
-            setMessage("");
-            
+            try {
+                await emailApi.sendSupportEmail({ name, email, message });
+                setStatus("Message envoyé avec succès !");
+                setName("");
+                setEmail("");
+                setMessage("");
+            } catch (error) {
+                console.error("Erreur envoi:", error);
+                setStatus("Erreur lors de l'envoi.");
+            }            
         } catch (error) {
             console.error("Erreur envoi:", error);
             setStatus("Erreur lors de l'envoi.");
