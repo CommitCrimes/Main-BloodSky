@@ -41,7 +41,7 @@ app.route('/api', createRouter());
 
 // Health check
 app.get('/', (c) => c.json({ status: 'ok', message: 'BloodSky API is running' }));
-
+void droneSyncService.syncAllDrones();
 droneSyncService.startSync();
 
 process.on('SIGTERM', () => {
