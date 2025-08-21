@@ -1,12 +1,22 @@
 import { db } from '../utils/db';
 import { drones } from '../schemas/drone';
-import { eq, isNotNull } from 'drizzle-orm';
-import { DroneFlightInfo, DroneUpdate, DroneStatus } from '../types/drone.types';
+import { eq } from 'drizzle-orm';
+import type { DroneFlightInfo, DroneStatus } from '../types/drone.types';
 
 export class DroneSyncService {
   private static instance: DroneSyncService;
+
   private syncInterval: NodeJS.Timeout | null = null;
-  private readonly SYNC_INTERVAL_MS = 5000; // 5 seconds
+
+  // --- Constantes SANS .env ---
+  private readonly API_BASE = 'http://localhost:5000';
+  private readonly SYNC_ENABLED = true; // mets false si tu veux couper le poller
+  private readonly SYNC_INTERVAL_MS = 5000; // 5s
+
+  // Mémoire pour limiter les writes et exposer lastSyncAt
+  private lastStatus = new Map<number, string>();
+  private lastSyncAt = new Map<number, Date>();
+  private lastErrorLogAt = 0; // anti-spam logs (ms epoch)
 
   private constructor() {}
 
@@ -16,25 +26,22 @@ export class DroneSyncService {
     }
     return DroneSyncService.instance;
   }
-
-  /**
-   * Start periodic synchronization of all drones with API URLs
-   */
   startSync(): void {
+    if (!this.SYNC_ENABLED) {
+      console.log('Drone sync disabled (SYNC_ENABLED=false)');
+      return;
+    }
     if (this.syncInterval) {
       console.log('Drone sync already running');
       return;
     }
-
-    console.log('Starting drone synchronization service...');
+    console.log(`Starting drone sync (base=${this.API_BASE}) every ${this.SYNC_INTERVAL_MS}ms`);
     this.syncInterval = setInterval(async () => {
       await this.syncAllDrones();
     }, this.SYNC_INTERVAL_MS);
   }
 
-  /**
-   * Stop periodic synchronization
-   */
+  /** Stop le poller */
   stopSync(): void {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
@@ -43,96 +50,90 @@ export class DroneSyncService {
     }
   }
 
-  /**
-   * Sync all drones that have API URLs configured
-   */
+  /** Sync tous les drones */
   async syncAllDrones(): Promise<void> {
     try {
-      const availableDrones = await db
-        .select()
-        .from(drones);
-
-      // For now, sync all drones using the fixed API URL
-      const syncPromises = availableDrones.map(drone => 
-        this.syncDrone(drone.droneId, 'http://localhost:5000', drone.droneId)
+      const availableDrones = await db.select().from(drones);
+      await Promise.allSettled(
+        availableDrones.map(d => this.syncDrone(d.droneId, this.API_BASE, d.droneId))
       );
-
-      await Promise.allSettled(syncPromises);
     } catch (error) {
       console.error('Error syncing drones:', error);
     }
   }
 
-  /**
-   * Sync a single drone with its API
-   */
-  async syncDrone(droneId: number, apiUrl: string, apiId?: number | null): Promise<void> {
-    try {
-      const flightInfo = await this.fetchFlightInfo(apiUrl, apiId);
-      if (flightInfo) {
-        await this.updateDroneFromFlightInfo(droneId, flightInfo);
-      }
-    } catch (error) {
-      console.error(`Error syncing drone ${droneId}:`, error);
-    }
-  }
+  /** Sync un drone */
+// 1) Supprime entièrement setStatusIfChanged()
 
-  /**
-   * Fetch flight info from drone API
-   */
+// 2) Remplace syncDrone par :
+async syncDrone(droneId: number, apiUrl: string, apiId?: number | null): Promise<void> {
+  try {
+    const flightInfo = await this.fetchFlightInfo(apiUrl, apiId);
+    const now = new Date();
+
+    if (!flightInfo) {
+      this.lastStatus.set(droneId, 'hors service');
+      this.lastSyncAt.set(droneId, now);
+      return;
+    }
+
+    const status = flightInfo.is_armed === true ? 'active' : 'ready';
+    this.lastStatus.set(droneId, status);
+    this.lastSyncAt.set(droneId, now);
+  } catch (error) {
+    console.error(`Error syncing drone ${droneId}:`, error);
+    const now = new Date();
+    this.lastStatus.set(droneId, 'hors service');
+    this.lastSyncAt.set(droneId, now);
+  }
+}
+
+  /** Récupère la télémétrie */
   private async fetchFlightInfo(apiUrl: string, apiId?: number | null): Promise<DroneFlightInfo | null> {
     try {
       const response = await fetch(`${apiUrl}/flight_info`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(5000)
+        signal: AbortSignal.timeout(5000),
       });
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = await response.json();
-      return data as DroneFlightInfo;
+      return (await response.json()) as DroneFlightInfo;
     } catch (error) {
-      console.error(`Failed to fetch flight info from ${apiUrl}:`, error);
+      // adoucir les logs (pas d'error spam)
+      const now = Date.now();
+      if (now - this.lastErrorLogAt > 15000) {
+        console.warn(`[sync] ${apiUrl}/flight_info unreachable: ${(error as Error).message}`);
+        this.lastErrorLogAt = now;
+      }
       return null;
     }
   }
 
-  /**
-   * Update drone record with sync timestamp
-   * Flight info is now retrieved in real-time, no need to store it
-   */
-  private async updateDroneFromFlightInfo(droneId: number, flightInfo: DroneFlightInfo): Promise<void> {
-    // Only update sync timestamp and status
-    const updateData = {
-      droneStatus: flightInfo.is_armed ? 'armed' : 'available'
-    };
-
-    await db
-      .update(drones)
-      .set(updateData)
-      .where(eq(drones.droneId, droneId));
-  }
-
-  /**
-   * Get sync status of all drones
-   */
+  /** Expose un statut "online/offline" + lastSyncAt */
   async getDronesStatus(): Promise<DroneStatus[]> {
-    const allDrones = await db.select().from(drones);
-    
-    return allDrones.map(drone => ({
-      droneId: drone.droneId,
-      isOnline: true, // Always consider online since we use real-time API
-      lastSyncAt: new Date() // Current time as we sync on-demand
-    }));
+    const all = await db.select().from(drones);
+
+    return all.map(drone => {
+      const status =
+        this.lastStatus.get(drone.droneId) ??
+        (drone as any).droneStatus ??
+        'unknown';
+      const isOnline = !['hors service', 'offline'].includes(String(status).toLowerCase());
+      const last = this.lastSyncAt.get(drone.droneId) ?? new Date();
+
+      return {
+        droneId: drone.droneId,
+        isOnline,
+        lastSyncAt: last, // type Date (OK)
+      };
+    });
   }
 
-
-  /**
-   * Force sync a specific drone
-   */
+  /** Sync forcée d’un drone */
   async forceSyncDrone(droneId: number): Promise<boolean> {
     try {
       const drone = await db
@@ -141,11 +142,9 @@ export class DroneSyncService {
         .where(eq(drones.droneId, droneId))
         .limit(1);
 
-      if (drone.length === 0) {
-        return false;
-      }
+      if (drone.length === 0) return false;
 
-      await this.syncDrone(droneId, 'http://localhost:5000', droneId);
+      await this.syncDrone(droneId, this.API_BASE, droneId);
       return true;
     } catch (error) {
       console.error(`Force sync failed for drone ${droneId}:`, error);
