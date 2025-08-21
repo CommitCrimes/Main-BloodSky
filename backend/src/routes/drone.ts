@@ -70,9 +70,7 @@ droneRouter.get('/center/:centerId', async (c) => {
 droneRouter.get('/:id/flight_info', async (c) => {
   const id = Number(c.req.param('id'));
   if (isNaN(id)) return c.text('Invalid ID', 400);
-  
   const result = await droneControlService.getFlightInfo(id);
-  
   if (result.error) {
     return c.json({ error: result.error }, 400);
   }
