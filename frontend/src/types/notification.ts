@@ -3,7 +3,19 @@ export interface Notification {
   userId: number;
   hospitalId?: number;
   centerId?: number;
-  type: 'delivery_request' | 'delivery_status' | 'stock_alert' | 'system' | 'user';
+  type:
+    | 'delivery_request'
+    | 'delivery_status'
+    | 'in_transit'
+    | 'delivered'
+    | 'cancelled'
+    | 'stock_alert'
+    | 'system'
+    | 'user'
+    | 'accepted_center'
+    | 'refused_center'
+    | 'accepted_dronist'
+    | 'refused_dronist';
   title: string;
   message: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';

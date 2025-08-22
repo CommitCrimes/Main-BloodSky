@@ -137,13 +137,33 @@ export class NotificationService {
           message = `La livraison #${deliveryId} a été annulée.`;
           priority = 'high';
           break;
+        case 'accepted_center':
+          title = 'Demande acceptée par le centre';
+          message = `Le centre a accepté la commande #${deliveryId}.`;
+          priority = 'high';
+          break;
+        case 'refused_center':
+          title = 'Demande refusée par le centre';
+          message = `Le centre a refusé la commande #${deliveryId}.`;
+          priority = 'high';
+          break;
+        case 'accepted_dronist':
+          title = 'Livraison acceptée par le droniste';
+          message = `Un droniste a accepté la livraison #${deliveryId}.`;
+          priority = 'medium';
+          break;
+        case 'refused_dronist':
+          title = 'Livraison refusée par le droniste';
+          message = `Un droniste a refusé la livraison #${deliveryId}.`;
+          priority = 'high';
+          break;
         default:
           title = 'Mise à jour de livraison';
           message = `Le statut de la livraison #${deliveryId} a été mis à jour: ${newStatus}`;
       }
 
       await this.createNotificationForCenter(centerId, {
-        type: 'delivery_status',
+        type: 'newStatus',
         title,
         message,
         priority,
@@ -152,7 +172,7 @@ export class NotificationService {
       });
 
       await this.createNotificationForHospital(hospitalId, {
-        type: 'delivery_status',
+        type: 'newStatus',
         title,
         message,
         priority,
@@ -161,7 +181,7 @@ export class NotificationService {
       });
 
       await this.createNotificationForDronist({
-        type: 'delivery_status',
+        type: 'newStatus',
         title,
         message,
         priority,

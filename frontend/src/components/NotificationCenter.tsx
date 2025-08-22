@@ -26,7 +26,8 @@ import {
   DoneAll,
   PriorityHigh,
   Info,
-  Warning
+  Warning,
+  Cancel
 } from '@mui/icons-material';
 import { NotificationStore } from '../stores/NotificationStore';
 
@@ -78,6 +79,18 @@ const NotificationCenter: React.FC<NotificationCenterProps> = observer(({ notifi
         return <LocalShipping color={priority === 'urgent' ? 'error' : 'primary'} />;
       case 'delivery_status':
         return <Info color="info" />;
+      case 'in_transit':
+        return <LocalShipping color="info" />;
+      case 'delivered':
+        return <DoneAll color="success" />;
+      case 'cancelled':
+        return <Cancel color="error" />;
+      case 'accepted_center':
+      case 'accepted_dronist':
+        return <DoneAll color="success" />;
+      case 'refused_center':
+      case 'refused_dronist':
+        return <Cancel color="error" />;
       case 'stock_alert':
         return <Warning color="warning" />;
       case 'system':

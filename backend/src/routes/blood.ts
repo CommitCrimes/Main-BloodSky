@@ -209,9 +209,9 @@ bloodRouter.post("/cancel-order/:deliveryId", async (c) => {
     }
 
     if (delivery[0].deliveryStatus !== 'pending') {
-      return c.json({ 
-        success: false, 
-        message: "Seules les commandes en attente peuvent être annulées" 
+      return c.json({
+        success: false,
+        message: "Seules les commandes en attente peuvent être annulées"
       }, 400);
     }
 
@@ -244,6 +244,53 @@ bloodRouter.post("/cancel-order/:deliveryId", async (c) => {
 
   } catch (error) {
     console.error('Erreur lors de l\'annulation de la commande:', error);
+    return c.json({ success: false, message: "Erreur serveur" }, 500);
+  }
+});
+
+// POST accepter ou refuser une commande
+bloodRouter.post("/status-update/:deliveryId", async (c) => {
+  try {
+    const deliveryId = Number(c.req.param("deliveryId"));
+    if (isNaN(deliveryId)) {
+      return c.json({ success: false, message: "ID de livraison invalide" }, 400);
+    }
+
+    const { status } = await c.req.json();
+    const validStatuses = ['accepted_center', 'refused_center', 'accepted_dronist', 'refused_dronist'];
+    if (!validStatuses.includes(status)) {
+      return c.json({ success: false, message: "Statut invalide" }, 400);
+    }
+
+    const delivery = await db
+      .select()
+      .from(deliveries)
+      .where(eq(deliveries.deliveryId, deliveryId))
+      .limit(1);
+
+    if (!delivery.length) {
+      return c.json({ success: false, message: "Livraison non trouvée" }, 404);
+    }
+
+    await db
+      .update(deliveries)
+      .set({ deliveryStatus: status })
+      .where(eq(deliveries.deliveryId, deliveryId));
+
+    try {
+      await NotificationService.notifyDeliveryStatusChange(
+        deliveryId,
+        status,
+        delivery[0].hospitalId!,
+        delivery[0].centerId!,
+      );
+    } catch (notificationError) {
+      console.error('Erreur lors de l\'envoi de la notification de statut:', notificationError);
+    }
+
+    return c.json({ success: true, message: 'Statut mis à jour', status });
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du statut:', error);
     return c.json({ success: false, message: "Erreur serveur" }, 500);
   }
 });
