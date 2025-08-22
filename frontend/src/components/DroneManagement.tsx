@@ -37,6 +37,9 @@ import { dronesApi } from '@/api/drone';
 import type { FlightInfo as DroneFlightInfo } from '@/types/drone';
 import type { DroneHistory } from '@/types/delivery';
 import type { DroneStatus } from '@/types/drone';
+const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+const toFixedOrNA = (v: unknown, d = 0) => (isNum(v) ? (v as number).toFixed(d) : 'N/A');
+const percentOrNA = (v: unknown) => (isNum(v) ? `${(v as number).toFixed(0)}%` : 'N/A');
 
 const DroneManagement: React.FC = () => {
   const [dronesHistory, setDronesHistory] = useState<DroneHistory[]>([]);
@@ -133,24 +136,30 @@ const DroneManagement: React.FC = () => {
   }, []);
 
   useEffect(() => {
-  if (dronesHistory.length === 0) return;
-  if (detailViewDroneId) return; // pause
-  fetchAllDronesFlightInfo();
-  const id = setInterval(fetchAllDronesFlightInfo, 5000);
-  return () => clearInterval(id);
-}, [dronesHistory, detailViewDroneId]);
+    if (dronesHistory.length === 0) return;
+    if (detailViewDroneId) return; // pause
+    fetchAllDronesFlightInfo();
+    const id = setInterval(fetchAllDronesFlightInfo, 3000);
+    return () => clearInterval(id);
+  }, [dronesHistory, detailViewDroneId]);
 
-
-  const getStatusColor = (status: string): string => {
-    switch (status?.toLowerCase()) {
-      case 'active':
-      case 'flying':
-        return '#4caf50';
-      case 'charging':
-      case 'standby':
-        return '#ff9800';
+  const tStatus = (status?: string | null) => {
+    const s = (status || '').toLowerCase();
+    switch (s) {
+      case 'available':
+        return 'available';
       case 'maintenance':
-      case 'error':
+        return 'Maintenance';
+      case 'hors service':
+        return 'Hors service';
+    }
+  };
+  const getStatusColor = (status: string): string => {
+    switch ((status || '').toLowerCase()) {
+      case 'available':
+        return '#616161';
+      case 'maintenance':
+      case 'hors service':
         return '#f44336';
       default:
         return '#9e9e9e';
@@ -209,11 +218,14 @@ const DroneManagement: React.FC = () => {
     return <DroneDetailView droneId={detailViewDroneId} onBack={() => setDetailViewDroneId(null)} />;
   }
 
-  const avgBattery =
-    Math.round(
-      (Object.values(dronesFlightInfo).reduce((acc, info) => acc + (info?.battery_remaining_percent || 0), 0) /
-        Math.max(Object.keys(dronesFlightInfo).length, 1)) * 1
-    ) || 0;
+  const batteryValues = Object.values(dronesFlightInfo)
+    .map((fi) => (isNum(fi?.battery_remaining_percent) ? fi!.battery_remaining_percent! : null))
+    .filter((v): v is number => v !== null);
+
+  const avgBattery = batteryValues.length
+    ? Math.round(batteryValues.reduce((a, b) => a + b, 0) / batteryValues.length)
+    : 0;
+
 
   return (
     <Box sx={{ p: 3 }}>
@@ -274,7 +286,7 @@ const DroneManagement: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>
                   <Typography variant="h6" color="warning.main">
-                    {uniqueDrones.filter((d) => !!dronesFlightInfo[d.droneId]?.is_armed).length}
+                    {uniqueDrones.filter((d) => dronesFlightInfo[d.droneId]?.is_armed === true).length}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     Armés
@@ -291,7 +303,10 @@ const DroneManagement: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>
                   <Typography variant="h6" color="info.main">
-                    {uniqueDrones.filter((d) => !!dronesFlightInfo[d.droneId]?.is_armed).length}
+                    {uniqueDrones.filter((d) => {
+                      const fi = dronesFlightInfo[d.droneId];
+                      return fi?.state === 'flying' || fi?.is_armed === true;
+                    }).length}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
                     En mission
@@ -340,6 +355,7 @@ const DroneManagement: React.FC = () => {
             {uniqueDrones.map((drone) => {
               const status = dronesStatus.find((s) => s.droneId === drone.droneId);
               const fi = dronesFlightInfo[drone.droneId];
+              const isOffline = !!(fi?.unavailable || fi?.state === 'offline');
 
               return (
                 <TableRow key={drone.droneId}>
@@ -365,7 +381,7 @@ const DroneManagement: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={drone.droneStatus || 'UNKNOWN'}
+                      label={tStatus(drone.droneStatus)}
                       size="small"
                       sx={{
                         backgroundColor: getStatusColor(drone.droneStatus),
@@ -374,22 +390,25 @@ const DroneManagement: React.FC = () => {
                       }}
                     />
                   </TableCell>
+
+                  {/* État */}
                   <TableCell>
-                    <Chip
-                      label={fi?.is_armed ? 'ARMÉ' : 'DÉSARMÉ'}
-                      size="small"
-                      color={fi?.is_armed ? 'error' : 'default'}
-                      variant="outlined"
-                    />
+                    {fi?.unavailable || fi?.state === 'offline' ? (
+                      <Chip label="OFFLINE" size="small" variant="outlined" />
+                    ) : fi?.is_armed === true ? (
+                      <Chip label="ARMÉ" size="small" color="error" variant="outlined" />
+                    ) : fi?.is_armed === false ? (
+                      <Chip label="DÉSARMÉ" size="small" variant="outlined" />
+                    ) : (
+                      <Chip label="N/A" size="small" variant="outlined" />
+                    )}
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">{fi?.flight_mode || 'N/A'}</Typography>
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {typeof fi?.battery_remaining_percent === 'number'
-                        ? `${fi.battery_remaining_percent.toFixed(0)}%`
-                        : 'N/A'}
+                      {percentOrNA(fi?.battery_remaining_percent)}
                     </Typography>
                   </TableCell>
                   <TableCell>
@@ -407,10 +426,16 @@ const DroneManagement: React.FC = () => {
                           <HomeOutlined />
                         </IconButton>
                       </Tooltip>
-                      <Tooltip title="Détails">
-                        <IconButton size="small" onClick={() => setDetailViewDroneId(drone.droneId)}>
-                          <Visibility />
-                        </IconButton>
+                      <Tooltip title={isOffline ? "Détails indisponibles (OFFLINE)" : "Détails"}>
+                        <span>
+                          <IconButton
+                            size="small"
+                            onClick={() => setDetailViewDroneId(drone.droneId)}
+                            disabled={isOffline}
+                          >
+                            <Visibility />
+                          </IconButton>
+                        </span>
                       </Tooltip>
                       <Tooltip title="Informations">
                         <IconButton
@@ -453,37 +478,36 @@ const DroneManagement: React.FC = () => {
                     <strong>Mode de vol:</strong> {dronesFlightInfo[selectedDrone.droneId]?.flight_mode || 'N/A'}
                   </Typography>
                   <Typography>
-                    <strong>Armé:</strong> {dronesFlightInfo[selectedDrone.droneId]?.is_armed ? 'Oui' : 'Non'}
+                    <strong>Armé:</strong>{' '}
+                    {dronesFlightInfo[selectedDrone.droneId]?.is_armed === true
+                      ? 'Oui'
+                      : dronesFlightInfo[selectedDrone.droneId]?.is_armed === false
+                        ? 'Non'
+                        : 'N/A'}
                   </Typography>
+
                   {dronesFlightInfo[selectedDrone.droneId] && (
                     <>
                       <Typography>
-                        <strong>Latitude:</strong>{' '}
-                        {dronesFlightInfo[selectedDrone.droneId].latitude.toFixed(6)}
+                        <strong>Latitude:</strong> {toFixedOrNA(dronesFlightInfo[selectedDrone.droneId]?.latitude, 6)}
                       </Typography>
                       <Typography>
-                        <strong>Longitude:</strong>{' '}
-                        {dronesFlightInfo[selectedDrone.droneId].longitude.toFixed(6)}
+                        <strong>Longitude:</strong> {toFixedOrNA(dronesFlightInfo[selectedDrone.droneId]?.longitude, 6)}
                       </Typography>
                       <Typography>
-                        <strong>Altitude:</strong>{' '}
-                        {dronesFlightInfo[selectedDrone.droneId].altitude_m.toFixed(1)} m
+                        <strong>Altitude:</strong> {toFixedOrNA(dronesFlightInfo[selectedDrone.droneId]?.altitude_m, 1)} m
                       </Typography>
                       <Typography>
-                        <strong>Vitesse:</strong>{' '}
-                        {dronesFlightInfo[selectedDrone.droneId].horizontal_speed_m_s.toFixed(1)} m/s
+                        <strong>Vitesse:</strong> {toFixedOrNA(dronesFlightInfo[selectedDrone.droneId]?.horizontal_speed_m_s, 1)} m/s
                       </Typography>
                       <Typography>
-                        <strong>Direction:</strong>{' '}
-                        {dronesFlightInfo[selectedDrone.droneId].heading_deg?.toFixed(0) || 'N/A'}°
+                        <strong>Direction:</strong> {toFixedOrNA(dronesFlightInfo[selectedDrone.droneId]?.heading_deg, 0)}°
                       </Typography>
                       <Typography>
-                        <strong>Déplacement:</strong>{' '}
-                        {dronesFlightInfo[selectedDrone.droneId].movement_track_deg?.toFixed(0) || 'N/A'}°
+                        <strong>Déplacement:</strong> {toFixedOrNA(dronesFlightInfo[selectedDrone.droneId]?.movement_track_deg, 0)}°
                       </Typography>
                       <Typography>
-                        <strong>Batterie:</strong>{' '}
-                        {dronesFlightInfo[selectedDrone.droneId].battery_remaining_percent?.toFixed(0) || 'N/A'}%
+                        <strong>Batterie:</strong> {percentOrNA(dronesFlightInfo[selectedDrone.droneId]?.battery_remaining_percent)}
                       </Typography>
                     </>
                   )}

@@ -63,12 +63,9 @@ export class DroneSyncService {
   }
 
   /** Sync un drone */
-// 1) Supprime entièrement setStatusIfChanged()
-
-// 2) Remplace syncDrone par :
 async syncDrone(droneId: number, apiUrl: string, apiId?: number | null): Promise<void> {
   try {
-    const flightInfo = await this.fetchFlightInfo(apiUrl, apiId);
+    const flightInfo = await this.fetchFlightInfo(apiUrl, apiId ?? droneId /*, true */); // true => strict si tu veux
     const now = new Date();
 
     if (!flightInfo) {
@@ -88,30 +85,32 @@ async syncDrone(droneId: number, apiUrl: string, apiId?: number | null): Promise
   }
 }
 
+
   /** Récupère la télémétrie */
-  private async fetchFlightInfo(apiUrl: string, apiId?: number | null): Promise<DroneFlightInfo | null> {
-    try {
-      const response = await fetch(`${apiUrl}/flight_info`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(5000),
-      });
+private async fetchFlightInfo(apiUrl: string, droneId: number, strict = false): Promise<DroneFlightInfo | null> {
+  try {
+    const url = `${apiUrl}/drones/${droneId}/flight_info${strict ? '?strict=1' : ''}`;
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(5000),
+    });
 
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      return (await response.json()) as DroneFlightInfo;
-    } catch (error) {
-      // adoucir les logs (pas d'error spam)
-      const now = Date.now();
-      if (now - this.lastErrorLogAt > 15000) {
-        console.warn(`[sync] ${apiUrl}/flight_info unreachable: ${(error as Error).message}`);
-        this.lastErrorLogAt = now;
-      }
-      return null;
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
+
+    return (await response.json()) as DroneFlightInfo;
+  } catch (error) {
+    const now = Date.now();
+    if (now - this.lastErrorLogAt > 15000) {
+      console.warn(`[sync] /drones/${droneId}/flight_info unreachable: ${(error as Error).message}`);
+      this.lastErrorLogAt = now;
+    }
+    return null;
   }
+}
+
 
   /** Expose un statut "online/offline" + lastSyncAt */
   async getDronesStatus(): Promise<DroneStatus[]> {
@@ -128,7 +127,7 @@ async syncDrone(droneId: number, apiUrl: string, apiId?: number | null): Promise
       return {
         droneId: drone.droneId,
         isOnline,
-        lastSyncAt: last, // type Date (OK)
+        lastSyncAt: last,
       };
     });
   }
