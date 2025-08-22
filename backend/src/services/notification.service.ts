@@ -53,6 +53,14 @@ export class NotificationService {
           .select({ userId: deliveryParticipations.userId })
           .from(deliveryParticipations)
           .where(eq(deliveryParticipations.deliveryId, deliveryId));
+
+          // If no dronists have yet participated in this delivery,
+          // fall back to notifying all dronists.
+          if (dronistUsers.length === 0) {
+            dronistUsers = await db
+              .select({ userId: userDronists.userId })
+              .from(userDronists);
+          }
       } else {
         dronistUsers = await db
           .select({ userId: userDronists.userId })
@@ -163,7 +171,7 @@ export class NotificationService {
       }
 
       await this.createNotificationForCenter(centerId, {
-        type: 'newStatus',
+        type: newStatus,
         title,
         message,
         priority,
@@ -172,7 +180,7 @@ export class NotificationService {
       });
 
       await this.createNotificationForHospital(hospitalId, {
-        type: 'newStatus',
+        type: newStatus,
         title,
         message,
         priority,
@@ -181,7 +189,7 @@ export class NotificationService {
       });
 
       await this.createNotificationForDronist({
-        type: 'newStatus',
+        type: newStatus,
         title,
         message,
         priority,
