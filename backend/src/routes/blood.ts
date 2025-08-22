@@ -162,7 +162,7 @@ bloodRouter.post("/order", async (c) => {
       .set({ deliveryId })
       .where(inArray(bloods.bloodId, bloodIds));
 
-    // Envoyer notification au centre de donation
+    // Envoyer notification au centre de donation et aux dronistes
     try {
       await NotificationService.notifyDeliveryRequest(
         hospitalId,
@@ -215,6 +215,7 @@ bloodRouter.post("/cancel-order/:deliveryId", async (c) => {
       }, 400);
     }
 
+    // Notifier l'annulation aux centres, hôpitaux et dronistes
     try {
       await NotificationService.notifyDeliveryStatusChange(
         deliveryId,

@@ -4,6 +4,8 @@ import { hospitals } from "../schemas/hospital";
 import { donationCenters } from "../schemas/donation_center";
 import { userHospital } from "../schemas/user_hospital";
 import { userDonationCenter } from "../schemas/user_donation_center";
+import { userDronists } from "../schemas/user_dronist";
+import { deliveryParticipations } from "../schemas/delivery_participation";
 import { eq, and, desc } from "drizzle-orm";
 
 export class NotificationService {
@@ -42,6 +44,35 @@ export class NotificationService {
     }
   }
 
+  static async createNotificationForDronist(notification: Omit<NewNotification, 'userId'>, deliveryId?: number) {
+    try {
+      let dronistUsers;
+
+      if (deliveryId) {
+        dronistUsers = await db
+          .select({ userId: deliveryParticipations.userId })
+          .from(deliveryParticipations)
+          .where(eq(deliveryParticipations.deliveryId, deliveryId));
+      } else {
+        dronistUsers = await db
+          .select({ userId: userDronists.userId })
+          .from(userDronists);
+      }
+
+      const notificationPromises = dronistUsers.map(user =>
+        this.createNotification({
+          ...notification,
+          userId: user.userId
+        })
+      );
+
+      await Promise.all(notificationPromises);
+    } catch (error) {
+      console.error("Erreur lors de la création des notifications pour les dronistes:", error);
+      throw new Error("Impossible de créer les notifications pour les dronistes");
+    }
+  }
+
   static async notifyDeliveryRequest(hospitalId: number, centerId: number, deliveryId: number, bloodType: string, quantity: number, isUrgent: boolean) {
     try {
       const hospital = await db
@@ -65,6 +96,16 @@ export class NotificationService {
         priority: priorityLevel,
         deliveryId,
         hospitalId
+      });
+
+      await this.createNotificationForDronist({
+        type: 'delivery_request',
+        title: `Nouvelle demande de livraison${urgentText}`,
+        message: `L'hôpital ${hospitalInfo.hospitalName} a demandé ${quantity} poche(s) de sang ${bloodType}${urgentText}. Commande #${deliveryId}`,
+        priority: priorityLevel,
+        deliveryId,
+        hospitalId,
+        centerId
       });
 
       console.log(`Notification envoyée au centre ${centerId} pour la demande de livraison #${deliveryId}`);
@@ -118,6 +159,16 @@ export class NotificationService {
         deliveryId,
         centerId
       });
+
+      await this.createNotificationForDronist({
+        type: 'delivery_status',
+        title,
+        message,
+        priority,
+        deliveryId,
+        hospitalId,
+        centerId
+      }, deliveryId);
 
     } catch (error) {
       console.error('Erreur lors de la notification de changement de statut:', error);
