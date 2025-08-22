@@ -207,7 +207,7 @@ const handleLoadMission = async (d: DeliveryWithParticipants) => {
       mode: 'auto',
       waypoints: [{ lat, lon, alt: ALT }],
       ...(fi
-        ? { startlat: fi.latitude, startlon: fi.longitude, startalt: ALT }
+        ? { startlat: Number(fi.latitude), startlon: Number(fi.longitude), startalt: ALT }
         : {}),
     };
 

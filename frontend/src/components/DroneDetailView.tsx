@@ -44,6 +44,8 @@ type CurrentMission = {
   count: number;
   items: Array<{ seq: number; lat: number; lon: number; alt?: number; command?: number }>;
 };
+const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
+const fixed = (v: unknown, d = 0) => (isNum(v) ? (v as number).toFixed(d) : 'N/A');
 
 const normalizeCurrent = (raw: MissionCurrent): CurrentMission => {
   const items = (raw.items ?? [])
@@ -193,17 +195,13 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     try {
       if (flightInfo?.is_armed) {
         await dronesApi.returnHome(droneId);
-        setTarget(null);
-        //alert('RTL envoyé, retour automatique.');
       } else {
         setHomeBusy(true);
         await createMissionToDonationCenter();
-        //alert('Mission vers le centre créée et chargée !');
       }
       await fetchFlightInfo();
     } catch (err) {
       console.error('Error returning home / creating center mission:', err);
-      //alert(`Erreur: ${err}`);
     }finally{
           setHomeBusy(false);
     }
@@ -213,15 +211,16 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const handleCreateMission = async () => {
     await withBusy(async () => {
       const payload: Mission = {
-        ...missionData,
-        ...(flightInfo
-          ? {
-            startlat: flightInfo.latitude,
-            startlon: flightInfo.longitude,
-            startalt: missionData.altitude_takeoff,
-          }
-          : {}),
-      };
+  ...missionData,
+  ...(flightInfo
+    ? {
+        startlat: Number(flightInfo.latitude),
+        startlon: Number(flightInfo.longitude),
+        startalt: missionData.altitude_takeoff,
+      }
+    : {}),
+};
+
 
       const res = await dronesApi.createMission(droneId, payload);
       await dronesApi.sendMissionFile(droneId, res.filename);
@@ -370,9 +369,9 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
       altitude_takeoff: ALT,
       mode: 'auto',
       waypoints: [{ lat: deliveryLat, lon: deliveryLon, alt: ALT }],
-      ...(flightInfo
-        ? { startlat: flightInfo.latitude, startlon: flightInfo.longitude, startalt: ALT }
-        : {}),
+...(flightInfo
+  ? { startlat: Number(flightInfo.latitude), startlon: Number(flightInfo.longitude), startalt: ALT }
+  : {}),
     };
 
     const res = await dronesApi.createMission(droneId, mission);
@@ -405,9 +404,9 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
         altitude_takeoff: ALT,
         mode: 'auto',
         waypoints: [{ lat, lon, alt: ALT }],
-        ...(flightInfo
-          ? { startlat: flightInfo.latitude, startlon: flightInfo.longitude, startalt: ALT }
-          : {}),
+...(flightInfo
+  ? { startlat: Number(flightInfo.latitude), startlon: Number(flightInfo.longitude), startalt: ALT }
+  : {}),
       };
 
       const res = await dronesApi.createMission(droneId, mission);
@@ -421,36 +420,40 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const firstValid = <T extends { lat?: number; lon?: number }>(arr: T[]) =>
     arr.find(w => Number.isFinite(w?.lat) && Number.isFinite(w?.lon)) ?? null;
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const lastValid = <T extends { lat?: number; lon?: number }>(arr: T[]) =>
     [...arr].reverse().find(w => Number.isFinite(w?.lat) && Number.isFinite(w?.lon)) ?? null;
 
   // Lit la mission chargée et fixe le target selon le mode
-  const refreshTargetFromCurrentMission = async () => {
-    try {
-      const cur = await dronesApi.getMissionCurrent(droneId);
-      const items = cur?.items ?? [];
-      if (!items.length) {
-        setTarget(null);
-        return;
-      }
+const refreshTargetFromCurrentMission = async () => {
+  try {
+    const mode = (flightInfo?.flight_mode || '').toUpperCase();
+    const isRTL = mode === 'RTL';
+    const isArmed = flightInfo?.is_armed === true;
 
-      const mode = (flightInfo?.flight_mode || '').toUpperCase();
-      const isRTL = mode === 'RTL';
+    // ↩️ Ne rien modifier si pas RTL ou pas armé (on garde la target actuelle)
+    if (!isRTL || !isArmed) return;
 
-      const chosen = isRTL ? firstValid(items) : lastValid(items);
-      if (chosen) {
-        setTarget({
-          id: typeof chosen.seq === 'number' ? chosen.seq : 0,
-          lat: Number(chosen.lat),
-          lon: Number(chosen.lon),
-        });
-      } else {
-        setTarget(null);
-      }
-    } catch (e) {
-      console.warn('getMissionCurrent failed:', e);
-    }
-  };
+    // (Optionnel) si tu veux aussi ignorer quand offline, décommente :
+    // if (flightInfo?.unavailable || flightInfo?.state === 'offline') return;
+
+    const cur = await dronesApi.getMissionCurrent(droneId);
+    const items = cur?.items ?? [];
+    if (!items.length) return; // rien à faire, on ne clear pas la target
+
+    // En RTL + armé → prendre le premier WP valide (home/centre)
+    const chosen = firstValid(items);
+    if (!chosen) return;
+
+    setTarget({
+      id: typeof chosen.seq === 'number' ? chosen.seq : 0,
+      lat: Number(chosen.lat),
+      lon: Number(chosen.lon),
+    });
+  } catch (e) {
+    console.warn('getMissionCurrent failed:', e);
+  }
+};
 
   useEffect(() => {
     void refreshTargetFromCurrentMission();
@@ -478,18 +481,36 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   }, [droneId]);
 
   useEffect(() => {
-    if (!flightInfo) return;
-    if (!missionRunning) return;
-    const mode = (flightInfo.flight_mode || '').toUpperCase();
-    const disarmed = !flightInfo.is_armed;
-    const nearGround = flightInfo.altitude_m < 2;
-    const still = Math.abs(flightInfo.horizontal_speed_m_s) < 0.3 && Math.abs(flightInfo.vertical_speed_m_s) < 0.3;
-    const notAuto = mode !== 'AUTO';
-    if (disarmed || (nearGround && still && notAuto)) {
-      setMissionRunning(false);
-      // missionReady reste false : le bouton se désactive tant qu'on n’a pas renvoyé un nouveau fichier
+  try {
+    if (typeof window === 'undefined') return;
+    const raw = localStorage.getItem(targetStorageKey);
+    if (!raw) return;
+    const parsed = JSON.parse(raw) as { id: number; lat: number; lon: number };
+    if (typeof parsed?.id === 'number' && Number.isFinite(parsed?.lat) && Number.isFinite(parsed?.lon)) {
+      setTarget(parsed);
     }
-  }, [flightInfo, missionRunning]);
+  } catch (e) {
+    console.warn('Error reading target from localStorage:', e);
+  }
+}, [targetStorageKey]);
+
+useEffect(() => {
+  if (!flightInfo) return;
+  if (!missionRunning) return;
+
+  const mode = (flightInfo.flight_mode || '').toUpperCase();
+  const disarmed = flightInfo.is_armed === false;
+  const nearGround = Number(flightInfo.altitude_m ?? 0) < 2;
+  const still =
+    Math.abs(Number(flightInfo.horizontal_speed_m_s ?? 0)) < 0.3 &&
+    Math.abs(Number(flightInfo.vertical_speed_m_s ?? 0)) < 0.3;
+  const notAuto = mode !== 'AUTO';
+
+  if (disarmed || (nearGround && still && notAuto)) {
+    setMissionRunning(false);
+  }
+}, [flightInfo, missionRunning]);
+
 
   useEffect(() => {
     patchLeafletDefaultIcons();
@@ -521,26 +542,27 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
        }
   }, [targetStorageKey, target]);
   useEffect(() => {
-    const items = currentMission?.items ?? [];
-    if ((currentMission?.count ?? 0) === 0) {
-      setTarget(null);
-      setMissionReady(false);
-      return;
-    }
-    if (items.length === 0) {
-      setMissionReady(false);
-      return;
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const valid = (w: any) => Number.isFinite(w?.lat) && Number.isFinite(w?.lon);
-    const mode = (flightInfo?.flight_mode || '').toUpperCase();
-    const isRTL = mode === 'RTL';
-    const chosen = isRTL ? items.find(valid) : [...items].reverse().find(valid);
-    if (chosen) {
-      setTarget({ id: chosen.seq, lat: chosen.lat, lon: chosen.lon });
-      setMissionReady(true);
-    }
-  }, [currentMission, flightInfo?.flight_mode]);
+  const mode = (flightInfo?.flight_mode || '').toUpperCase();
+  const isRTL = mode === 'RTL';
+  const isArmed = flightInfo?.is_armed === true;
+
+  // 🔒 Ne JAMAIS toucher la target si pas RTL ou pas armé
+  if (!isRTL || !isArmed) return;
+
+  const items = currentMission?.items ?? [];
+  if (!items.length) return;
+
+  const chosen = firstValid(items); // en RTL : premier WP (home/centre)
+  if (!chosen) return;
+
+  setTarget({
+    id: typeof chosen.seq === 'number' ? chosen.seq : 0,
+    lat: Number(chosen.lat),
+    lon: Number(chosen.lon),
+  });
+  setMissionReady(true);
+}, [currentMission, flightInfo?.flight_mode, flightInfo?.is_armed]);
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
@@ -603,9 +625,9 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
                   <Typography variant="body2" color="text.secondary">
                     Position
                   </Typography>
-                  <Typography variant="body1">
-                    {flightInfo.latitude.toFixed(6)}, {flightInfo.longitude.toFixed(6)}
-                  </Typography>
+<Typography variant="body1">
+  {fixed(flightInfo?.latitude, 6)}, {fixed(flightInfo?.longitude, 6)}
+</Typography>
                 </CardContent>
               </Card>
             </Box>
@@ -616,9 +638,9 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
                   <Typography variant="body2" color="text.secondary">
                     Altitude
                   </Typography>
-                  <Typography variant="body1">
-                    {flightInfo.altitude_m.toFixed(1)} m
-                  </Typography>
+<Typography variant="body1">
+  {fixed(flightInfo?.altitude_m, 1)} m
+</Typography>
                 </CardContent>
               </Card>
             </Box>
@@ -629,9 +651,9 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
                   <Typography variant="body2" color="text.secondary">
                     Vitesse
                   </Typography>
-                  <Typography variant="body1">
-                    {flightInfo.horizontal_speed_m_s.toFixed(1)} m/s
-                  </Typography>
+<Typography variant="body1">
+  {fixed(flightInfo?.horizontal_speed_m_s, 1)} m/s
+</Typography>
                 </CardContent>
               </Card>
             </Box>
@@ -642,9 +664,9 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
                   <Typography variant="body2" color="text.secondary">
                     Direction
                   </Typography>
-                  <Typography variant="body1">
-                    {flightInfo.heading_deg.toFixed(0)}°
-                  </Typography>
+<Typography variant="body1">
+  {fixed(flightInfo?.heading_deg, 0)}°
+</Typography>
                 </CardContent>
               </Card>
             </Box>
@@ -666,7 +688,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
       <Paper sx={{ flex: 1, p: 1, position: 'relative' }}>
         {flightInfo && (
           <MapContainer
-            center={[flightInfo.latitude, flightInfo.longitude]}
+  center={[Number(flightInfo?.latitude ?? 0), Number(flightInfo?.longitude ?? 0)]}
             zoom={15}
             style={{ height: '100%', width: '100%', borderRadius: 20 }}
           >
@@ -715,26 +737,22 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
                 </Marker>
               );
             })}
-
-
             <Marker
-              position={[flightInfo.latitude, flightInfo.longitude]}
+  position={[Number(flightInfo?.latitude ?? 0), Number(flightInfo?.longitude ?? 0)]}
               icon={droneIcon} zIndexOffset={1000}
             >
               <Popup>
                 <div>
                   <strong>Drone {droneId}</strong><br />
-                  Mode: {flightInfo.flight_mode}<br />
-                  Altitude: {flightInfo.altitude_m.toFixed(1)} m<br />
-                  Vitesse: {flightInfo.horizontal_speed_m_s.toFixed(1)} m/s<br />
-                  Cap (heading): {flightInfo.heading_deg.toFixed(0)}°<br />
-                  Déplacement: {flightInfo.movement_track_deg?.toFixed(0) || 'N/A'}°<br />
-                  Batterie: {flightInfo.battery_remaining_percent?.toFixed(0) || 'N/A'}%<br />
-                  {flightInfo.horizontal_speed_m_s > 0.1 ? (
-                    <span style={{ color: '#00ff00' }}>🡹 En mouvement</span>
-                  ) : (
-                    <span style={{ color: '#999' }}>⏸ Stationnaire</span>
-                  )}
+Mode: {flightInfo?.flight_mode}<br />
+Altitude: {fixed(flightInfo?.altitude_m, 1)} m<br />
+Vitesse: {fixed(flightInfo?.horizontal_speed_m_s, 1)} m/s<br />
+Cap (heading): {fixed(flightInfo?.heading_deg, 0)}°<br />
+Déplacement: {fixed(flightInfo?.movement_track_deg, 0)}°<br />
+Batterie: {fixed(flightInfo?.battery_remaining_percent, 0)}%<br />
+{Number(flightInfo?.horizontal_speed_m_s ?? 0) > 0.1
+  ? <span style={{ color: '#00ff00' }}>🡹 En mouvement</span>
+  : <span style={{ color: '#999' }}>⏸ Stationnaire</span>}
                 </div>
               </Popup>
             </Marker>
@@ -883,7 +901,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
             <Button
               onClick={() => {
                 if (flightInfo) {
-                  addWaypoint(flightInfo.latitude + 0.001, flightInfo.longitude + 0.001);
+                  addWaypoint(Number(flightInfo.latitude) + 0.001, Number(flightInfo.longitude) + 0.001);
                 }
               }}
               variant="outlined"
