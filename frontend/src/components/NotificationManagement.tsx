@@ -29,7 +29,7 @@ import {
   NotificationImportant,
   LocalShipping,
   DoneAll,
-  Info,
+  Cancel,
   Warning,
   Refresh,
   Search,
@@ -89,8 +89,18 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
     switch (type) {
       case 'delivery_request':
         return <LocalShipping color={priority === 'urgent' ? 'error' : 'primary'} />;
-      case 'delivery_status':
-        return <Info color="info" />;
+      case 'in_transit':
+        return <LocalShipping color="info" />;
+      case 'delivered':
+        return <DoneAll color="success" />;
+      case 'cancelled':
+        return <Cancel color="error" />;
+      case 'accepted_center':
+      case 'accepted_dronist':
+        return <DoneAll color="success" />;
+      case 'refused_center':
+      case 'refused_dronist':
+        return <Cancel color="error" />;
       case 'stock_alert':
         return <Warning color="warning" />;
       case 'system':
@@ -134,8 +144,20 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
     switch (type) {
       case 'delivery_request':
         return 'Demande de livraison';
-      case 'delivery_status':
-        return 'Statut de livraison';
+      case 'in_transit':
+        return 'Livraison en cours';
+      case 'delivered':
+        return 'Livraison effectuée';
+      case 'cancelled':
+        return 'Livraison annulée';
+      case 'accepted_center':
+        return 'Demande acceptée par le centre';
+      case 'refused_center':
+        return 'Demande refusée par le centre';
+      case 'accepted_dronist':
+        return 'Livraison acceptée par le droniste';
+      case 'refused_dronist':
+        return 'Livraison refusée par le droniste';
       case 'stock_alert':
         return 'Alerte de stock';
       case 'system':
@@ -338,7 +360,13 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
               >
                 <MenuItem value="all">Tous</MenuItem>
                 <MenuItem value="delivery_request">Demande</MenuItem>
-                <MenuItem value="delivery_status">Statut</MenuItem>
+                <MenuItem value="in_transit">En transit</MenuItem>
+                <MenuItem value="delivered">Livrée</MenuItem>
+                <MenuItem value="cancelled">Annulée</MenuItem>
+                <MenuItem value="accepted_center">Acceptée centre</MenuItem>
+                <MenuItem value="refused_center">Refusée centre</MenuItem>
+                <MenuItem value="accepted_dronist">Acceptée droniste</MenuItem>
+                <MenuItem value="refused_dronist">Refusée droniste</MenuItem>
                 <MenuItem value="stock_alert">Alerte</MenuItem>
                 <MenuItem value="system">Système</MenuItem>
               </Select>

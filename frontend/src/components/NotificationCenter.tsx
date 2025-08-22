@@ -25,7 +25,6 @@ import {
   LocalShipping,
   DoneAll,
   PriorityHigh,
-  Info,
   Warning,
   Cancel
 } from '@mui/icons-material';
@@ -77,8 +76,6 @@ const NotificationCenter: React.FC<NotificationCenterProps> = observer(({ notifi
     switch (type) {
       case 'delivery_request':
         return <LocalShipping color={priority === 'urgent' ? 'error' : 'primary'} />;
-      case 'delivery_status':
-        return <Info color="info" />;
       case 'in_transit':
         return <LocalShipping color="info" />;
       case 'delivered':

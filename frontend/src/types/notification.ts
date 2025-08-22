@@ -5,7 +5,6 @@ export interface Notification {
   centerId?: number;
   type:
     | 'delivery_request'
-    | 'delivery_status'
     | 'in_transit'
     | 'delivered'
     | 'cancelled'
