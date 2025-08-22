@@ -26,7 +26,8 @@ import {
   DoneAll,
   PriorityHigh,
   Warning,
-  Cancel
+  Cancel,
+  AccountCircle
 } from '@mui/icons-material';
 import { NotificationStore } from '../stores/NotificationStore';
 
@@ -92,6 +93,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = observer(({ notifi
         return <Warning color="warning" />;
       case 'system':
         return <NotificationImportant color="info" />;
+      case 'user':
+        return <AccountCircle color="primary" />;
       default:
         return <Notifications color="primary" />;
     }

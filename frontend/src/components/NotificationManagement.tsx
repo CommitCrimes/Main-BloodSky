@@ -33,7 +33,8 @@ import {
   Warning,
   Refresh,
   Search,
-  Done
+  Done,
+  AccountCircle
 } from '@mui/icons-material';
 import { NotificationStore } from '../stores/NotificationStore';
 
@@ -105,6 +106,8 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
         return <Warning color="warning" />;
       case 'system':
         return <NotificationImportant color="info" />;
+      case 'user':
+        return <AccountCircle color="primary" />;
       default:
         return <Notifications color="primary" />;
     }
@@ -162,6 +165,8 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
         return 'Alerte de stock';
       case 'system':
         return 'Système';
+      case 'user':
+        return 'Notification utilisateur';
       default:
         return 'Autre';
     }
@@ -369,6 +374,7 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
                 <MenuItem value="refused_dronist">Refusée droniste</MenuItem>
                 <MenuItem value="stock_alert">Alerte</MenuItem>
                 <MenuItem value="system">Système</MenuItem>
+                <MenuItem value="user">Utilisateur</MenuItem>
               </Select>
             </FormControl>
 
