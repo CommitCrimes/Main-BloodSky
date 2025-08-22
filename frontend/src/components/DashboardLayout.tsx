@@ -30,6 +30,7 @@ import {
   AccountCircleOutlined,
   LocalShippingOutlined,
   ContactSupportOutlined,
+  CloudOutlined,
   GroupOutlined,
   MenuOutlined,
   NotificationsNone,
@@ -70,6 +71,7 @@ interface DashboardConfig {
   orderBloodComponent?: ReactNode;
   customDashboardComponent?: ReactNode | ((setActiveView: (view: string) => void) => ReactNode);
   contactComponent?: React.ReactNode;
+  weatherComponent?: React.ReactNode;
   menuItems?: Array<{
     id: string;
     label: string;
@@ -155,9 +157,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
     { id: 'notifications', label: 'Notifications', icon: <NotificationsOutlined />, hasNotification: notificationStore.unreadCount > 0 },
     { id: 'historique', label: 'Historique', icon: <HistoryOutlined /> },
     { id: 'profil', label: 'Mon profil', icon: <AccountCircleOutlined /> },
+    { id: 'contact', label: 'Contact', icon: <ContactSupportOutlined /> },
+    //Onglet météo uniquement pour droniste
+    { id: 'meteo', label: 'weather', icon: <CloudOutlined /> },
     // Onglet livraison uniquement pour les hôpitaux
     ...(!auth.user?.role?.centerId ? [{ id: 'livraison', label: getDeliveryLabel(), icon: <LocalShippingOutlined /> }] : []),
-    { id: 'contact', label: 'Contact', icon: <ContactSupportOutlined /> },
     ...(auth.user?.role?.admin ? [{ id: 'users', label: 'Gestion des utilisateurs', icon: <GroupOutlined /> }] : []),
   ];
 
@@ -923,7 +927,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
             <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
               {config.contactComponent}
             </Box>
-          ) : activeView === 'drones' ? (
+          ) : activeView === 'meteo' && config.weatherComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.weatherComponent}
+            </Box>
+          )
+           : activeView === 'drones' ? (
             <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
               <DroneManagement />
             </Box>
