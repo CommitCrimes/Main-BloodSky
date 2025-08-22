@@ -23,7 +23,7 @@ export interface Notification {
   deliveryId?: number;
   createdAt: string;
   readAt?: string;
-}
+} 
 
 export interface NotificationResponse {
   notifications: Notification[];
