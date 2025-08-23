@@ -46,6 +46,7 @@ import { NotificationStore } from '@/stores/NotificationStore';
 import NotificationManagement from './NotificationManagement';
 import DroneManagement from './DroneManagement';
 import { dashboardApi } from '@/api/dashboard';
+import MapWeather from './MapWeather';
 
 // Fix for default markers in react-leaflet
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
@@ -926,6 +927,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
           ) : activeView === 'drones' ? (
             <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
               <DroneManagement />
+            </Box>
+          ) : activeView === 'meteo' ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              <MapWeather />
             </Box>
           ) : activeView === 'dashboard' ? (
             config.customDashboardComponent ? (
