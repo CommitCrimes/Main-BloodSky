@@ -19,7 +19,7 @@ const Modal = ({ isOpen, onClose, children }: ModalProps) => {
   useEffect(() => {
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-    } else {
+    } else { 
       document.removeEventListener("mousedown", handleClickOutside);
     }
 
