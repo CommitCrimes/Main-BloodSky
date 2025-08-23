@@ -30,7 +30,6 @@ import {
   AccountCircleOutlined,
   LocalShippingOutlined,
   ContactSupportOutlined,
-  CloudOutlined,
   GroupOutlined,
   MenuOutlined,
   NotificationsNone,
@@ -159,7 +158,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
     { id: 'profil', label: 'Mon profil', icon: <AccountCircleOutlined /> },
     { id: 'contact', label: 'Contact', icon: <ContactSupportOutlined /> },
     //Onglet météo uniquement pour droniste
-    { id: 'meteo', label: 'weather', icon: <CloudOutlined /> },
     // Onglet livraison uniquement pour les hôpitaux
     ...(!auth.user?.role?.centerId ? [{ id: 'livraison', label: getDeliveryLabel(), icon: <LocalShippingOutlined /> }] : []),
     ...(auth.user?.role?.admin ? [{ id: 'users', label: 'Gestion des utilisateurs', icon: <GroupOutlined /> }] : []),
