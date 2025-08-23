@@ -50,6 +50,13 @@ export interface Blood {
   deliveryId?: number;
 }
 
+// ⛔️ drones de test à ignorer
+const IGNORE_DRONE_IDS = new Set<number>([2]);
+
+const filterOutTestDrones = <T extends { droneId?: number | string }>(list: T[]): T[] =>
+  list.filter(d => !IGNORE_DRONE_IDS.has(Number(d.droneId)));
+
+
 // API pour récupérer les données d'historique
 export const historyApi = {
   // Récupérer tous les hôpitaux
@@ -73,7 +80,7 @@ export const historyApi = {
   // Récupérer les drones
   getDrones: async (): Promise<Drone[]> => {
     const response = await api.get('/drones');
-    return response.data;
+    return filterOutTestDrones(response.data as Drone[]);
   },
 
   // Récupérer les types de sang
@@ -82,7 +89,7 @@ export const historyApi = {
     return response.data;
   },
 
-  
+
 
   // Récupérer l'historique pour un centre de donation
   getDonationCenterHistory: async (centerId: number): Promise<DonationCenterHistory[]> => {
@@ -122,6 +129,23 @@ export const historyApi = {
         bloodType: blood?.bloodType,
         droneId: drone?.droneId,
         droneName: drone?.droneName,
+        sourceDonationCenter: currentCenter
+          ? {
+            centerId: currentCenter.centerId,
+            centerCity: currentCenter.centerCity,
+            centerName: currentCenter.centerCity, // fallback if no name property
+            centerAddress: currentCenter.centerAdress,
+            latitude: parseFloat(currentCenter.centerLatitude),
+            longitude: parseFloat(currentCenter.centerLongitude)
+          }
+          : {
+            centerId: 0,
+            centerCity: '',
+            centerName: '',
+            centerAddress: '',
+            latitude: 0,
+            longitude: 0
+          },
         destinationHospital: {
           hospitalId: hospital.hospitalId,
           hospitalName: hospital.hospitalName,
@@ -191,7 +215,7 @@ export const historyApi = {
     });
   },
 
-    getDroneDeliveryHistory: async (): Promise<DonationCenterHistory[]> => {
+  getDroneDeliveryHistory: async (): Promise<DonationCenterHistory[]> => {
     const [deliveries, hospitals, donationCenters, drones, bloodTypes] = await Promise.all([
       historyApi.getDeliveries(),
       historyApi.getHospitals(),
