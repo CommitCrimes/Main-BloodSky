@@ -12,6 +12,7 @@ import {
 } from '@mui/icons-material';
 import HistoryManagementDrone from '@/components/HistoryManagementDrone';
 import Contact from './Contact';
+import Weather from '@/components/WeatherMap';
 
 const DronistDashboard = () => {
   const auth = useAuth();
@@ -39,6 +40,8 @@ const DronistDashboard = () => {
     ),
         historyManagementComponent: <HistoryManagementDrone />,
         contactComponent: <Contact />,
+        weatherComponent: <Weather />,
+
   };
 
   return <DashboardLayout config={dashboardConfig} />;
