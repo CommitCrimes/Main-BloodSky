@@ -30,6 +30,7 @@ import {
 import * as weather from '@/api/weather';
 import { deliveryApi } from '@/api/delivery';
 import { dronesApi } from '@/api/drone';
+import { notificationApi } from '@/api/notification';
 
 interface WeatherData {
   main: {
@@ -74,6 +75,41 @@ interface DronistDashboardContentProps {
   onNavigate: (view: string) => void;
 }
 
+type ApiNotification = {
+  notificationId: number;
+  type: string;     
+  priority: string;   
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;  
+};
+
+const durationLabel = (iso: string): string => {
+  const d = new Date(iso);
+  const diff = Date.now() - d.getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return '1 min';
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} h`;
+  const j = Math.floor(h / 24);
+  return `${j} j`;
+};
+
+// Mappe priorité/type API -> type UI ('success' | 'warning' | 'info')
+const toUiType = (n: ApiNotification): 'success' | 'warning' | 'info' => {
+  const p = n.priority?.toLowerCase();
+  const t = n.type?.toLowerCase();
+  const title = (n.title || '').toLowerCase();
+
+  if (t === 'delivery_status' && (title.includes('livraison effectuée') || title.includes('delivered'))) {
+    return 'success';
+  }
+  if (p === 'urgent' || p === 'high') return 'warning';
+  return 'info';
+};
+
 const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNavigate }) => {
   const auth = useAuth();
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
@@ -95,6 +131,7 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
     [yMax]
   );
 
+  /** MÉTÉO */
   useEffect(() => {
     const loadWeather = async () => {
       setLoadingWeather(true);
@@ -115,6 +152,7 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
     loadWeather();
   }, []);
 
+  /** STATS LIVRAISONS (garde ton calcul) */
   useEffect(() => {
     type DeliveryStatus = 'pending' | 'in_transit' | 'delivered' | 'cancelled';
 
@@ -140,17 +178,6 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
     const frDayShort = (d: Date) =>
       d.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '');
 
-    const timeAgo = (from: Date) => {
-      const diff = Date.now() - from.getTime();
-      const m = Math.floor(diff / 60000);
-      if (m < 1) return 'à l’instant';
-      if (m < 60) return `il y a ${m} min`;
-      const h = Math.floor(m / 60);
-      if (h < 24) return `il y a ${h} h`;
-      const d = Math.floor(h / 24);
-      return `il y a ${d} j`;
-    };
-
     const load = async () => {
       const centerId = auth.user?.role?.centerId;
       const raw = centerId != null
@@ -164,6 +191,7 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
         deliveryDate: (d as { deliveryDate?: string | Date | null }).deliveryDate ?? null,
         dteValidation: (d as { dteValidation?: string | Date | null }).dteValidation ?? null,
       }));
+
       const today = startOfDay(new Date());
       const days = Array.from({ length: 7 }, (_, i) => {
         const d = new Date(today);
@@ -197,30 +225,12 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
           return { name: frDayShort(d), vols: b.vols, echecs: b.echecs };
         })
       );
-      const stamp = (x: DeliveryLike): Date =>
-        parseDate(x.dteValidation) ?? parseDate(x.deliveryDate) ?? parseDate(x.requestDate) ?? new Date(0);
-
-      const recent = [...list]
-        .sort((a, b) => stamp(b).getTime() - stamp(a).getTime())
-        .slice(0, 8)
-        .map((it, idx) => {
-          const when = stamp(it);
-          const status = String(it.deliveryStatus).toLowerCase() as DeliveryStatus;
-          if (status === 'delivered')
-            return { id: idx, type: 'success' as const, message: `Livraison #${it.deliveryId} livrée`, time: timeAgo(when) };
-          if (status === 'cancelled')
-            return { id: idx, type: 'warning' as const, message: `Livraison #${it.deliveryId} annulée`, time: timeAgo(when) };
-          if (status === 'in_transit')
-            return { id: idx, type: 'info' as const, message: `Livraison #${it.deliveryId} en transit`, time: timeAgo(when) };
-          return { id: idx, type: 'info' as const, message: `Livraison #${it.deliveryId} en attente`, time: timeAgo(when) };
-        });
-
-      setRecentNotifications(recent);
     };
 
     load();
   }, [auth.user?.role?.centerId]);
 
+  /** STATUT DRONES (inchangé) */
   useEffect(() => {
     type DroneItem = { droneStatus?: string | null };
 
@@ -245,88 +255,50 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
     };
     load();
   }, []);
+
+  /** 🔔 NOTIFICATIONS UTILISATEUR (NOUVEAU) */
   useEffect(() => {
-    type DeliveryRow = {
-      deliveryId: number;
-      deliveryStatus?: string | null;
-      dteValidation?: string | Date | null;
-    };
-    const asDate = (v?: string | Date | null): Date | null => v == null ? null : v instanceof Date ? v : new Date(v);
-    const startOfDay = (d: Date) => {
-      const x = new Date(d);
-      x.setHours(0, 0, 0, 0);
-      return x;
-    };
-    const dayKey = (d: Date) => startOfDay(d).toISOString();
-    const frDayShort = (d: Date) =>
-      d.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '');
-    const norm = (s?: string | null) => (s ?? '').trim().toLowerCase();
-    const isCancelled = (s: string) =>
-      ['cancelled', 'canceled', 'annulée', 'annulee', 'cancel', 'rejected', 'refused'].includes(norm(s));
-    const isValidated = (s: string) =>
-      ['validated', 'validée', 'validee', 'delivered', 'terminée', 'completed', 'done'].includes(norm(s));
-    const timeAgo = (from: Date) => {
-      const diff = Date.now() - from.getTime();
-      const m = Math.floor(diff / 60000);
-      if (m < 1) return 'à l’instant';
-      if (m < 60) return `${m} min`;
-      const h = Math.floor(m / 60);
-      if (h < 24) return `${h} h`;
-      const d = Math.floor(h / 24);
-      return `${d} j`;
-    };
+    const rawId = auth.user?.userId;
+    const userId = typeof rawId === 'number' ? rawId : Number(rawId);
+    if (!Number.isFinite(userId)) {
+      setRecentNotifications([]);
+      return;
+    }
 
-    const load = async () => {
-      const centerId = auth.user?.role?.centerId;
-      const raw = centerId != null
-        ? await deliveryApi.getByCenterId(centerId)
-        : await deliveryApi.getAll();
+    let cancelled = false;
 
-      const rows: DeliveryRow[] = raw.map((d) => ({
-        deliveryId: (d as { deliveryId: number }).deliveryId,
-        deliveryStatus: (d as { deliveryStatus?: string | null }).deliveryStatus ?? null,
-        dteValidation: (d as { dteValidation?: string | Date | null }).dteValidation ?? null,
-      }));
-      const today = startOfDay(new Date());
-      const days = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(today);
-        d.setDate(today.getDate() - (6 - i));
-        return d;
-      });
-      const buckets = new Map<string, { vols: number; echecs: number; date: Date }>();
-      days.forEach((d) => buckets.set(dayKey(d), { vols: 0, echecs: 0, date: d }));
-      rows.forEach((r) => {
-        const when = asDate(r.dteValidation);
-        if (!when) return; // pas encore finalisée → on ignore
-        const b = buckets.get(dayKey(when));
-        if (!b) return;
-        const s = norm(r.deliveryStatus);
-        if (isValidated(s)) b.vols += 1;
-        else if (isCancelled(s)) b.echecs += 1;
-      });
-      setDeliveryStats(
-        days.map((d) => {
-          const b = buckets.get(dayKey(d))!;
-          return { name: frDayShort(d), vols: b.vols, echecs: b.echecs };
-        })
-      );
-      const finalized = rows
-        .filter((r) => asDate(r.dteValidation))
-.sort((a, b) =>asDate(b.dteValidation)!.getTime() - asDate(a.dteValidation)!.getTime()).slice(0, 8)
-        .map((r, idx) => {
-          const s = norm(r.deliveryStatus);
-          const when = asDate(r.dteValidation)!;
-          return isCancelled(s)
-            ? { id: idx, type: 'warning' as const, message: `Livraison #${r.deliveryId} annulée`, time: timeAgo(when) }
-            : { id: idx, type: 'success' as const, message: `Livraison #${r.deliveryId} validée`, time: timeAgo(when) };
-        });
-      setRecentNotifications(finalized);
+    (async () => {
+      try {
+        const rows = (await notificationApi.getUserNotifications(userId)) as ApiNotification[];
+
+        if (cancelled) return;
+
+        const mapped = rows
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+          .slice(0, 8)
+          .map((n) => ({
+            id: n.notificationId,
+            type: toUiType(n),
+            message: n.title || n.message,
+            time: durationLabel(n.createdAt),
+          }));
+
+        setRecentNotifications(mapped);
+      } catch (e) {
+        console.error('Erreur chargement notifications:', e);
+        if (!cancelled) setRecentNotifications([]);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
     };
-    load();
-  }, [auth.user?.role?.centerId]);
+  }, [auth.user?.userId]);
+
   const formatTimeAgo = (time: string) => {
     return `Il y a ${time}`;
   };
+
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'success':
@@ -337,6 +309,7 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
         return <NotificationsOutlined sx={{ color: '#3b82f6' }} />;
     }
   };
+
   const getWeatherIcon = (weatherMain: string) => {
     switch (weatherMain.toLowerCase()) {
       case 'clear':
@@ -354,6 +327,7 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
         return <CloudOutlined sx={{ color: '#6b7280', fontSize: 40 }} />;
     }
   };
+
   const formatDay = (timestamp: number) => {
     const date = new Date(timestamp * 1000);
     const today = new Date();
@@ -367,6 +341,7 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
       return date.toLocaleDateString('fr-FR', { weekday: 'short' });
     }
   };
+
   return (
     <Box sx={{
       backgroundColor: '#e3f8fe',
