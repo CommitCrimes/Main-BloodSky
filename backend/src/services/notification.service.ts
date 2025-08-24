@@ -5,6 +5,7 @@ import { donationCenters } from "../schemas/donation_center";
 import { userHospital } from "../schemas/user_hospital";
 import { userDonationCenter } from "../schemas/user_donation_center";
 import { eq, and, desc } from "drizzle-orm";
+import { userDronists } from "../schemas/user_dronist";
 
 export class NotificationService {
   static async createNotification(notification: NewNotification) {
@@ -19,6 +20,26 @@ export class NotificationService {
       throw new Error('Impossible de créer la notification');
     }
   }
+static async createNotificationForAllDronists(
+  notification: Omit<NewNotification, "userId">
+) {
+  try {
+    const rows = await db
+      .select({ userId: userDronists.userId })
+      .from(userDronists);
+
+    const ids = Array.from(new Set(rows.map(r => r.userId)));
+
+    await Promise.all(
+      ids.map(userId =>
+        this.createNotification({ ...notification, userId })
+      )
+    );
+  } catch (error) {
+    console.error("Erreur notifications dronists:", error);
+    throw new Error("Impossible de créer les notifications dronists");
+  }
+}
 
   static async createNotificationForCenter(centerId: number, notification: Omit<NewNotification, 'centerId'>) {
     try {
@@ -66,8 +87,15 @@ export class NotificationService {
         deliveryId,
         hospitalId
       });
-
-      console.log(`Notification envoyée au centre ${centerId} pour la demande de livraison #${deliveryId}`);
+      await this.createNotificationForAllDronists({
+      type: 'mission_new',
+      title: `Nouvelle mission${urgentText}`,
+      message: `Commande #${deliveryId} — ${quantity} poche(s) ${bloodType} pour ${hospitalInfo.hospitalName}.`,
+      priority: priorityLevel,
+      deliveryId,
+      hospitalId,
+    });
+      console.log(`Notification envoyée au centre ${centerId}+ dronists pour la demande de livraison #${deliveryId}`);
     } catch (error) {
       console.error('Erreur lors de la notification de demande de livraison:', error);
       throw error;
@@ -111,13 +139,25 @@ export class NotificationService {
       });
 
       await this.createNotificationForHospital(hospitalId, {
-        type: 'delivery_status',
-        title,
-        message,
-        priority,
+      type: 'delivery_status',
+      title,
+      message,
+      priority,
+      deliveryId,
+      centerId,
+    });
+
+    if (newStatus === 'validated' || newStatus === 'approved') {
+      await this.createNotificationForAllDronists({
+        type: 'mission_update',
+        title: 'Mission validée',
+        message: `Commande #${deliveryId} — mission confirmée.`,
+        priority: 'high',
         deliveryId,
-        centerId
+        hospitalId,
       });
+    }
+
 
     } catch (error) {
       console.error('Erreur lors de la notification de changement de statut:', error);
