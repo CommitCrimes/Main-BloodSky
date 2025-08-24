@@ -7,9 +7,9 @@ export class DroneSyncService {
   private static instance: DroneSyncService;
 
   private syncInterval: NodeJS.Timeout | null = null;
-
+  
+  private readonly DRONE_API_BASE = process.env.DRONE_API_BASE ?? "http://localhost:5000";
   // --- Constantes SANS .env ---
-  private readonly API_BASE = 'http://localhost:5000';
   private readonly SYNC_ENABLED = true; // mets false si tu veux couper le poller
   private readonly SYNC_INTERVAL_MS = 5000; // 5s
 
@@ -35,7 +35,7 @@ export class DroneSyncService {
       console.log('Drone sync already running');
       return;
     }
-    console.log(`Starting drone sync (base=${this.API_BASE}) every ${this.SYNC_INTERVAL_MS}ms`);
+    console.log(`Starting drone sync (base=${this.DRONE_API_BASE}) every ${this.SYNC_INTERVAL_MS}ms`);
     this.syncInterval = setInterval(async () => {
       await this.syncAllDrones();
     }, this.SYNC_INTERVAL_MS);
@@ -55,7 +55,7 @@ export class DroneSyncService {
     try {
       const availableDrones = await db.select().from(drones);
       await Promise.allSettled(
-        availableDrones.map(d => this.syncDrone(d.droneId, this.API_BASE, d.droneId))
+        availableDrones.map(d => this.syncDrone(d.droneId, this.DRONE_API_BASE, d.droneId))
       );
     } catch (error) {
       console.error('Error syncing drones:', error);
@@ -143,7 +143,7 @@ private async fetchFlightInfo(apiUrl: string, droneId: number, strict = false): 
 
       if (drone.length === 0) return false;
 
-      await this.syncDrone(droneId, this.API_BASE, droneId);
+      await this.syncDrone(droneId, this.DRONE_API_BASE, droneId);
       return true;
     } catch (error) {
       console.error(`Force sync failed for drone ${droneId}:`, error);
