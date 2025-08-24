@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:5000";
+const DRONE_API_BASE = process.env.DRONE_API_BASE ?? "http://localhost:5000";
 
 export type Waypoint = {
   lat: number;
@@ -35,7 +35,7 @@ export type ModifyWaypointPayload = Partial<{   //les arguments sont optionnel g
 }>;
 
 export async function createMission(data: CreateMissionPayload): Promise<{ message: string }> {
-  const res = await fetch(`${BASE_URL}/mission/create`, {
+  const res = await fetch(`${DRONE_API_BASE}/mission/create`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
@@ -53,7 +53,7 @@ export async function sendMission(file: File): Promise<{ message: string }> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(`${BASE_URL}/mission/send`, {
+  const res = await fetch(`${DRONE_API_BASE}/mission/send`, {
     method: "POST",
     body: formData,
   });
@@ -71,7 +71,7 @@ export async function modifyMission(
   seq: number,
   updates: ModifyWaypointPayload
 ): Promise<{ message: string }> {
-  const res = await fetch(`${BASE_URL}/mission/modify`, {
+  const res = await fetch(`${DRONE_API_BASE}/mission/modify`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ filename, seq, updates }),

@@ -1,4 +1,4 @@
-const BASE_URL = "http://localhost:5000";
+const DRONE_API_BASE = process.env.DRONE_API_BASE ?? "http://localhost:5000";
 
 export type FlightInfo = {
   drone_id: string;
@@ -13,7 +13,7 @@ export type FlightInfo = {
 };
 
 export async function getFlightInfo(): Promise<FlightInfo> {
-  const res = await fetch(`${BASE_URL}/flight_info`);
+  const res = await fetch(`${DRONE_API_BASE}/flight_info`);
   if (!res.ok) throw new Error(await res.text());
   return await res.json();
 }
