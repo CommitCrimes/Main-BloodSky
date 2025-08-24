@@ -4,6 +4,7 @@ import { cors } from 'hono/cors';
 import { HTTPException } from 'hono/http-exception';
 import { createRouter } from './routes';
 import { droneSyncService } from './services/drone-sync.service';
+import { hostname } from 'os';
 
 // Load environment variables
 const PORT = process.env.PORT || 3000;
@@ -61,5 +62,6 @@ console.log(`Server running on http://localhost:${PORT}`);
 
 export default {
   fetch: app.fetch,
+  hostname: "0.0.0.0",
   port: PORT,
 };
