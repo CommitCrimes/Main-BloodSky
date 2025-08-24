@@ -77,8 +77,7 @@ export async function sendSupportEmail(payload: SupportPayload) {
 
   const html = `
   <div style="font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;line-height:1.45;">
-    <h3 style="margin:0 0 12px 0;color:#111827;">Nouveau message de support</h3>
-
+  
     <table style="border-collapse:collapse;background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;width:100%;max-width:640px;">
       ${detailRow('Nom', name)}
       ${detailRow('Email', email)}
@@ -91,20 +90,7 @@ export async function sendSupportEmail(payload: SupportPayload) {
         <td style="padding:6px 8px;color:#374151;vertical-align:top;"><b>Message</b></td>
         <td style="padding:6px 8px;color:#111827;white-space:pre-wrap;">${esc(message)}</td>
       </tr>
-      ${
-        extraMetaEntries.length
-          ? `<tr>
-              <td style="padding:6px 8px;color:#374151;vertical-align:top;"><b>Contexte</b></td>
-              <td style="padding:6px 8px;color:#111827;">
-                <ul style="margin:6px 0 0 16px;padding:0;">
-                  ${extraMetaEntries
-                    .map(([k, v]) => `<li><b>${esc(k)}:</b> ${esc(typeof v === 'object' ? JSON.stringify(v) : v)}</li>`)
-                    .join('')}
-                </ul>
-              </td>
-            </tr>`
-          : ''
-      }
+
     </table>
 
     <div style="margin-top:12px;color:#6b7280;font-size:12px;">

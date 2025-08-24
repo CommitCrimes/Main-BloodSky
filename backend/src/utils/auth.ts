@@ -55,7 +55,6 @@ export const authMiddleware = async (c: Context, next: () => Promise<void>) => {
     const token = authHeader.split(' ')[1];
     const payload = await verifyToken(token);
     
-    // Définir les données utilisateur dans le contexte de la requête pour que les routes protégées puissent les utiliser
     c.set('user', payload);
     await next();
   } catch (error) {
