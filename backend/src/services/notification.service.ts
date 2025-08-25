@@ -22,14 +22,22 @@ export class NotificationService {
     }
   }
 
-  static async createNotificationForCenter(centerId: number, notification: Omit<NewNotification, 'centerId'>) {
+  static async createNotificationForCenter(
+    centerId: number,
+    notification: Omit<NewNotification, 'centerId'>,
+    excludeUserId?: number
+  ) {
     try {
       const centerUsers = await db
         .select({ userId: userDonationCenter.userId })
         .from(userDonationCenter)
         .where(eq(userDonationCenter.centerId, centerId));
 
-      const notificationPromises = centerUsers.map(user => 
+      const filteredUsers = excludeUserId
+        ? centerUsers.filter(user => user.userId !== excludeUserId)
+        : centerUsers;
+
+      const notificationPromises = filteredUsers.map(user =>
         this.createNotification({
           ...notification,
           userId: user.userId,
@@ -44,7 +52,11 @@ export class NotificationService {
     }
   }
 
-  static async createNotificationForDronist(notification: Omit<NewNotification, 'userId'>, deliveryId?: number) {
+  static async createNotificationForDronist(
+    notification: Omit<NewNotification, 'userId'>,
+    deliveryId?: number,
+    excludeUserId?: number
+  ) {
     try {
       let dronistUsers;
 
@@ -54,20 +66,24 @@ export class NotificationService {
           .from(deliveryParticipations)
           .where(eq(deliveryParticipations.deliveryId, deliveryId));
 
-          // If no dronists have yet participated in this delivery,
-          // fall back to notifying all dronists.
-          if (dronistUsers.length === 0) {
-            dronistUsers = await db
-              .select({ userId: userDronists.userId })
-              .from(userDronists);
-          }
+        // If no dronists have yet participated in this delivery,
+        // fall back to notifying all dronists.
+        if (dronistUsers.length === 0) {
+          dronistUsers = await db
+            .select({ userId: userDronists.userId })
+            .from(userDronists);
+        }
       } else {
         dronistUsers = await db
           .select({ userId: userDronists.userId })
           .from(userDronists);
       }
 
-      const notificationPromises = dronistUsers.map(user =>
+      const filteredUsers = excludeUserId
+        ? dronistUsers.filter(user => user.userId !== excludeUserId)
+        : dronistUsers;
+
+      const notificationPromises = filteredUsers.map(user =>
         this.createNotification({
           ...notification,
           userId: user.userId
@@ -123,7 +139,13 @@ export class NotificationService {
     }
   }
 
-  static async notifyDeliveryStatusChange(deliveryId: number, newStatus: string, hospitalId: number, centerId: number) {
+  static async notifyDeliveryStatusChange(
+    deliveryId: number,
+    newStatus: string,
+    hospitalId: number,
+    centerId: number,
+    actingUserId?: number
+  ) {
     try {
       let title: string;
       let message: string;
@@ -170,33 +192,75 @@ export class NotificationService {
           message = `Le statut de la livraison #${deliveryId} a été mis à jour: ${newStatus}`;
       }
 
-      await this.createNotificationForCenter(centerId, {
-        type: newStatus,
-        title,
-        message,
-        priority,
-        deliveryId,
-        hospitalId
-      });
+      const centerActionStatuses = ['accepted_center', 'refused_center'];
+      const dronistActionStatuses = ['accepted_dronist', 'refused_dronist'];
+
+      if (dronistActionStatuses.includes(newStatus)) {
+        await this.createNotificationForCenter(centerId, {
+          type: newStatus,
+          title,
+          message,
+          priority,
+          deliveryId,
+          hospitalId
+        }, actingUserId);
 
       await this.createNotificationForHospital(hospitalId, {
-        type: newStatus,
-        title,
-        message,
-        priority,
-        deliveryId,
-        centerId
-      });
+          type: newStatus,
+          title,
+          message,
+          priority,
+          deliveryId,
+          centerId
+        }, actingUserId);
+      } else if (centerActionStatuses.includes(newStatus)) {
+        await this.createNotificationForHospital(hospitalId, {
+          type: newStatus,
+          title,
+          message,
+          priority,
+          deliveryId,
+          centerId
+        }, actingUserId);
 
-      await this.createNotificationForDronist({
-        type: newStatus,
-        title,
-        message,
-        priority,
-        deliveryId,
-        hospitalId,
-        centerId
-      }, deliveryId);
+        await this.createNotificationForDronist({
+          type: newStatus,
+          title,
+          message,
+          priority,
+          deliveryId,
+          hospitalId,
+          centerId
+        }, deliveryId, actingUserId);
+      } else {
+        await this.createNotificationForCenter(centerId, {
+          type: newStatus,
+          title,
+          message,
+          priority,
+          deliveryId,
+          hospitalId
+        }, actingUserId);
+
+        await this.createNotificationForHospital(hospitalId, {
+          type: newStatus,
+          title,
+          message,
+          priority,
+          deliveryId,
+          centerId
+        }, actingUserId);
+
+        await this.createNotificationForDronist({
+          type: newStatus,
+          title,
+          message,
+          priority,
+          deliveryId,
+          hospitalId,
+          centerId
+        }, deliveryId, actingUserId);
+      }
 
     } catch (error) {
       console.error('Erreur lors de la notification de changement de statut:', error);
@@ -204,14 +268,22 @@ export class NotificationService {
     }
   }
 
-  static async createNotificationForHospital(hospitalId: number, notification: Omit<NewNotification, 'hospitalId'>) {
+  static async createNotificationForHospital(
+    hospitalId: number,
+    notification: Omit<NewNotification, 'hospitalId'>,
+    excludeUserId?: number
+  ) {
     try {
       const hospitalUsers = await db
         .select({ userId: userHospital.userId })
         .from(userHospital)
         .where(eq(userHospital.hospitalId, hospitalId));
 
-      const notificationPromises = hospitalUsers.map(user => 
+      const filteredUsers = excludeUserId
+        ? hospitalUsers.filter(user => user.userId !== excludeUserId)
+        : hospitalUsers;
+
+      const notificationPromises = filteredUsers.map(user =>
         this.createNotification({
           ...notification,
           userId: user.userId,
