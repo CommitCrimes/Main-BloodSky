@@ -10,7 +10,8 @@
     "test": "bun test",
     "lint": "eslint src --ext .ts",
     "format": "prettier --write 'src/**/*.ts'",
-    "create-admin": "bun run scripts/create-admin.ts"
+    "create-admin": "bun run scripts/create-admin.ts",
+    "fix:user-sequence": "bun src/scripts/fix-user-sequence.ts"
   },
   "dependencies": {
     "@hono/swagger-ui": "^0.3.0",
@@ -21,16 +22,18 @@
     "bcrypt": "^6.0.0",
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.44.2",
+    "express": "^5.1.0",
     "hono": "^4.0.5",
     "jose": "^5.2.2",
-    "nodemailer": "^7.0.3",
+    "nodemailer": "^7.0.5",
     "pg": "^8.11.3",
     "uuid": "^11.1.0",
     "zod": "^3.22.4"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
-    "@types/node": "^20.11.20",
+    "@types/express": "^5.0.3",
+    "@types/node": "^20.19.11",
     "@types/pg": "^8.11.0",
     "@typescript-eslint/eslint-plugin": "^7.0.2",
     "@typescript-eslint/parser": "^7.0.2",

@@ -13,6 +13,7 @@ import { donationCenterAdminRouter } from './donation-center-admin.routes';
 import { profileRouter } from './profile.routes';
 import { notificationRouter } from './notification';
 import { dashboardRouter } from './dashboard';
+
 import { swaggerUI } from '@hono/swagger-ui';
 import { bloodSwagger } from '@/swagger/blood-swagger';
 import { userSwagger } from '@/swagger/user-swagger';
@@ -24,6 +25,8 @@ import { notificationSwagger } from '@/swagger/notification-swagger';
 import { profileSwagger } from '@/swagger/profile-swagger';
 import { adminSwagger } from '@/swagger/admin-swagger';
 import { dashboardSwagger } from '@/swagger/dashboard-swagger';
+
+import { emailRouter } from './email.routes';
 
 export const createRouter = () => {
   const api = new Hono();
@@ -715,6 +718,11 @@ export const createRouter = () => {
     
     // Routes dashboard
     api.route('/dashboard', dashboardRouter);
+
+    // Routes email
+    api.route('/email', emailRouter);
+
+
 
   api.get('/swagger', swaggerUI({ url: '/api/docs' }));
   

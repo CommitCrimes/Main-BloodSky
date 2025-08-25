@@ -29,11 +29,12 @@ import {
   NotificationImportant,
   LocalShipping,
   DoneAll,
-  Info,
+  Cancel,
   Warning,
   Refresh,
   Search,
-  Done
+  Done,
+  AccountCircle
 } from '@mui/icons-material';
 import { NotificationStore } from '../stores/NotificationStore';
 
@@ -50,7 +51,7 @@ const commonStyles = {
   },
   headerGlass: {
     background: 'rgba(255, 255, 255, 0.7)',
-    backdropFilter: 'blur(20px)', 
+    backdropFilter: 'blur(20px)',
     border: '1px solid rgba(255, 255, 255, 0.3)',
     borderRadius: '24px',
     boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)'
@@ -89,12 +90,24 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
     switch (type) {
       case 'delivery_request':
         return <LocalShipping color={priority === 'urgent' ? 'error' : 'primary'} />;
-      case 'delivery_status':
-        return <Info color="info" />;
+      case 'in_transit':
+        return <LocalShipping color="info" />;
+      case 'delivered':
+        return <DoneAll color="success" />;
+      case 'cancelled':
+        return <Cancel color="error" />;
+      case 'accepted_center':
+      case 'accepted_dronist':
+        return <DoneAll color="success" />;
+      case 'refused_center':
+      case 'refused_dronist':
+        return <Cancel color="error" />;
       case 'stock_alert':
         return <Warning color="warning" />;
       case 'system':
         return <NotificationImportant color="info" />;
+      case 'user':
+        return <AccountCircle color="primary" />;
       default:
         return <Notifications color="primary" />;
     }
@@ -134,12 +147,26 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
     switch (type) {
       case 'delivery_request':
         return 'Demande de livraison';
-      case 'delivery_status':
-        return 'Statut de livraison';
+      case 'in_transit':
+        return 'Livraison en cours';
+      case 'delivered':
+        return 'Livraison effectuée';
+      case 'cancelled':
+        return 'Livraison annulée';
+      case 'accepted_center':
+        return 'Demande acceptée par le centre';
+      case 'refused_center':
+        return 'Demande refusée par le centre';
+      case 'accepted_dronist':
+        return 'Livraison acceptée par le droniste';
+      case 'refused_dronist':
+        return 'Livraison refusée par le droniste';
       case 'stock_alert':
         return 'Alerte de stock';
       case 'system':
         return 'Système';
+      case 'user':
+        return 'Notification utilisateur';
       default:
         return 'Autre';
     }
@@ -208,8 +235,8 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
   }
 
   return (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
         height: '100vh',
         background: commonStyles.backgroundGradient,
         p: { xs: 2, md: 4 },
@@ -230,10 +257,10 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
             <Badge badgeContent={notificationStore.unreadCount} color="error">
               <Notifications sx={{ fontSize: 40, color: '#981A0E' }} />
             </Badge>
-            <Typography 
-              variant="h1" 
-              sx={{ 
-                color: '#981A0E', 
+            <Typography
+              variant="h1"
+              sx={{
+                color: '#981A0E',
                 fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem' },
                 fontFamily: 'Iceland, cursive',
                 ...commonStyles.gradientText
@@ -242,16 +269,16 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
               Notifications
             </Typography>
           </Box>
-          <Typography 
+          <Typography
             variant="subtitle1"
-            sx={{ 
-              color: '#5C7F9B', 
+            sx={{
+              color: '#5C7F9B',
               ...commonStyles.techFont,
               opacity: 0.8,
               fontSize: { xs: '0.9rem', md: '1.1rem' }
             }}
           >
-            {notificationStore.unreadCount > 0 
+            {notificationStore.unreadCount > 0
               ? `${notificationStore.unreadCount} notification${notificationStore.unreadCount > 1 ? 's' : ''} non lue${notificationStore.unreadCount > 1 ? 's' : ''}`
               : 'Toutes les notifications sont lues'
             }
@@ -262,13 +289,13 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
       {/* Affichage des erreurs */}
       {notificationStore.error && (
         <Fade in timeout={600}>
-          <Alert 
-            severity="error" 
-            sx={{ 
+          <Alert
+            severity="error"
+            sx={{
               mb: 3,
               borderRadius: '16px',
               '& .MuiAlert-message': commonStyles.techFont
-            }} 
+            }}
             onClose={() => notificationStore.clearError()}
           >
             {notificationStore.error}
@@ -338,9 +365,16 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
               >
                 <MenuItem value="all">Tous</MenuItem>
                 <MenuItem value="delivery_request">Demande</MenuItem>
-                <MenuItem value="delivery_status">Statut</MenuItem>
+                <MenuItem value="in_transit">En transit</MenuItem>
+                <MenuItem value="delivered">Livrée</MenuItem>
+                <MenuItem value="cancelled">Annulée</MenuItem>
+                <MenuItem value="accepted_center">Acceptée centre</MenuItem>
+                <MenuItem value="refused_center">Refusée centre</MenuItem>
+                <MenuItem value="accepted_dronist">Acceptée droniste</MenuItem>
+                <MenuItem value="refused_dronist">Refusée droniste</MenuItem>
                 <MenuItem value="stock_alert">Alerte</MenuItem>
                 <MenuItem value="system">Système</MenuItem>
+                <MenuItem value="user">Utilisateur</MenuItem>
               </Select>
             </FormControl>
 
@@ -409,9 +443,9 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
               </Typography>
             </Box>
           ) : (
-            <List sx={{ 
-              py: 0, 
-              flex: 1, 
+            <List sx={{
+              py: 0,
+              flex: 1,
               overflow: 'auto',
               '&::-webkit-scrollbar': {
                 width: '8px',

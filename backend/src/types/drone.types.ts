@@ -49,6 +49,24 @@ export interface DroneUpdate {
   lastSyncAt?: Date;
 }
 
+export type NormalizedFlightInfo = {
+  state: 'offline' | 'idle' | 'flying' | 'unknown' | null;
+  is_armed: boolean | null;
+  flight_mode: string | null;
+  battery_remaining_percent: number | null;
+  latitude: number | null;
+  longitude: number | null;
+  altitude_m: number | null;
+  horizontal_speed_m_s: number | null;
+  heading_deg: number | null;
+  movement_track_deg: number | null;
+  updated_at: string;
+  unavailable: boolean;
+  reason: string | null;
+};
+
+
+
 export enum DroneFlightMode {
   STABILIZE = 'STABILIZE',
   ACRO = 'ACRO',

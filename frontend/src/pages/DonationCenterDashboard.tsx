@@ -4,7 +4,7 @@ import DonationCenterUserManagement from '@/components/DonationCenterUserManagem
 import ProfileManagement from '@/components/ProfileManagement';
 import HistoryManagement from '@/components/HistoryManagement';
 import DashboardLayout from '@/components/DashboardLayout';
-
+import ContactWidhetAuthed from '@/components/SupportItEmailingAuth';
 const DonationCenterDashboard = () => {
   const auth = useAuth();
 
@@ -21,6 +21,7 @@ const DonationCenterDashboard = () => {
     ) : undefined,
     profileManagementComponent: <ProfileManagement />,
     historyManagementComponent: <HistoryManagement />,
+    contactComponent: <ContactWidhetAuthed />,
   };
 
   return <DashboardLayout config={dashboardConfig} />;

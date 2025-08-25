@@ -17,6 +17,7 @@ import TermsAndConditions from './pages/ TermsAndConditions.tsx';
 import FAQ from './pages/FAQ.tsx';
 
 import LegalNotice from './pages/LegalNotice.tsx';
+import Contact from './pages/Contact';
 
 import './App.css';
 
@@ -36,6 +37,7 @@ const App = observer(() => {
           <Route path="/terms-condition" element={<TermsAndConditions />} />
           <Route path="/legal-notice" element={<LegalNotice />} />
           <Route path="/faq" element={<FAQ />} />
+          <Route path="/contact" element={<Contact />} />
 
 
           {/* Routes protégées */}

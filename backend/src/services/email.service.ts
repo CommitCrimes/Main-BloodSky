@@ -29,7 +29,7 @@ export const sendInvitationEmail = async (
   const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/update-password?token=${token}&temp=${tempPassword}`;
   
   const mailOptions = {
-    from: 'admin@bloodsky.fr',
+    from: process.env.EMAIL_USER! || 'admin@bloodsky.fr',
     to: email,
     subject: 'Invitation BloodSky - Première connexion',
     html: `

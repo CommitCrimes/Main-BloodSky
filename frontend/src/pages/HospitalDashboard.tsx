@@ -5,7 +5,7 @@ import ProfileManagement from '@/components/ProfileManagement';
 import HistoryManagement from '@/components/HistoryManagement';
 import OrderBlood from '@/components/OrderBlood';
 import DashboardLayout from '@/components/DashboardLayout';
-
+import ContactWidgetAuthed from '@/components/SupportItEmailingAuth';
 const HospitalDashboard = () => {
   const auth = useAuth();
 
@@ -23,6 +23,7 @@ const HospitalDashboard = () => {
     profileManagementComponent: <ProfileManagement />,
     historyManagementComponent: <HistoryManagement />,
     orderBloodComponent: <OrderBlood />,
+    contactComponent: <ContactWidgetAuthed />,
   };
 
   return <DashboardLayout config={dashboardConfig} />;

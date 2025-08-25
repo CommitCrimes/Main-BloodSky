@@ -181,7 +181,7 @@ const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
               <TableContainer component={Paper} sx={{ maxHeight: 300 }}>
                 <Table size="small" stickyHeader>
                   <TableHead>
-                    <TableRow>
+                    <TableRow >
                       <TableCell sx={{ fontFamily: 'Share Tech, monospace' }}>Heure</TableCell>
                       <TableCell sx={{ fontFamily: 'Share Tech, monospace' }}>Icône</TableCell>
                       <TableCell sx={{ fontFamily: 'Share Tech, monospace' }}>Vent (m/s)</TableCell>
@@ -191,7 +191,7 @@ const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
                     {forecastData
                       .filter((entry) => {
                         const hour = parseInt(entry.dt_txt.split(' ')[1].slice(0, 2), 10);
-                        return hour >= 9 && hour <= 18;
+                        return hour;
                       })
                       .map((entry) => (
                         <TableRow key={entry.dt_txt}>
