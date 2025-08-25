@@ -3,6 +3,8 @@ import { deliveries } from "../schemas/delivery";
 import { deliveryParticipations } from "../schemas/delivery_participation";
 import { db } from "../utils/db";
 import { eq, and } from "drizzle-orm";
+import { NotificationService } from "../services/notification.service";
+
 
 export const deliveryRouter = new Hono();
 
@@ -140,6 +142,19 @@ deliveryRouter.put("/:id", async (c) => {
     return c.text("No fields to update", 400);
   }
   await db.update(deliveries).set(patch).where(eq(deliveries.deliveryId, id));
+  const [delivery] = await db
+    .select({ hospitalId: deliveries.hospitalId, centerId: deliveries.centerId })
+    .from(deliveries)
+    .where(eq(deliveries.deliveryId, id));
+
+  if (body.deliveryStatus && delivery?.hospitalId && delivery?.centerId) {
+    await NotificationService.notifyDeliveryStatusChange(
+      id,
+      body.deliveryStatus,
+      delivery.hospitalId,
+      delivery.centerId
+    );
+  }
   return c.text("Updated");
 });
 
