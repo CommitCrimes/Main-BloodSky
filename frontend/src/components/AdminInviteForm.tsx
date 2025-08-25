@@ -21,7 +21,7 @@ interface Hospital {
 }
 
 interface AdminInviteFormProps {
-  type: 'donation_center' | 'hospital';
+  type: 'donation_center' | 'hospital' | 'add_hospital';
 }
 
 interface FormData {
@@ -42,6 +42,18 @@ interface FormErrors {
   general?: string;
 }
 
+const getEntityDisplayName = (entity: DonationCenter | Hospital): string => {
+  if ('hospitalName' in entity) {
+    return `${entity.hospitalName} - ${entity.hospitalCity}`;
+  } else {
+    return `Centre ${entity.centerCity} - ${entity.centerAdress}`;
+  }
+};
+
+const getEntityId = (entity: DonationCenter | Hospital): number => {
+  return 'hospitalId' in entity ? entity.hospitalId : entity.centerId;
+};
+
 const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
   const [formData, setFormData] = useState<FormData>({
     email: '',
@@ -56,6 +68,19 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
   const [successMessage, setSuccessMessage] = useState('');
   const [entities, setEntities] = useState<(DonationCenter | Hospital)[]>([]);
   const [loadingEntities, setLoadingEntities] = useState(true);
+
+  // State for add_hospital form
+  const [hospitalForm, setHospitalForm] = useState({
+    hospitalName: '',
+    hospitalCity: '',
+    hospitalPostal: '',
+    hospitalAdress: '',
+    hospitalLatitude: '',
+    hospitalLongitude: '',
+  });
+  const [hospitalErrors, setHospitalErrors] = useState<{ [key: string]: string }>({});
+  const [hospitalSuccess, setHospitalSuccess] = useState('');
+  const [hospitalLoading, setHospitalLoading] = useState(false);
 
   const entityLabel = type === 'donation_center' ? 'Centre de donation' : 'Hôpital';
   const entityApiPath = type === 'donation_center' ? 'donation-centers' : 'hospitals';
@@ -166,17 +191,168 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
     }
   };
 
-  const getEntityDisplayName = (entity: DonationCenter | Hospital): string => {
-    if ('hospitalName' in entity) {
-      return `${entity.hospitalName} - ${entity.hospitalCity}`;
-    } else {
-      return `Centre ${entity.centerCity} - ${entity.centerAdress}`;
+  // Handler for add_hospital form
+  const handleHospitalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setHospitalForm(prev => ({ ...prev, [name]: value }));
+    if (hospitalErrors[name]) {
+      setHospitalErrors(prev => {
+        const { [name]: _removed, ...rest } = prev;
+        return rest;
+      });
+    }
+    setHospitalSuccess('');
+  };
+
+  const validateHospitalForm = () => {
+    const errors: { [key: string]: string } = {};
+    if (!hospitalForm.hospitalName) errors.hospitalName = 'Nom requis';
+    if (!hospitalForm.hospitalCity) errors.hospitalCity = 'Ville requise';
+    if (!hospitalForm.hospitalPostal || !/^\d{5}$/.test(hospitalForm.hospitalPostal)) errors.hospitalPostal = 'Code postal invalide';
+    if (!hospitalForm.hospitalAdress) errors.hospitalAdress = 'Adresse requise';
+    if (!hospitalForm.hospitalLatitude || isNaN(Number(hospitalForm.hospitalLatitude))) errors.hospitalLatitude = 'Latitude invalide';
+    if (!hospitalForm.hospitalLongitude || isNaN(Number(hospitalForm.hospitalLongitude))) errors.hospitalLongitude = 'Longitude invalide';
+    setHospitalErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleHospitalSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!validateHospitalForm()) return;
+    setHospitalLoading(true);
+    setHospitalErrors({});
+    try {
+      const payload = {
+        hospitalName: hospitalForm.hospitalName,
+        hospitalCity: hospitalForm.hospitalCity,
+        hospitalPostal: Number(hospitalForm.hospitalPostal),
+        hospitalAdress: hospitalForm.hospitalAdress,
+        hospitalLatitude: Number(hospitalForm.hospitalLatitude),
+        hospitalLongitude: Number(hospitalForm.hospitalLongitude),
+      };
+      await api.post('/hospitals', payload);
+      setHospitalSuccess('Nouvel hôpital ajouté avec succès !');
+      setHospitalForm({
+        hospitalName: '',
+        hospitalCity: '',
+        hospitalPostal: '',
+        hospitalAdress: '',
+        hospitalLatitude: '',
+        hospitalLongitude: '',
+      });
+    } catch (error) {
+      setHospitalErrors({ general: "Erreur lors de l'ajout de l'hôpital." });
+    } finally {
+      setHospitalLoading(false);
     }
   };
 
-  const getEntityId = (entity: DonationCenter | Hospital): number => {
-    return 'hospitalId' in entity ? entity.hospitalId : entity.centerId;
-  };
+  if (type === 'add_hospital') {
+    return (
+      <div className="bg-white shadow-md rounded-lg p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Ajouter un nouvel hôpital</h3>
+        {hospitalSuccess && (
+          <div className="mb-4 rounded-md bg-green-50 p-4">
+            <div className="text-sm text-green-700">{hospitalSuccess}</div>
+          </div>
+        )}
+        {hospitalErrors.general && (
+          <div className="mb-4 rounded-md bg-red-50 p-4">
+            <div className="text-sm text-red-700">{hospitalErrors.general}</div>
+          </div>
+        )}
+        <form onSubmit={handleHospitalSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="hospitalName" className="block text-sm font-medium text-gray-700">Nom de l'hôpital *</label>
+            <input
+              id="hospitalName"
+              name="hospitalName"
+              type="text"
+              required
+              className={`mt-1 block w-full px-3 py-2 border ${hospitalErrors.hospitalName ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              value={hospitalForm.hospitalName}
+              onChange={handleHospitalInputChange}
+            />
+            {hospitalErrors.hospitalName && <p className="mt-1 text-sm text-red-600">{hospitalErrors.hospitalName}</p>}
+          </div>
+          <div>
+            <label htmlFor="hospitalCity" className="block text-sm font-medium text-gray-700">Ville *</label>
+            <input
+              id="hospitalCity"
+              name="hospitalCity"
+              type="text"
+              required
+              className={`mt-1 block w-full px-3 py-2 border ${hospitalErrors.hospitalCity ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              value={hospitalForm.hospitalCity}
+              onChange={handleHospitalInputChange}
+            />
+            {hospitalErrors.hospitalCity && <p className="mt-1 text-sm text-red-600">{hospitalErrors.hospitalCity}</p>}
+          </div>
+          <div>
+            <label htmlFor="hospitalPostal" className="block text-sm font-medium text-gray-700">Code postal *</label>
+            <input
+              id="hospitalPostal"
+              name="hospitalPostal"
+              type="text"
+              required
+              className={`mt-1 block w-full px-3 py-2 border ${hospitalErrors.hospitalPostal ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              value={hospitalForm.hospitalPostal}
+              onChange={handleHospitalInputChange}
+            />
+            {hospitalErrors.hospitalPostal && <p className="mt-1 text-sm text-red-600">{hospitalErrors.hospitalPostal}</p>}
+          </div>
+          <div>
+            <label htmlFor="hospitalAdress" className="block text-sm font-medium text-gray-700">Adresse *</label>
+            <input
+              id="hospitalAdress"
+              name="hospitalAdress"
+              type="text"
+              required
+              className={`mt-1 block w-full px-3 py-2 border ${hospitalErrors.hospitalAdress ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              value={hospitalForm.hospitalAdress}
+              onChange={handleHospitalInputChange}
+            />
+            {hospitalErrors.hospitalAdress && <p className="mt-1 text-sm text-red-600">{hospitalErrors.hospitalAdress}</p>}
+          </div>
+          <div>
+            <label htmlFor="hospitalLatitude" className="block text-sm font-medium text-gray-700">Latitude *</label>
+            <input
+              id="hospitalLatitude"
+              name="hospitalLatitude"
+              type="text"
+              required
+              className={`mt-1 block w-full px-3 py-2 border ${hospitalErrors.hospitalLatitude ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              value={hospitalForm.hospitalLatitude}
+              onChange={handleHospitalInputChange}
+            />
+            {hospitalErrors.hospitalLatitude && <p className="mt-1 text-sm text-red-600">{hospitalErrors.hospitalLatitude}</p>}
+          </div>
+          <div>
+            <label htmlFor="hospitalLongitude" className="block text-sm font-medium text-gray-700">Longitude *</label>
+            <input
+              id="hospitalLongitude"
+              name="hospitalLongitude"
+              type="text"
+              required
+              className={`mt-1 block w-full px-3 py-2 border ${hospitalErrors.hospitalLongitude ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              value={hospitalForm.hospitalLongitude}
+              onChange={handleHospitalInputChange}
+            />
+            {hospitalErrors.hospitalLongitude && <p className="mt-1 text-sm text-red-600">{hospitalErrors.hospitalLongitude}</p>}
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={hospitalLoading}
+              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {hospitalLoading ? 'Ajout en cours...' : 'Ajouter l\'hôpital'}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white shadow-md rounded-lg p-6">

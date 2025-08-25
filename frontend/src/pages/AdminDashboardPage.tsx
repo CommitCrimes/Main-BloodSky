@@ -9,7 +9,7 @@ const AdminDashboardPage = observer(() => {
   const auth = useAuth();
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'invite-donation' | 'invite-hospital' | 'searchbar'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'invite-donation' | 'invite-hospital' | 'ajouter-hospital' | 'searchbar'>('dashboard');
 
   useEffect(() => {
     if (!auth.user || auth.user.email !== 'admin@bloodsky.fr') {
@@ -66,6 +66,16 @@ const AdminDashboardPage = observer(() => {
                 }`}
               >
                 Inviter Admin Hôpital
+              </button>
+              <button
+                onClick={() => setActiveTab('ajouter-hospital')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'ajouter-hospital'
+                    ? 'border-pink-500 text-pink-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                Ajouter un hôpital
               </button>
               <button
                 onClick={() => setActiveTab('searchbar')}
@@ -139,6 +149,10 @@ const AdminDashboardPage = observer(() => {
 
         {activeTab === 'invite-hospital' && (
           <AdminInviteForm type="hospital" />
+        )}
+
+        {activeTab === 'ajouter-hospital' && (
+          <AdminInviteForm type="add_hospital" />
         )}
 
         {activeTab === 'searchbar' && (
