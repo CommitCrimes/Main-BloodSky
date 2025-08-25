@@ -44,7 +44,9 @@ import {
   PriorityHigh,
   LocationOn,
   CalendarToday,
-  Numbers
+  Numbers,
+  ArrowUpward,
+  ArrowDownward,
 } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import type {
@@ -108,7 +110,7 @@ const HistoryManagementDrone: React.FC = observer(() => {
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [filters, setFilters] = useState<HistoryFilters>({});
-  const [sortConfig] = useState<DroneHistorySortConfig>({
+  const [sortConfig, setSortConfig] = useState<DroneHistorySortConfig>({
     field: 'deliveryDate',
     direction: 'desc'
   });
@@ -138,21 +140,34 @@ const HistoryManagementDrone: React.FC = observer(() => {
 
 
   const openDroneMenu = async (e: React.MouseEvent<HTMLElement>, delivery: DeliveryHistory) => {
-    setDroneMenuAnchor(e.currentTarget);
-    setDroneMenuDeliveryId(delivery.deliveryId);
-    setDroneAssignedOnRow(delivery.droneId ?? null); // si ton type expose droneId
-    setDroneMenuLoading(true);
-    try {
-      // “tous les drones” comme tu veux
-      const list = await dronesApi.list();
-      setDroneOptions(list);
-    } catch (err) {
-      console.error('load drones error', err);
+  setDroneMenuAnchor(e.currentTarget);
+  setDroneMenuDeliveryId(delivery.deliveryId);
+  setDroneAssignedOnRow(delivery.droneId ?? null);
+  setDroneMenuLoading(true);
+
+  try {
+    const centerId =
+      delivery.type === 'delivery'
+        ? delivery.sourceDonationCenter?.centerId
+        : delivery.sourceDonationCenter?.centerId;
+
+    if (!centerId) {
       setDroneOptions([]);
-    } finally {
-      setDroneMenuLoading(false);
+      setError("Impossible de déterminer le centre associé à cette livraison.");
+      return;
     }
-  };
+
+    const id = typeof centerId === 'object' ? centerId.centerId : centerId;
+    const list = await dronesApi.getByCenter(id);
+    setDroneOptions(list);
+  } catch (err) {
+    console.error('load drones error', err);
+    setDroneOptions([]);
+  } finally {
+    setDroneMenuLoading(false);
+  }
+};
+
 
 
   const closeDroneMenu = () => {
@@ -203,6 +218,36 @@ const HistoryManagementDrone: React.FC = observer(() => {
     }
   };
 
+  const handleSort = (field: DroneHistorySortConfig['field']) => {
+    setSortConfig(prev => ({
+      field,
+      direction: prev.field === field && prev.direction === 'asc' ? 'desc' : 'asc',
+    }));
+  };
+
+  const SortableHeader: React.FC<{ label: string; field: DroneHistorySortConfig['field'] }> = ({ label, field }) => {
+    const active = sortConfig.field === field;
+    const dir = sortConfig.direction;
+    return (
+      <Box
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 0.5,
+          cursor: 'pointer',
+          userSelect: 'none'
+        }}
+        onClick={() => handleSort(field)}
+        role="button"
+        aria-label={`Trier par ${label}`}
+        aria-sort={active ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'}
+        title={`Trier par ${label} (${active ? (dir === 'asc' ? 'asc' : 'desc') : 'asc'})`}
+      >
+        <Typography sx={commonStyles.techFontBold}>{label}</Typography>
+        {active ? (dir === 'asc' ? <ArrowUpward fontSize="small" /> : <ArrowDownward fontSize="small" />) : null}
+      </Box>
+    );
+  };
 
   const fetchHistory = async () => {
     try {
@@ -332,6 +377,10 @@ const HistoryManagementDrone: React.FC = observer(() => {
         case 'deliveryDate':
           aValue = a.deliveryDate ? new Date(a.deliveryDate).getTime() : 0;
           bValue = b.deliveryDate ? new Date(b.deliveryDate).getTime() : 0;
+          break;
+        case 'requestDate':
+          aValue = a.requestDate ? new Date(a.requestDate).getTime() : 0;
+          bValue = b.requestDate ? new Date(b.requestDate).getTime() : 0;
           break;
         case 'validationDate':
           aValue = a.validationDate ? new Date(a.validationDate).getTime() : 0;
@@ -560,8 +609,12 @@ const HistoryManagementDrone: React.FC = observer(() => {
                   <TableCell sx={commonStyles.techFontBold}>Centre de Don</TableCell>
                   <TableCell sx={commonStyles.techFontBold}>Hôpital de Destination</TableCell>
                   <TableCell sx={commonStyles.techFontBold}>Type de Sang</TableCell>
-                  <TableCell sx={commonStyles.techFontBold}>Date Demande</TableCell>
-                  <TableCell sx={commonStyles.techFontBold}>Date Livraison</TableCell>
+                  <TableCell sx={commonStyles.techFontBold}>
+                    <SortableHeader label="Date Demande" field="requestDate" />
+                  </TableCell>
+                  <TableCell sx={commonStyles.techFontBold}>
+                    <SortableHeader label="Date Livraison" field="deliveryDate" />
+                  </TableCell>
                   <TableCell sx={commonStyles.techFontBold}>Urgent</TableCell>
                   <TableCell sx={commonStyles.techFontBold}>Statut</TableCell>
                 </TableRow>
@@ -762,7 +815,7 @@ const HistoryManagementDrone: React.FC = observer(() => {
                             transition: 'border-color 0.3s ease',
                             cursor: 'pointer',
                             '&:hover': {
-                              borderColor: '#fff', // ou une couleur comme '#e0e0e0' si tu veux plus subtil
+                              borderColor: '#fff',
                             }
 
                           }}

@@ -10,17 +10,14 @@ export type MissionCurrent = {
   items: DroneWaypoint[];
 };
 
-
-
-// ⛔️ Drones de test à ignorer côté UI
-const IGNORE_DRONE_IDS = new Set<number>([2]);
+const IGNORE_DRONE_IDS = new Set<number>([0]);
 
 function filterDrones<T extends { droneId?: number }>(arr: T[]): T[] {
   return arr.filter(d => !(typeof d?.droneId === 'number' && IGNORE_DRONE_IDS.has(d.droneId)));
 }
 
 /* =========================
- * Helper HTTP minimaliste
+ * Helper HTTP 
  * ========================= */
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
@@ -158,5 +155,4 @@ export const dronesApi = {
   /** GET /drones/:id/mission/current */
   getMissionCurrent: (id: number) =>
     fetchJson<MissionCurrent>(`/drones/${id}/mission/current`),
-
 };

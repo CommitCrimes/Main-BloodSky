@@ -40,6 +40,27 @@ export class NotificationService {
     }
   }
 
+  static async createNotificationForAllDronists(
+    notification: Omit<NewNotification, "userId">
+  ) {
+    try {
+      const rows = await db
+        .select({ userId: userDronists.userId })
+        .from(userDronists);
+
+      const ids = Array.from(new Set(rows.map(r => r.userId)));
+
+      await Promise.all(
+        ids.map(userId =>
+          this.createNotification({ ...notification, userId })
+        )
+      );
+    } catch (error) {
+      console.error("Erreur notifications dronists:", error);
+      throw new Error("Impossible de créer les notifications dronists");
+    }
+  }
+
   static async createNotificationForCenter(
     centerId: number,
     notification: Omit<NewNotification, "centerId">,
@@ -146,6 +167,7 @@ export class NotificationService {
       const urgentText = isUrgent ? " URGENTE" : "";
       const priorityLevel = isUrgent ? "urgent" : "high";
 
+      // Always notify the center
       await this.createNotificationForCenter(centerId, {
         type: "delivery_request",
         title: `Nouvelle demande de livraison${urgentText}`,
@@ -155,6 +177,7 @@ export class NotificationService {
         hospitalId,
       });
 
+      // Notify dronists: participants-if-any, else all dronists (includes centerId in payload)
       await this.createNotificationForDronist({
         type: "delivery_request",
         title: `Nouvelle demande de livraison${urgentText}`,
@@ -163,10 +186,10 @@ export class NotificationService {
         deliveryId,
         hospitalId,
         centerId,
-      });
+      }, deliveryId);
 
       console.log(
-        `Notification envoyée au centre ${centerId} pour la demande de livraison #${deliveryId}`,
+        `Notification envoyée au centre ${centerId} et aux dronists pour la demande de livraison #${deliveryId}`,
       );
     } catch (error) {
       console.error(
@@ -243,7 +266,7 @@ export class NotificationService {
           hospitalId,
         }, actingUserId);
 
-      await this.createNotificationForHospital(hospitalId, {
+        await this.createNotificationForHospital(hospitalId, {
           type: newStatus,
           title,
           message,
@@ -251,6 +274,7 @@ export class NotificationService {
           deliveryId,
           centerId,
         }, actingUserId);
+
       } else if (centerActionStatuses.includes(newStatus)) {
         await this.createNotificationForHospital(hospitalId, {
           type: newStatus,
@@ -300,6 +324,17 @@ export class NotificationService {
         }, deliveryId, actingUserId);
       }
 
+      // Extra broadcast from dev: when mission gets validated/approved, notify all dronists
+      if (newStatus === "validated" || newStatus === "approved") {
+        await this.createNotificationForAllDronists({
+          type: "mission_update",
+          title: "Mission validée",
+          message: `Commande #${deliveryId} — mission confirmée.`,
+          priority: "high",
+          deliveryId,
+          hospitalId,
+        });
+      }
     } catch (error) {
       console.error(
         "Erreur lors de la notification de changement de statut:",

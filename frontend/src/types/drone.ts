@@ -48,18 +48,25 @@ export interface DroneMission {
 
 /** Télémetrie (shape renvoyée par le back) */
 export interface FlightInfo {
-  drone_id: string;
-  is_armed: boolean;
-  flight_mode: string;
-  latitude: number;
-  longitude: number;
-  altitude_m: number;
-  horizontal_speed_m_s: number;
-  vertical_speed_m_s: number;
-  heading_deg: number;
-  movement_track_deg: number;      
-  battery_remaining_percent: number;
+  state: 'offline' | 'idle' | 'flying' | 'unknown' | null;
+  unavailable: boolean;
+  reason: string | null;
+  updated_at: string;
+
+  is_armed: boolean | null;
+  flight_mode: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  altitude_m: number | null;
+  horizontal_speed_m_s: number | null;
+  vertical_speed_m_s: number | null;
+  heading_deg: number | null;
+  movement_track_deg: number | null;
+  battery_remaining_percent: number | null;
+
+  drone_id?: string | null;
 }
+
 
 /** Commandes de vol possibles (extensible) */
 export type CommandMode =
