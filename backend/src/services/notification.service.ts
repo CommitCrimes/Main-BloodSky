@@ -11,20 +11,38 @@ import { eq, and, desc } from "drizzle-orm";
 export class NotificationService {
   static async createNotification(notification: NewNotification) {
     try {
+      if (notification.type === "cancelled" && notification.deliveryId) {
+        const existing = await db
+          .select()
+          .from(notifications)
+          .where(
+            and(
+              eq(notifications.deliveryId, notification.deliveryId),
+              eq(notifications.type, "cancelled"),
+              ...(notification.userId
+                ? [eq(notifications.userId, notification.userId)]
+                : []),
+            ),
+          )
+          .limit(1);
+        if (existing.length > 0) {
+          return existing[0];
+        }
+      }
       const [newNotification] = await db
         .insert(notifications)
         .values(notification)
         .returning();
       return newNotification;
     } catch (error) {
-      console.error('Erreur lors de la création de la notification:', error);
-      throw new Error('Impossible de créer la notification');
+      console.error("Erreur lors de la création de la notification:", error);
+      throw new Error("Impossible de créer la notification");
     }
   }
 
   static async createNotificationForCenter(
     centerId: number,
-    notification: Omit<NewNotification, 'centerId'>,
+    notification: Omit<NewNotification, "centerId">,
     excludeUserId?: number
   ) {
     try {
@@ -37,23 +55,26 @@ export class NotificationService {
         ? centerUsers.filter(user => user.userId !== excludeUserId)
         : centerUsers;
 
-      const notificationPromises = filteredUsers.map(user =>
+      const notificationPromises = filteredUsers.map((user) =>
         this.createNotification({
           ...notification,
           userId: user.userId,
-          centerId
-        })
+          centerId,
+        }),
       );
 
       await Promise.all(notificationPromises);
     } catch (error) {
-      console.error('Erreur lors de la création des notifications pour le centre:', error);
-      throw new Error('Impossible de créer les notifications pour le centre');
+      console.error(
+        "Erreur lors de la création des notifications pour le centre:",
+        error,
+      );
+      throw new Error("Impossible de créer les notifications pour le centre");
     }
   }
 
   static async createNotificationForDronist(
-    notification: Omit<NewNotification, 'userId'>,
+    notification: Omit<NewNotification, "userId">,
     deliveryId?: number,
     excludeUserId?: number
   ) {
@@ -83,21 +104,33 @@ export class NotificationService {
         ? dronistUsers.filter(user => user.userId !== excludeUserId)
         : dronistUsers;
 
-      const notificationPromises = filteredUsers.map(user =>
+      const notificationPromises = filteredUsers.map((user) =>
         this.createNotification({
           ...notification,
-          userId: user.userId
-        })
+          userId: user.userId,
+        }),
       );
 
       await Promise.all(notificationPromises);
     } catch (error) {
-      console.error("Erreur lors de la création des notifications pour les dronistes:", error);
-      throw new Error("Impossible de créer les notifications pour les dronistes");
+      console.error(
+        "Erreur lors de la création des notifications pour les dronistes:",
+        error,
+      );
+      throw new Error(
+        "Impossible de créer les notifications pour les dronistes",
+      );
     }
   }
 
-  static async notifyDeliveryRequest(hospitalId: number, centerId: number, deliveryId: number, bloodType: string, quantity: number, isUrgent: boolean) {
+  static async notifyDeliveryRequest(
+    hospitalId: number,
+    centerId: number,
+    deliveryId: number,
+    bloodType: string,
+    quantity: number,
+    isUrgent: boolean,
+  ) {
     try {
       const hospital = await db
         .select()
@@ -106,7 +139,7 @@ export class NotificationService {
         .limit(1);
 
       if (!hospital.length) {
-        throw new Error('Hôpital non trouvé');
+        throw new Error("Hôpital non trouvé");
       }
 
       const hospitalInfo = hospital[0];
@@ -114,27 +147,32 @@ export class NotificationService {
       const priorityLevel = isUrgent ? "urgent" : "high";
 
       await this.createNotificationForCenter(centerId, {
-        type: 'delivery_request',
-        title: `Nouvelle demande de livraison${urgentText}`,
-        message: `L'hôpital ${hospitalInfo.hospitalName} a demandé ${quantity} poche(s) de sang ${bloodType}${urgentText}. Commande #${deliveryId}`,
-        priority: priorityLevel,
-        deliveryId,
-        hospitalId
-      });
-
-      await this.createNotificationForDronist({
-        type: 'delivery_request',
+        type: "delivery_request",
         title: `Nouvelle demande de livraison${urgentText}`,
         message: `L'hôpital ${hospitalInfo.hospitalName} a demandé ${quantity} poche(s) de sang ${bloodType}${urgentText}. Commande #${deliveryId}`,
         priority: priorityLevel,
         deliveryId,
         hospitalId,
-        centerId
       });
 
-      console.log(`Notification envoyée au centre ${centerId} pour la demande de livraison #${deliveryId}`);
+      await this.createNotificationForDronist({
+        type: "delivery_request",
+        title: `Nouvelle demande de livraison${urgentText}`,
+        message: `L'hôpital ${hospitalInfo.hospitalName} a demandé ${quantity} poche(s) de sang ${bloodType}${urgentText}. Commande #${deliveryId}`,
+        priority: priorityLevel,
+        deliveryId,
+        hospitalId,
+        centerId,
+      });
+
+      console.log(
+        `Notification envoyée au centre ${centerId} pour la demande de livraison #${deliveryId}`,
+      );
     } catch (error) {
-      console.error('Erreur lors de la notification de demande de livraison:', error);
+      console.error(
+        "Erreur lors de la notification de demande de livraison:",
+        error,
+      );
       throw error;
     }
   }
@@ -149,51 +187,51 @@ export class NotificationService {
     try {
       let title: string;
       let message: string;
-      let priority: string = 'medium';
+      let priority: string = "medium";
 
       switch (newStatus) {
-        case 'in_transit':
-          title = 'Livraison en cours';
+        case "in_transit":
+          title = "Livraison en cours";
           message = `La livraison #${deliveryId} est maintenant en transit vers l'hôpital.`;
-          priority = 'high';
+          priority = "high";
           break;
-        case 'delivered':
-          title = 'Livraison effectuée';
+        case "delivered":
+          title = "Livraison effectuée";
           message = `La livraison #${deliveryId} a été livrée avec succès.`;
-          priority = 'medium';
+          priority = "medium";
           break;
-        case 'cancelled':
-          title = 'Livraison annulée';
+        case "cancelled":
+          title = "Livraison annulée";
           message = `La livraison #${deliveryId} a été annulée.`;
-          priority = 'high';
+          priority = "high";
           break;
-        case 'accepted_center':
-          title = 'Demande acceptée par le centre';
+        case "accepted_center":
+          title = "Demande acceptée par le centre";
           message = `Le centre a accepté la commande #${deliveryId}.`;
-          priority = 'high';
+          priority = "high";
           break;
-        case 'refused_center':
-          title = 'Demande refusée par le centre';
+        case "refused_center":
+          title = "Demande refusée par le centre";
           message = `Le centre a refusé la commande #${deliveryId}.`;
-          priority = 'high';
+          priority = "high";
           break;
-        case 'accepted_dronist':
-          title = 'Livraison acceptée par le droniste';
+        case "accepted_dronist":
+          title = "Livraison acceptée par le droniste";
           message = `Un droniste a accepté la livraison #${deliveryId}.`;
-          priority = 'medium';
+          priority = "medium";
           break;
-        case 'refused_dronist':
-          title = 'Livraison refusée par le droniste';
+        case "refused_dronist":
+          title = "Livraison refusée par le droniste";
           message = `Un droniste a refusé la livraison #${deliveryId}.`;
-          priority = 'high';
+          priority = "high";
           break;
         default:
-          title = 'Mise à jour de livraison';
+          title = "Mise à jour de livraison";
           message = `Le statut de la livraison #${deliveryId} a été mis à jour: ${newStatus}`;
       }
 
-      const centerActionStatuses = ['accepted_center', 'refused_center'];
-      const dronistActionStatuses = ['accepted_dronist', 'refused_dronist'];
+      const centerActionStatuses = ["accepted_center", "refused_center"];
+      const dronistActionStatuses = ["accepted_dronist", "refused_dronist"];
 
       if (dronistActionStatuses.includes(newStatus)) {
         await this.createNotificationForCenter(centerId, {
@@ -202,7 +240,7 @@ export class NotificationService {
           message,
           priority,
           deliveryId,
-          hospitalId
+          hospitalId,
         }, actingUserId);
 
       await this.createNotificationForHospital(hospitalId, {
@@ -211,7 +249,7 @@ export class NotificationService {
           message,
           priority,
           deliveryId,
-          centerId
+          centerId,
         }, actingUserId);
       } else if (centerActionStatuses.includes(newStatus)) {
         await this.createNotificationForHospital(hospitalId, {
@@ -220,7 +258,7 @@ export class NotificationService {
           message,
           priority,
           deliveryId,
-          centerId
+          centerId,
         }, actingUserId);
 
         await this.createNotificationForDronist({
@@ -230,7 +268,7 @@ export class NotificationService {
           priority,
           deliveryId,
           hospitalId,
-          centerId
+          centerId,
         }, deliveryId, actingUserId);
       } else {
         await this.createNotificationForCenter(centerId, {
@@ -239,7 +277,7 @@ export class NotificationService {
           message,
           priority,
           deliveryId,
-          hospitalId
+          hospitalId,
         }, actingUserId);
 
         await this.createNotificationForHospital(hospitalId, {
@@ -248,7 +286,7 @@ export class NotificationService {
           message,
           priority,
           deliveryId,
-          centerId
+          centerId,
         }, actingUserId);
 
         await this.createNotificationForDronist({
@@ -258,19 +296,22 @@ export class NotificationService {
           priority,
           deliveryId,
           hospitalId,
-          centerId
+          centerId,
         }, deliveryId, actingUserId);
       }
 
     } catch (error) {
-      console.error('Erreur lors de la notification de changement de statut:', error);
+      console.error(
+        "Erreur lors de la notification de changement de statut:",
+        error,
+      );
       throw error;
     }
   }
 
   static async createNotificationForHospital(
     hospitalId: number,
-    notification: Omit<NewNotification, 'hospitalId'>,
+    notification: Omit<NewNotification, "hospitalId">,
     excludeUserId?: number
   ) {
     try {
@@ -283,18 +324,21 @@ export class NotificationService {
         ? hospitalUsers.filter(user => user.userId !== excludeUserId)
         : hospitalUsers;
 
-      const notificationPromises = filteredUsers.map(user =>
+      const notificationPromises = filteredUsers.map((user) =>
         this.createNotification({
           ...notification,
           userId: user.userId,
-          hospitalId
-        })
+          hospitalId,
+        }),
       );
 
       await Promise.all(notificationPromises);
     } catch (error) {
-      console.error('Erreur lors de la création des notifications pour l\'hôpital:', error);
-      throw new Error('Impossible de créer les notifications pour l\'hôpital');
+      console.error(
+        "Erreur lors de la création des notifications pour l'hôpital:",
+        error,
+      );
+      throw new Error("Impossible de créer les notifications pour l'hôpital");
     }
   }
 
@@ -307,8 +351,8 @@ export class NotificationService {
         .orderBy(desc(notifications.createdAt))
         .limit(limit);
     } catch (error) {
-      console.error('Erreur lors de la récupération des notifications:', error);
-      throw new Error('Impossible de récupérer les notifications');
+      console.error("Erreur lors de la récupération des notifications:", error);
+      throw new Error("Impossible de récupérer les notifications");
     }
   }
 
@@ -316,7 +360,7 @@ export class NotificationService {
     try {
       await db
         .update(notifications)
-        .set({ 
+        .set({
           isRead: true,
           readAt: new Date()
         })
@@ -327,8 +371,8 @@ export class NotificationService {
           )
         );
     } catch (error) {
-      console.error('Erreur lors du marquage comme lu:', error);
-      throw new Error('Impossible de marquer la notification comme lue');
+      console.error("Erreur lors du marquage comme lu:", error);
+      throw new Error("Impossible de marquer la notification comme lue");
     }
   }
 
@@ -340,13 +384,16 @@ export class NotificationService {
         .where(
           and(
             eq(notifications.userId, userId),
-            eq(notifications.isRead, false)
-          )
+            eq(notifications.isRead, false),
+          ),
         );
       return result.length;
     } catch (error) {
-      console.error('Erreur lors du comptage des notifications non lues:', error);
-      throw new Error('Impossible de compter les notifications non lues');
+      console.error(
+        "Erreur lors du comptage des notifications non lues:",
+        error,
+      );
+      throw new Error("Impossible de compter les notifications non lues");
     }
   }
 }
