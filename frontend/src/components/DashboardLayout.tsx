@@ -46,6 +46,8 @@ import { NotificationStore } from '@/stores/NotificationStore';
 import NotificationManagement from './NotificationManagement';
 import DroneManagement from './DroneManagement';
 import { dashboardApi } from '@/api/dashboard';
+import { donationCenterApi } from '@/api/donation_center';
+import { hospitalApi } from '@/api/hospital';
 
 // Fix for default markers in react-leaflet
 delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
@@ -98,6 +100,29 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
   const [statusStats, setStatusStats] = useState<any[]>([]);
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [mapPosition, setMapPosition] = useState<[number, number]>(config.position);
+  const [mapLabel, setMapLabel] = useState<'center' | 'hospital' | 'unknown'>('unknown');
+  const [isLoadingMap, setIsLoadingMap] = useState(false);
+  function parseCoord(value: unknown): number | null {
+    if (value == null) return null;
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string') {
+      const cleaned = value.trim().replace(',', '.');
+      const n = parseFloat(cleaned);
+      return Number.isFinite(n) ? n : null;
+    }
+    return null;
+  }
+  function isValidLatLon(lat: number | null, lon: number | null): lat is number & {} {
+    return (
+      lat != null &&
+      lon != null &&
+      Number.isFinite(lat) &&
+      Number.isFinite(lon) &&
+      lat >= -90 && lat <= 90 &&
+      lon >= -180 && lon <= 180
+    );
+  }
 
   useEffect(() => {
     localStorage.setItem('bloodsky-active-view', activeView);
@@ -142,6 +167,82 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
 
     return () => clearInterval(interval);
   }, [notificationStore]);
+
+  useEffect(() => {
+  const loadPosition = async () => {
+  setIsLoadingMap(true);
+  try {
+    // 1) Utilisateur rattaché à un centre de don
+    if (auth.user?.role?.centerId) {
+      const centerId = auth.user.role.centerId;
+      const center = await donationCenterApi.getCenterById(centerId);
+
+      // Essayons plusieurs alias possibles renvoyés par le back
+      const rawLat =
+        (center as any)?.latitude ??
+        (center as any)?.centerLatitude ??
+        (center as any)?.lat ??
+        null;
+
+      const rawLon =
+        (center as any)?.longitude ??
+        (center as any)?.centerLongitude ??
+        (center as any)?.lon ??
+        null;
+
+      const lat = parseCoord(rawLat);
+      const lon = parseCoord(rawLon);
+
+      if (isValidLatLon(lat, lon)) {
+        setMapPosition([lat as number, lon as number]);
+        setMapLabel('center');
+        return;
+      } else {
+        console.warn('Coordonnées center invalides → fallback', {
+          rawLat,
+          rawLon,
+          parsed: { lat, lon },
+          center,
+        });
+      }
+    }
+
+    // 2) Utilisateur rattaché à un hôpital
+    if (auth.user?.role?.hospitalId) {
+      const hospitalId = auth.user.role.hospitalId;
+      const hosp = await hospitalApi.getById(hospitalId);
+
+      const lat = parseCoord(hosp?.hospitalLatitude);
+      const lon = parseCoord(hosp?.hospitalLongitude);
+
+      if (isValidLatLon(lat, lon)) {
+        setMapPosition([lat as number, lon as number]);
+        setMapLabel('hospital');
+        return;
+      } else {
+        console.warn('Coordonnées hôpital invalides → fallback', {
+          latRaw: hosp?.hospitalLatitude,
+          lonRaw: hosp?.hospitalLongitude,
+        });
+      }
+    }
+
+    // 3) Fallback → position par défaut
+    setMapPosition(config.position);
+    setMapLabel('unknown');
+  } catch (e) {
+    console.error('Erreur chargement position carte:', e);
+    setMapPosition(config.position);
+    setMapLabel('unknown');
+  } finally {
+    setIsLoadingMap(false);
+  }
+};
+
+  loadPosition();
+}, [auth.user?.role?.centerId, auth.user?.role?.hospitalId, config.position]);
+
+
 
   // Détermine le libellé selon le type d'utilisateur
   const getDeliveryLabel = () => {
@@ -558,28 +659,37 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                 <LocationOnOutlined sx={{ color: '#10b981' }} />
               </Box>
               <Box sx={{ 
-                height: { xs: '185px', md: '225px' }, 
-                width: '100%', 
-                borderRadius: 2, 
-                overflow: 'hidden' 
-              }}>
-                <MapContainer
-                  center={config.position}
-                  zoom={13}
-                  style={{ height: '100%', width: '100%' }}
-                >
-                  <TileLayer
-                    url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  />
-                  <Marker position={config.position}>
-                    <Popup>
-                      Votre hôpital<br />
-                      Centre de soins principal
-                    </Popup>
-                  </Marker>
-                </MapContainer>
-              </Box>
+  height: { xs: '185px', md: '225px' }, 
+  width: '100%', 
+  borderRadius: 2, 
+  overflow: 'hidden' 
+}}>
+  {isLoadingMap ? (
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+      <CircularProgress />
+    </Box>
+  ) : (
+    <MapContainer
+      center={mapPosition}
+      zoom={13}
+      style={{ height: '100%', width: '100%' }}
+      key={`${mapPosition[0]}-${mapPosition[1]}`} // force refresh si la position change
+    >
+      <TileLayer
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      />
+      <Marker position={mapPosition}>
+        <Popup>
+          {mapLabel === 'center' && <>Votre centre de don<br />Point d’envoi</>}
+          {mapLabel === 'hospital' && <>Votre hôpital<br />Centre de soins principal</>}
+          {mapLabel === 'unknown' && <>Position par défaut</>}
+        </Popup>
+      </Marker>
+    </MapContainer>
+  )}
+</Box>
+
             </Paper>
           </Box>
 
