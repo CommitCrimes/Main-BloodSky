@@ -246,12 +246,10 @@ type SelectedPointState = {
   error?: string | null;
 };
 
-const kmh = (ms?: number) => (typeof ms === 'number' ? Math.round(ms * 3.6) : null);
 const fmtTemp = (t?: number) =>
   typeof t === 'number' && Number.isFinite(t) ? `${Math.round(t)}°C` : '—';
 const fmtWind = (ms?: number) => {
-  const k = kmh(ms);
-  return k !== null ? `${k} km/h` : '—';
+  return typeof ms === 'number' ? `${Math.round(ms)} m/s` : '—';
 };
 const fmtVisibility = (m?: number) =>
   typeof m === 'number' ? `${Math.round(m / 1000)} km` : '—';
@@ -326,8 +324,9 @@ function createWeatherIcon(point: WeatherPoint, weather?: CurrentWeather) {
   const typeStyle = getPointTypeStyle(point.type);
   const isHighPriority = point.priority === 'high';
   
-  const size = isHighPriority ? 200 : point.priority === 'medium' ? 170 : 140;
-  const fontSize = isHighPriority ? 16 : point.priority === 'medium' ? 14 : 12;
+  // Tailles réduites et responsives
+  const baseSize = isHighPriority ? 160 : point.priority === 'medium' ? 135 : 110;
+  const baseFontSize = isHighPriority ? 13 : point.priority === 'medium' ? 11 : 9;
   
   return `
     <div style="
@@ -335,10 +334,10 @@ function createWeatherIcon(point: WeatherPoint, weather?: CurrentWeather) {
       flex-direction: column;
       align-items: center;
       background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(255,255,255,0.88));
-      border: 3px solid ${conditions.color};
-      border-radius: 18px;
-      padding: 12px;
-      min-width: ${size}px;
+      border: 2px solid ${conditions.color};
+      border-radius: 12px;
+      padding: 8px;
+      min-width: ${baseSize}px;
       font-family: 'Share Tech', monospace;
       cursor: pointer;
       backdrop-filter: blur(10px);
@@ -362,10 +361,10 @@ function createWeatherIcon(point: WeatherPoint, weather?: CurrentWeather) {
         width: 100%;
         justify-content: center;
       ">
-        <span style="font-size: ${fontSize + 2}px;">${typeStyle.icon}</span>
+        <span style="font-size: ${baseFontSize + 2}px;">${typeStyle.icon}</span>
         <div style="
           font-weight: 700; 
-          font-size: ${fontSize}px; 
+          font-size: ${baseFontSize}px; 
           color: #1a1a1a; 
           text-align: center;
           line-height: 1.2;
@@ -388,7 +387,7 @@ function createWeatherIcon(point: WeatherPoint, weather?: CurrentWeather) {
         padding: 0 4px;
       ">
         <div style="
-          font-size: ${fontSize + 8}px; 
+          font-size: ${baseFontSize + 8}px; 
           font-weight: 800; 
           color: ${conditions.color};
           text-shadow: 0 1px 2px rgba(0,0,0,0.1);
@@ -396,7 +395,7 @@ function createWeatherIcon(point: WeatherPoint, weather?: CurrentWeather) {
           ${temp}
         </div>
         <div style="
-          font-size: ${fontSize - 1}px; 
+          font-size: ${baseFontSize - 1}px; 
           color: #555;
           display: flex;
           align-items: center;
@@ -413,7 +412,7 @@ function createWeatherIcon(point: WeatherPoint, weather?: CurrentWeather) {
         color: white;
         padding: 6px 10px;
         border-radius: 10px;
-        font-size: ${fontSize - 2}px;
+        font-size: ${baseFontSize - 2}px;
         font-weight: 700;
         text-align: center;
         width: 100%;
@@ -426,7 +425,7 @@ function createWeatherIcon(point: WeatherPoint, weather?: CurrentWeather) {
       <!-- Adresse si disponible -->
       ${point.city ? `
         <div style="
-          font-size: ${fontSize - 4}px;
+          font-size: ${baseFontSize - 4}px;
           color: #666;
           margin-top: 4px;
           text-align: center;
@@ -531,8 +530,8 @@ const Weather: React.FC = () => {
       icons[point.id] = L.divIcon({
         className: 'weather-point-icon',
         html: createWeatherIcon(point, weather),
-        iconSize: point.priority === 'high' ? [220, 140] : point.priority === 'medium' ? [190, 120] : [160, 100],
-        iconAnchor: point.priority === 'high' ? [110, 140] : point.priority === 'medium' ? [95, 120] : [80, 100],
+        iconSize: point.priority === 'high' ? [170, 110] : point.priority === 'medium' ? [145, 95] : [120, 80],
+        iconAnchor: point.priority === 'high' ? [85, 110] : point.priority === 'medium' ? [72, 95] : [60, 80],
       });
     }
     return icons;
@@ -573,8 +572,10 @@ const Weather: React.FC = () => {
 
   // Clic sur un point météo → ouvrir panneau (date par défaut = aujourd'hui)
   const handlePointClick = async (point: WeatherPoint) => {
+    const scrollPosition = window.scrollY;
     const today = addDays(new Date(), 0);
     await fetchForecast(point, today);
+    window.scrollTo(0, scrollPosition);
   };
 
   // Options de dates J → J+4
@@ -594,31 +595,43 @@ const Weather: React.FC = () => {
     <Box sx={{ 
       position: 'relative', 
       width: '100%', 
-      height: '100vh', 
-      overflow: 'hidden',
-      background: 'linear-gradient(135deg, #e3f8fe 0%, #f0f9ff 50%, #e0f2fe 100%)'
+      height: { xs: '100dvh', sm: '100vh' }, 
+      overflowY: 'auto',
+      overflowX: 'hidden',
+      '&::-webkit-scrollbar': { display: 'none' },
+      scrollbarWidth: 'none',
+      msOverflowStyle: 'none',
+      background: 'linear-gradient(135deg, #e3f8fe 0%, #f0f9ff 50%, #e0f2fe 100%)',
+      '& .leaflet-container': {
+        fontSize: { xs: '14px', sm: '16px' }
+      },
+      '& .weather-point-icon': {
+        transform: { xs: 'scale(0.85)', sm: 'scale(1)' }
+      }
     }}>
       
       <Paper
         elevation={3}
         sx={{
           position: 'absolute',
-          top: 20,
-          left: '50%',
-          transform: 'translateX(-50%)',
+          top: { xs: 10, sm: 20 },
+          left: { xs: 10, sm: '50%' },
+          right: { xs: 10, sm: 'auto' },
+          transform: { xs: 'none', sm: 'translateX(-50%)' },
           zIndex: 1000,
-          px: 3,
-          py: 2,
-          borderRadius: 3,
+          px: { xs: 1.5, sm: 2.5 },
+          py: { xs: 1, sm: 1.5 },
+          borderRadius: { xs: 2, sm: 3 },
           background: 'rgba(255,255,255,0.95)',
           backdropFilter: 'blur(10px)',
           display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
           alignItems: 'center',
-          gap: 3,
+          gap: { xs: 1.5, sm: 2 },
         }}
       >
         <Typography 
-          variant="h6" 
+          variant="h6"
           sx={{ 
             fontFamily: 'Share Tech, monospace', 
             color: '#1a1a1a',
@@ -626,10 +639,17 @@ const Weather: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             gap: 1,
+            textAlign: { xs: 'center', sm: 'left' },
+            fontSize: { xs: '0.9rem', sm: '1.1rem' }
           }}
         >
-          <CloudIcon sx={{ color: '#3b82f6' }} />
-          Météo Droniste - Région Nantaise
+          <CloudIcon sx={{ color: '#3b82f6', fontSize: { xs: 18, sm: 20 } }} />
+          <Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}>
+            Météo Droniste - Région Nantaise
+          </Box>
+          <Box component="span" sx={{ display: { xs: 'inline', md: 'none' } }}>
+            Météo Droniste
+          </Box>
         </Typography>
         
         <ToggleButtonGroup
@@ -638,22 +658,36 @@ const Weather: React.FC = () => {
           onChange={(_, newValue) => newValue && setViewMode(newValue)}
           size="small"
           sx={{
+            width: { xs: '100%', sm: 'auto' },
             '& .MuiToggleButton-root': {
               fontFamily: 'Share Tech, monospace',
               textTransform: 'none',
               display: 'flex',
               alignItems: 'center',
-              gap: 1,
+              gap: { xs: 0.5, sm: 1 },
+              fontSize: { xs: '0.75rem', sm: '0.8rem' },
+              px: { xs: 1, sm: 1.5 },
+              flex: { xs: 1, sm: 'none' }
             }
           }}
         >
           <ToggleButton value="nantes">
-            <MyLocationIcon sx={{ fontSize: 18 }} />
-            Focus Nantes
+            <MyLocationIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+              Focus Nantes
+            </Box>
+            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+              Focus
+            </Box>
           </ToggleButton>
           <ToggleButton value="region">
-            <NavigationIcon sx={{ fontSize: 18 }} />
-            Vue Région
+            <NavigationIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+              Vue Région
+            </Box>
+            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+              Région
+            </Box>
           </ToggleButton>
         </ToggleButtonGroup>
       </Paper>
@@ -663,27 +697,30 @@ const Weather: React.FC = () => {
           elevation={6}
           sx={{
             position: 'absolute',
-            top: 20,
-            right: 20,
-            width: 320,
+            top: { xs: 120, sm: 140, md: 20 },
+            right: { xs: 10, sm: 20 },
+            left: { xs: 10, md: 'auto' },
+            width: { xs: 'auto', md: 280 },
+            maxWidth: { xs: 'calc(100vw - 20px)', md: '280px' },
             zIndex: 999,
-            borderRadius: 3,
+            borderRadius: { xs: 2, sm: 3 },
             background: 'rgba(255,255,255,0.95)',
             backdropFilter: 'blur(10px)',
             overflow: 'hidden',
             border: `3px solid ${getFlightConditions(mainCenterWeather).color}`,
           }}
         >
-          <Box sx={{ p: 3 }}>
+          <Box sx={{ p: { xs: 1, sm: 1.5 } }}>
             <Typography 
-              variant="h6" 
+              variant="h6"
               sx={{ 
                 fontFamily: 'Share Tech, monospace',
                 color: '#1a1a1a',
-                mb: 2,
+                mb: { xs: 0.5, sm: 1 },
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
+                fontSize: { xs: '0.8rem', sm: '1rem' }
               }}
             >
               🩸 {mainCenterName}
@@ -695,45 +732,46 @@ const Weather: React.FC = () => {
                   color: 'white',
                   fontFamily: 'Share Tech, monospace',
                   fontWeight: 600,
+                  fontSize: { xs: '0.6rem', sm: '0.7rem' }
                 }}
               />
             </Typography>
             
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <ThermostatIcon sx={{ color: '#ef4444', fontSize: 20 }} />
-                  <Typography sx={{ fontFamily: 'Share Tech, monospace', fontWeight: 600, fontSize: '1.1rem' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1.2, sm: 1.6 } }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 0.8 } }}>
+                  <ThermostatIcon sx={{ color: '#ef4444', fontSize: { xs: 16, sm: 18 } }} />
+                  <Typography sx={{ fontFamily: 'Share Tech, monospace', fontWeight: 600, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
                     {fmtTemp(mainCenterWeather.main?.temp)}
                   </Typography>
                 </Box>
-                <Typography variant="caption" sx={{ fontFamily: 'Share Tech, monospace', color: '#666' }}>
+                <Typography variant="caption" sx={{ fontFamily: 'Share Tech, monospace', color: '#666', fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
                   Ressenti {fmtTemp(mainCenterWeather.main?.feels_like)}
                 </Typography>
               </Box>
               
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <AirIcon sx={{ color: '#3b82f6', fontSize: 20 }} />
-                  <Typography sx={{ fontFamily: 'Share Tech, monospace', fontWeight: 600, fontSize: '1.1rem' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 0.8 } }}>
+                  <AirIcon sx={{ color: '#3b82f6', fontSize: { xs: 16, sm: 18 } }} />
+                  <Typography sx={{ fontFamily: 'Share Tech, monospace', fontWeight: 600, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
                     {fmtWind(mainCenterWeather.wind?.speed)}
                   </Typography>
                 </Box>
-                <Typography variant="caption" sx={{ fontFamily: 'Share Tech, monospace', color: '#666' }}>
+                <Typography variant="caption" sx={{ fontFamily: 'Share Tech, monospace', color: '#666', fontSize: { xs: '0.65rem', sm: '0.75rem' } }}>
                   {mainCenterWeather.weather?.[0]?.description}
                 </Typography>
               </Box>
               
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <VisibilityIcon sx={{ color: '#10b981', fontSize: 18 }} />
-                  <Typography variant="body2" sx={{ fontFamily: 'Share Tech, monospace' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 0.8 } }}>
+                  <VisibilityIcon sx={{ color: '#10b981', fontSize: { xs: 14, sm: 16 } }} />
+                  <Typography variant="body2" sx={{ fontFamily: 'Share Tech, monospace', fontSize: { xs: '0.7rem', sm: '0.8rem' } }}>
                     {fmtVisibility(mainCenterWeather.visibility)}
                   </Typography>
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <HumidityIcon sx={{ color: '#6366f1', fontSize: 18 }} />
-                  <Typography variant="body2" sx={{ fontFamily: 'Share Tech, monospace' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 0.8 } }}>
+                  <HumidityIcon sx={{ color: '#6366f1', fontSize: { xs: 14, sm: 16 } }} />
+                  <Typography variant="body2" sx={{ fontFamily: 'Share Tech, monospace', fontSize: { xs: '0.7rem', sm: '0.8rem' } }}>
                     {fmtHumidity(mainCenterWeather.main?.humidity)}
                   </Typography>
                 </Box>
@@ -864,9 +902,9 @@ const Weather: React.FC = () => {
             bottom: { xs: 10, sm: 20 },
             left: { xs: 10, sm: 20 },
             right: { xs: 10, sm: 'auto' },
-            width: { xs: 'auto', sm: 480, md: 520 },
-            maxWidth: { xs: 'calc(100vw - 20px)', sm: '520px' },
-            maxHeight: { xs: 'calc(50vh)', sm: '500px' },
+            width: { xs: 'auto', sm: 520, md: 580, lg: 620 },
+            maxWidth: { xs: 'calc(100vw - 20px)', sm: '580px', lg: '620px' },
+            maxHeight: { xs: 'calc(45vh)', sm: '500px', lg: '550px' },
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
@@ -903,8 +941,8 @@ const Weather: React.FC = () => {
               }
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5, gap: 2 }}>
-              <Box sx={{ flex: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 1.5, gap: 1 }}>
+              <Box sx={{ flex: 1, textAlign: 'center' }}>
                 <Typography 
                   variant="h5" 
                   sx={{ 
@@ -940,8 +978,7 @@ const Weather: React.FC = () => {
                   backdropFilter: 'blur(10px)',
                   border: '1px solid rgba(0,0,0,0.1)',
                   '&:hover': { 
-                    backgroundColor: 'rgba(255,255,255,1)',
-                    transform: 'scale(1.05)'
+                    backgroundColor: 'rgba(255,255,255,1)'
                   },
                   transition: 'all 0.2s ease'
                 }}
@@ -950,7 +987,7 @@ const Weather: React.FC = () => {
               </IconButton>
             </Box>
             
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap', justifyContent: 'center' }}>
               <Chip
                 label={getFlightConditions(selected.currentWeather).message}
                 sx={{
@@ -958,14 +995,16 @@ const Weather: React.FC = () => {
                   color: 'white',
                   fontFamily: 'Share Tech, monospace',
                   fontWeight: 700,
-                  fontSize: { xs: '0.75rem', sm: '0.85rem' },
-                  px: 1.5,
+                  fontSize: { xs: '0.7rem', sm: '0.8rem' },
+                  px: { xs: 1.2, sm: 1.5 },
                   py: 0.5,
                   boxShadow: `0 4px 15px ${getFlightConditions(selected.currentWeather).color}40`,
+                  minWidth: 'auto',
+                  maxWidth: { xs: '150px', sm: '180px' },
                 }}
               />
               {selected.currentWeather?.main?.temp && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.9, sm: 0.5 }, flexWrap: 'wrap' }}>
                   <Typography 
                     variant="h6" 
                     sx={{ 
@@ -982,67 +1021,54 @@ const Weather: React.FC = () => {
                     sx={{ 
                       fontFamily: 'Share Tech, monospace', 
                       color: '#666',
-                      fontSize: '0.8rem'
+                      fontSize: { xs: '0.70rem', sm: '0.8rem' }
                     }}
                   >
                     💨 {fmtWind(selected.currentWeather.wind?.speed)}
                   </Typography>
-                </Box>
-              )}
-              {/* Informations lever/coucher du soleil */}
-              {selected.currentWeather?.sys?.sunrise && selected.currentWeather?.sys?.sunset && (
-                <Box sx={{ display: 'flex', gap: 2, mt: 1, flexWrap: 'wrap' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Typography sx={{ fontSize: '0.9rem' }}>🌅</Typography>
-                    <Typography 
-                      variant="caption" 
-                      sx={{ 
-                        fontFamily: 'Share Tech, monospace', 
-                        color: '#666',
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      {new Date(selected.currentWeather.sys.sunrise * 1000).toLocaleTimeString('fr-FR', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                    <Typography sx={{ fontSize: '0.9rem' }}>🌇</Typography>
-                    <Typography 
-                      variant="caption" 
-                      sx={{ 
-                        fontFamily: 'Share Tech, monospace', 
-                        color: '#666',
-                        fontSize: '0.75rem'
-                      }}
-                    >
-                      {new Date(selected.currentWeather.sys.sunset * 1000).toLocaleTimeString('fr-FR', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                      })}
-                    </Typography>
-                  </Box>
+                  {selected.currentWeather?.sys?.sunrise && selected.currentWeather?.sys?.sunset && (
+                    <>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
+                        <Typography sx={{ fontSize: '0.75rem' }}>🌅</Typography>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            fontFamily: 'Share Tech, monospace', 
+                            color: '#666',
+                            fontSize: { xs: '0.65rem', sm: '0.75rem' }
+                          }}
+                        >
+                          {new Date(selected.currentWeather.sys.sunrise * 1000).toLocaleTimeString('fr-FR', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.3 }}>
+                        <Typography sx={{ fontSize: '0.75rem' }}>🌇</Typography>
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            fontFamily: 'Share Tech, monospace', 
+                            color: '#666',
+                            fontSize: { xs: '0.65rem', sm: '0.75rem' }
+                          }}
+                        >
+                          {new Date(selected.currentWeather.sys.sunset * 1000).toLocaleTimeString('fr-FR', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </Typography>
+                      </Box>
+                    </>
+                  )}
                 </Box>
               )}
             </Box>
           </Box>
 
           {/* Sélecteur de date amélioré */}
-          <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1.5, sm: 2 }, borderBottom: '1px solid rgba(0,0,0,0.06)', background: 'rgba(248, 250, 252, 0.8)' }}>
-            <Typography 
-              variant="subtitle2" 
-              sx={{ 
-                fontFamily: 'Share Tech, monospace', 
-                mb: 1.5, 
-                color: '#555',
-                fontWeight: 600,
-                fontSize: { xs: '0.8rem', sm: '0.85rem' }
-              }}
-            >
-              📅 Sélectionner une date
-            </Typography>
+          <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1.5, sm: 2 }, borderBottom: '1px solid rgba(0,0,0,0.06)', background: 'rgba(248, 250, 252, 0.8)', display: 'flex', justifyContent: 'center' }}>
             <ToggleButtonGroup
               size="small"
               color="primary"
@@ -1091,16 +1117,9 @@ const Weather: React.FC = () => {
               overflowX: 'auto',
               overflowY: 'hidden',
               whiteSpace: 'nowrap',
-              scrollbarWidth: 'thin',
-              scrollbarColor: 'rgba(0,0,0,0.3) transparent',
-              '&::-webkit-scrollbar': { height: 8 },
-              '&::-webkit-scrollbar-track': { background: 'rgba(0,0,0,0.05)', borderRadius: 4 },
-              '&::-webkit-scrollbar-thumb': {
-                background: 'rgba(59, 130, 246, 0.5)',
-                borderRadius: 4,
-                '&:hover': { background: 'rgba(59, 130, 246, 0.7)' },
-              },
+              '&::-webkit-scrollbar': { display: 'none !important' }, // Chrome, Safari, Edge
               flex: 1,
+              textAlign: 'center',
             }}
           >
             {selected.loading && (
@@ -1195,31 +1214,30 @@ const Weather: React.FC = () => {
                       key={`${s.dt_txt}-${i}`}
                       variant="outlined"
                       sx={{
-                        minWidth: 140,
+                        minWidth: { xs: 100, sm: 120 },
                         borderColor: conditions.color,
                         borderWidth: 2,
                         backgroundColor: `${conditions.color}08`,
                         transition: 'all 0.3s ease',
                         '&:hover': {
-                          transform: 'scale(1.05)',
                           boxShadow: `0 8px 25px ${conditions.color}40`,
                         }
                       }}
                     >
-                      <CardContent sx={{ p: 2, textAlign: 'center' }}>
+                      <CardContent sx={{ p: { xs: 0.5, sm: 0.7 },height: '135px', textAlign: 'center' }}>
                         <Typography 
                           variant="subtitle2" 
-                          sx={{ fontFamily: 'Share Tech, monospace', fontWeight: 700, mb: 1 }}
+                          sx={{ fontFamily: 'Share Tech, monospace', fontWeight: 700, mb: 0.2, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
                         >
                           {hourFromDt(s.dt_txt)}
                         </Typography>
                         
-                        <Box sx={{ mb: 1 }}>
+                        <Box sx={{ mb: 0.3 }}>
                           <Typography 
                             variant="h4" 
                             sx={{ 
-                              fontSize: '1.8rem',
-                              mb: 0.5,
+                              fontSize: { xs: '1.3rem', sm: '1.5rem' },
+                              mb: 0.2,
                               filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
                             }}
                           >
@@ -1229,14 +1247,14 @@ const Weather: React.FC = () => {
                         
                         <Typography 
                           variant="h6" 
-                          sx={{ fontFamily: 'Share Tech, monospace', fontWeight: 800, color: conditions.color, mb: 0.5 }}
+                          sx={{ fontFamily: 'Share Tech, monospace', fontWeight: 800, color: conditions.color, mb: 0.3, fontSize: { xs: '0.85rem', sm: '1rem' } }}
                         >
                           {t}
                         </Typography>
                         
                         <Typography 
                           variant="body2" 
-                          sx={{ fontFamily: 'Share Tech, monospace', color: '#666', mb: 0.5 }}
+                          sx={{ fontFamily: 'Share Tech, monospace', color: '#666', mb: 0.3, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
                         >
                           💨 {w}
                         </Typography>
@@ -1258,7 +1276,7 @@ const Weather: React.FC = () => {
                             color: 'white',
                             fontFamily: 'Share Tech, monospace',
                             fontWeight: 600,
-                            fontSize: '0.65rem',
+                            fontSize: '0.5rem',
                           }}
                         />
                       </CardContent>
