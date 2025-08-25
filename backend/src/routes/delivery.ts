@@ -100,7 +100,11 @@ deliveryRouter.post("/participation", async (c) => {
 
   try {
     await db.insert(deliveryParticipations).values({ deliveryId, userId });
-    return c.text("User added to delivery", 201);
+    await db
+      .update(deliveries)
+      .set({ deliveryStatus: 'delivered', dteValidation: new Date() })
+      .where(eq(deliveries.deliveryId, deliveryId));
+    return c.text("User added and delivery validated", 201);
   } catch (err) {
     console.error(err);
     return c.text("Failed to add user to delivery", 500);
