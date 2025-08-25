@@ -530,18 +530,23 @@ const HistoryManagementDrone: React.FC = observer(() => {
             mb: 3
           }}
         >
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="center">
+          <Stack direction={{ xs: 'column', sm: 'column', md: 'row' }} spacing={{ xs: 2, md: 3 }} alignItems={{ xs: 'stretch', md: 'center' }}>
             <TextField
               placeholder="Rechercher dans l'historique..."
               value={searchConfig.searchTerm}
               onChange={(e) => setSearchConfig({ searchTerm: e.target.value })}
+              fullWidth
               sx={{
-                flex: 1,
+                flex: { md: 1 },
                 '& .MuiInputBase-root': {
                   borderRadius: commonStyles.borderRadius,
-                  ...commonStyles.techFont
+                  ...commonStyles.techFont,
+                  fontSize: { xs: '0.9rem', sm: '1rem' }
                 },
-                '& .MuiInputBase-input': commonStyles.techFont
+                '& .MuiInputBase-input': {
+                  ...commonStyles.techFont,
+                  fontSize: { xs: '0.9rem', sm: '1rem' }
+                }
               }}
               slotProps={{
                 input: {
@@ -551,8 +556,8 @@ const HistoryManagementDrone: React.FC = observer(() => {
             />
 
 
-            <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel sx={commonStyles.techFont}>Statut</InputLabel>
+            <FormControl sx={{ minWidth: { xs: '100%', md: 150 } }}>
+              <InputLabel sx={{ ...commonStyles.techFont, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Statut</InputLabel>
               <Select
                 value={filters.status || ''}
                 onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value as DeliveryHistory['deliveryStatus'] || undefined }))}
@@ -570,8 +575,8 @@ const HistoryManagementDrone: React.FC = observer(() => {
               </Select>
             </FormControl>
 
-            <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel sx={commonStyles.techFont}>Urgent</InputLabel>
+            <FormControl sx={{ minWidth: { xs: '100%', md: 150 } }}>
+              <InputLabel sx={{ ...commonStyles.techFont, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Urgent</InputLabel>
               <Select
                 value={filters.isUrgent === undefined ? 'all' : (filters.isUrgent ? 'true' : 'false')}
                 onChange={(e) => setFilters(prev => ({
@@ -593,12 +598,14 @@ const HistoryManagementDrone: React.FC = observer(() => {
         </Paper>
       </Fade>
 
+      {/* Tableau desktop */}
       <Fade in timeout={1200}>
         <Paper
           elevation={0}
           sx={{
             ...commonStyles.glassmorphism,
-            overflow: 'hidden'
+            overflow: 'hidden',
+            display: { xs: 'none', md: 'block' }
           }}
         >
           <TableContainer>
@@ -701,6 +708,173 @@ const HistoryManagementDrone: React.FC = observer(() => {
         </Paper>
       </Fade>
 
+      {/* Version mobile avec cards */}
+      <Fade in timeout={1200}>
+        <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+          <Stack spacing={2}>
+            {filteredAndSortedData
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((delivery) => (
+                <Card 
+                  key={delivery.id}
+                  sx={{
+                    ...commonStyles.glassmorphism,
+                    p: 2,
+                    '&:hover': { 
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                      transition: 'all 0.2s ease'
+                    }
+                  }}
+                >
+                  <CardContent sx={{ p: 0 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Box>
+                        <Typography 
+                          variant="h6" 
+                          sx={{ 
+                            ...commonStyles.techFontBold,
+                            fontSize: '1rem',
+                            color: '#008EFF'
+                          }}
+                        >
+                          {delivery.droneName || 'Non assigné'}
+                        </Typography>
+                        <Chip
+                          icon={getStatusIcon(delivery.deliveryStatus)}
+                          label={getStatusLabel(delivery.deliveryStatus)}
+                          size="small"
+                          sx={{
+                            backgroundColor: getStatusColor(delivery.deliveryStatus),
+                            color: 'white',
+                            fontSize: '0.7rem',
+                            mt: 0.5
+                          }}
+                        />
+                      </Box>
+                      {delivery.isUrgent && (
+                        <Chip
+                          icon={<PriorityHigh />}
+                          label="Urgent"
+                          color="error"
+                          size="small"
+                          sx={{ fontSize: '0.7rem' }}
+                        />
+                      )}
+                    </Box>
+                    
+                    <Stack spacing={1.5}>
+                      <Box>
+                        <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
+                          Centre → Hôpital
+                        </Typography>
+                        <Typography variant="body2" sx={{ ...commonStyles.techFont, fontSize: '0.85rem' }}>
+                          {delivery.sourceDonationCenter?.centerCity || 'N/A'} → {delivery.destinationHospital?.hospitalName || 'N/A'}
+                        </Typography>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
+                            Type de sang
+                          </Typography>
+                          <Chip
+                            label={delivery.bloodType || 'N/A'}
+                            size="small"
+                            sx={{ 
+                              ...commonStyles.techFont, 
+                              backgroundColor: '#f0f4f8',
+                              fontSize: '0.7rem',
+                              height: '22px'
+                            }}
+                          />
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
+                            Personne
+                          </Typography>
+                          <Typography variant="body2" sx={{ ...commonStyles.techFont, fontSize: '0.8rem' }}>
+                            {delivery.personIdentity}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', gap: 2 }}>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
+                            Demande
+                          </Typography>
+                          <Typography variant="body2" sx={{ ...commonStyles.techFont, fontSize: '0.8rem' }}>
+                            {delivery.requestDate?.toLocaleDateString('fr-FR') || '-'}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
+                            Livraison
+                          </Typography>
+                          <Typography variant="body2" sx={{ ...commonStyles.techFont, fontSize: '0.8rem' }}>
+                            {delivery.deliveryDate?.toLocaleDateString('fr-FR') || '-'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Stack>
+                    
+                    <Box sx={{ display: 'flex', gap: 1, mt: 2, pt: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+                      <Button
+                        onClick={(e) => openDroneMenu(e, delivery)}
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                          ...commonStyles.buttonBase,
+                          fontSize: '0.75rem',
+                          py: 0.5,
+                          px: 1.5
+                        }}
+                      >
+                        {delivery.droneId ? 'Changer' : 'Assigner'} drone
+                      </Button>
+                      <Button
+                        onClick={() => handleOpenEditStatus(delivery)}
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                          ...commonStyles.buttonBase,
+                          fontSize: '0.75rem',
+                          py: 0.5,
+                          px: 1.5
+                        }}
+                      >
+                        Modifier statut
+                      </Button>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+          </Stack>
+          
+          {/* Pagination mobile */}
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={filteredAndSortedData.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              sx={{
+                '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                  ...commonStyles.techFont,
+                  fontSize: '0.8rem'
+                },
+                '& .MuiTablePagination-select': {
+                  fontSize: '0.8rem'
+                }
+              }}
+            />
+          </Box>
+        </Box>
+      </Fade>
 
       {/* Dialog de détails */}
       <Dialog
@@ -708,6 +882,14 @@ const HistoryManagementDrone: React.FC = observer(() => {
         onClose={handleCloseDetail}
         maxWidth="md"
         fullWidth
+        fullScreen
+        PaperProps={{
+          sx: {
+            borderRadius: { xs: 0, sm: '16px' },
+            margin: { xs: 0, sm: '32px' },
+            maxHeight: { xs: '100vh', sm: '90vh' }
+          }
+        }}
       >
         <DialogTitle
           sx={{
@@ -967,22 +1149,22 @@ const HistoryManagementDrone: React.FC = observer(() => {
             <CircularProgress size={16} sx={{ mr: 1 }} /> Chargement…
           </MenuItem>
         ) : (
-          <>
-            {droneAssignedOnRow !== null && (
-              <MenuItem onClick={() => assignDrone(null)}>
+          [
+            droneAssignedOnRow !== null && (
+              <MenuItem key="unassign" onClick={() => assignDrone(null)}>
                 Désassigner le drone
               </MenuItem>
-            )}
-            {droneOptions.length === 0 ? (
-              <MenuItem disabled>Aucun drone</MenuItem>
+            ),
+            droneOptions.length === 0 ? (
+              <MenuItem key="no-drones" disabled>Aucun drone</MenuItem>
             ) : (
               droneOptions.map((d) => (
                 <MenuItem key={d.droneId} onClick={() => assignDrone(d.droneId)}>
                   {d.droneName || `Drone ${d.droneId}`}
                 </MenuItem>
               ))
-            )}
-          </>
+            )
+          ].filter(Boolean)
         )}
       </Menu>
 
