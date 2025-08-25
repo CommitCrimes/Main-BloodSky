@@ -411,18 +411,23 @@ const HistoryManagement: React.FC = observer(() => {
             mb: 3
           }}
         >
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="center">
+          <Stack direction={{ xs: 'column', sm: 'column', md: 'row' }} spacing={{ xs: 2, md: 3 }} alignItems={{ xs: 'stretch', md: 'center' }}>
             <TextField
               placeholder="Rechercher dans l'historique..."
               value={searchConfig.searchTerm}
               onChange={(e) => setSearchConfig({ searchTerm: e.target.value })}
+              fullWidth
               sx={{
-                flex: 1,
+                flex: { md: 1 },
                 '& .MuiInputBase-root': {
                   borderRadius: commonStyles.borderRadius,
-                  ...commonStyles.techFont
+                  ...commonStyles.techFont,
+                  fontSize: { xs: '0.9rem', sm: '1rem' }
                 },
-                '& .MuiInputBase-input': commonStyles.techFont
+                '& .MuiInputBase-input': {
+                  ...commonStyles.techFont,
+                  fontSize: { xs: '0.9rem', sm: '1rem' }
+                }
               }}
               slotProps={{
                 input: {
@@ -432,8 +437,8 @@ const HistoryManagement: React.FC = observer(() => {
             />
             
 
-            <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel sx={commonStyles.techFont}>Statut</InputLabel>
+            <FormControl sx={{ minWidth: { xs: '100%', md: 150 } }}>
+              <InputLabel sx={{ ...commonStyles.techFont, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Statut</InputLabel>
               <Select
                 value={filters.status || ''}
                 onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value as DeliveryHistory['deliveryStatus'] || undefined }))}
@@ -451,8 +456,8 @@ const HistoryManagement: React.FC = observer(() => {
               </Select>
             </FormControl>
 
-            <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel sx={commonStyles.techFont}>Urgent</InputLabel>
+            <FormControl sx={{ minWidth: { xs: '100%', md: 150 } }}>
+              <InputLabel sx={{ ...commonStyles.techFont, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Urgent</InputLabel>
               <Select
                 value={filters.isUrgent === undefined ? 'all' : (filters.isUrgent ? 'true' : 'false')}
                 onChange={(e) => setFilters(prev => ({ 
@@ -474,13 +479,14 @@ const HistoryManagement: React.FC = observer(() => {
         </Paper>
       </Fade>
 
-      {/* Tableau des données */}
+      {/* Tableau des données - Desktop */}
       <Fade in timeout={1200}>
         <Paper
           elevation={0}
           sx={{
             ...commonStyles.glassmorphism,
-            overflow: 'hidden'
+            overflow: 'hidden',
+            display: { xs: 'none', md: 'block' }
           }}
         >
           <TableContainer>
@@ -639,21 +645,210 @@ const HistoryManagement: React.FC = observer(() => {
         </Paper>
       </Fade>
 
+      {/* Version mobile avec cardes */}
+      <Fade in timeout={1200}>
+        <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+          <Stack spacing={2}>
+            {filteredAndSortedData
+              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+              .map((delivery) => (
+                <Card 
+                  key={delivery.id}
+                  sx={{
+                    ...commonStyles.glassmorphism,
+                    p: 2,
+                    '&:hover': { 
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
+                      transition: 'all 0.2s ease'
+                    }
+                  }}
+                >
+                  <CardContent sx={{ p: 0 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Typography 
+                        variant="h6" 
+                        sx={{ 
+                          ...commonStyles.techFontBold,
+                          fontSize: '1.1rem',
+                          color: '#008EFF'
+                        }}
+                      >
+                        #{delivery.deliveryId}
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Chip
+                          icon={getStatusIcon(delivery.deliveryStatus)}
+                          label={getStatusLabel(delivery.deliveryStatus)}
+                          size="small"
+                          sx={{
+                            backgroundColor: getStatusColor(delivery.deliveryStatus),
+                            color: 'white',
+                            fontSize: '0.75rem'
+                          }}
+                        />
+                        {delivery.isUrgent && (
+                          <Chip
+                            icon={<PriorityHigh />}
+                            label="Urgent"
+                            color="error"
+                            size="small"
+                            sx={{ fontSize: '0.7rem' }}
+                          />
+                        )}
+                      </Box>
+                    </Box>
+                    
+                    <Stack spacing={1.5}>
+                      <Box>
+                        <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
+                          {userType === 'donation_center' ? 'Hôpital de destination' : 'Centre de donation'}
+                        </Typography>
+                        <Typography variant="body2" sx={{ ...commonStyles.techFontBold, fontSize: '0.9rem' }}>
+                          {delivery.type === 'delivery' 
+                            ? delivery.destinationHospital.hospitalName
+                            : `${delivery.sourceDonationCenter.centerCity} - Centre de Don`
+                          }
+                        </Typography>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', gap: 3 }}>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
+                            Date demande
+                          </Typography>
+                          <Typography variant="body2" sx={{ ...commonStyles.techFont, fontSize: '0.85rem' }}>
+                            {delivery.requestDate.toLocaleDateString('fr-FR')}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
+                            Date livraison
+                          </Typography>
+                          <Typography variant="body2" sx={{ ...commonStyles.techFont, fontSize: '0.85rem' }}>
+                            {delivery.deliveryDate ? delivery.deliveryDate.toLocaleDateString('fr-FR') : '-'}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      
+                      <Box sx={{ display: 'flex', gap: 3 }}>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
+                            Type de sang
+                          </Typography>
+                          <Chip
+                            label={delivery.bloodType || 'N/A'}
+                            size="small"
+                            sx={{ 
+                              ...commonStyles.techFont, 
+                              backgroundColor: '#f0f4f8',
+                              fontSize: '0.75rem',
+                              height: '24px'
+                            }}
+                          />
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
+                            Personne
+                          </Typography>
+                          <Typography variant="body2" sx={{ ...commonStyles.techFont, fontSize: '0.85rem' }}>
+                            {delivery.personIdentity}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Stack>
+                    
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mt: 2, pt: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
+                      <Button
+                        onClick={() => handleViewDetail(delivery)}
+                        startIcon={<Visibility />}
+                        size="small"
+                        sx={{
+                          ...commonStyles.buttonBase,
+                          fontSize: '0.8rem',
+                          py: 0.5,
+                          px: 2
+                        }}
+                      >
+                        Détails
+                      </Button>
+                      {delivery.deliveryStatus === 'pending' && (
+                        <Button
+                          onClick={() => handleCancelOrder(delivery.deliveryId)}
+                          disabled={cancellingDelivery === delivery.deliveryId}
+                          color="error"
+                          size="small"
+                          startIcon={cancellingDelivery === delivery.deliveryId ? (
+                            <CircularProgress size={16} />
+                          ) : (
+                            <Cancel />
+                          )}
+                          sx={{
+                            ...commonStyles.buttonBase,
+                            fontSize: '0.8rem',
+                            py: 0.5,
+                            px: 2
+                          }}
+                        >
+                          Annuler
+                        </Button>
+                      )}
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+          </Stack>
+          
+          {/* Pagination mobile */}
+          <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+            <TablePagination
+              rowsPerPageOptions={[5, 10, 25]}
+              component="div"
+              count={filteredAndSortedData.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              sx={{
+                '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': {
+                  ...commonStyles.techFont,
+                  fontSize: '0.8rem'
+                },
+                '& .MuiTablePagination-select': {
+                  fontSize: '0.8rem'
+                }
+              }}
+            />
+          </Box>
+        </Box>
+      </Fade>
+
       {/* Dialog de détails */}
       <Dialog 
         open={showDetailDialog} 
         onClose={handleCloseDetail}
         maxWidth="md"
         fullWidth
+        fullScreen
+        PaperProps={{
+          sx: {
+            borderRadius: { xs: 0, sm: '16px' },
+            margin: { xs: 0, sm: '32px' },
+            maxHeight: { xs: '100vh', sm: '90vh' }
+          }
+        }}
       >
         <DialogTitle 
           sx={{ 
             ...commonStyles.techFont,
+            fontSize: { xs: '1.1rem', sm: '1.25rem' },
             background: 'linear-gradient(45deg, #008EFF, #0066cc)',
             color: 'white',
             display: 'flex',
             alignItems: 'center',
-            gap: 1
+            gap: 1,
+            px: { xs: 2, sm: 3 },
+            py: { xs: 1.5, sm: 2 }
           }}
         >
           <LocalShipping />
@@ -673,11 +868,11 @@ const HistoryManagement: React.FC = observer(() => {
             <Close />
           </IconButton>
         </DialogTitle>
-        <DialogContent sx={{ p: 4 }}>
+        <DialogContent sx={{ p: { xs: 2, sm: 4 } }}>
           {selectedDelivery && (
-            <Stack spacing={3}>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                <Card sx={{ flex: 1, minWidth: 250 }}>
+            <Stack spacing={{ xs: 2, sm: 3 }}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 2, sm: 3 } }}>
+                <Card sx={{ flex: 1, minWidth: { xs: '100%', sm: 250 } }}>
                   <CardContent>
                     <Typography variant="h6" sx={commonStyles.sectionTitle}>
                       <Numbers sx={{ color: '#008EFF' }} />
@@ -714,9 +909,9 @@ const HistoryManagement: React.FC = observer(() => {
                   </CardContent>
                 </Card>
 
-                <Card sx={{ flex: 1, minWidth: 250 }}>
+                <Card sx={{ flex: 1, minWidth: { xs: '100%', sm: 250 } }}>
                   <CardContent>
-                    <Typography variant="h6" sx={commonStyles.sectionTitle}>
+                    <Typography variant="h6" sx={{ ...commonStyles.sectionTitle, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                       <CalendarToday sx={{ color: '#008EFF' }} />
                       Dates et statut
                     </Typography>
@@ -778,12 +973,12 @@ const HistoryManagement: React.FC = observer(() => {
 
               <Card>
                 <CardContent>
-                  <Typography variant="h6" sx={commonStyles.sectionTitle}>
+                  <Typography variant="h6" sx={{ ...commonStyles.sectionTitle, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                     <Business sx={{ color: '#008EFF' }} />
                     Établissements
                   </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
-                    <Box sx={{ flex: 1, minWidth: 250 }}>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 2, sm: 3 } }}>
+                    <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 250 } }}>
                       <Typography variant="body2" color="textSecondary" sx={commonStyles.techFont}>
                         {selectedDelivery.type === 'delivery' ? 'Hôpital de destination' : 'Centre de donation'}
                       </Typography>
@@ -794,7 +989,7 @@ const HistoryManagement: React.FC = observer(() => {
                         }
                       </Typography>
                     </Box>
-                    <Box sx={{ flex: 1, minWidth: 250 }}>
+                    <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 250 } }}>
                       <Typography variant="body2" color="textSecondary" sx={commonStyles.techFont}>
                         Adresse
                       </Typography>
@@ -811,14 +1006,14 @@ const HistoryManagement: React.FC = observer(() => {
 
               <Card>
                 <CardContent>
-                  <Typography variant="h6" sx={commonStyles.sectionTitle}>
+                  <Typography variant="h6" sx={{ ...commonStyles.sectionTitle, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                     <LocationOn sx={{ color: '#008EFF' }} />
                     Coordonnées GPS
                   </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: { xs: 2, sm: 3 } }}>
                     {selectedDelivery.type === 'delivery' ? (
                       <>
-                        <Box sx={{ flex: 1, minWidth: 250 }}>
+                        <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 250 } }}>
                           <Typography variant="body2" color="textSecondary" sx={commonStyles.techFont}>
                             Point de départ (Centre)
                           </Typography>
@@ -826,7 +1021,7 @@ const HistoryManagement: React.FC = observer(() => {
                             {selectedDelivery.departureCoordinates.latitude}, {selectedDelivery.departureCoordinates.longitude}
                           </Typography>
                         </Box>
-                        <Box sx={{ flex: 1, minWidth: 250 }}>
+                        <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 250 } }}>
                           <Typography variant="body2" color="textSecondary" sx={commonStyles.techFont}>
                             Point d'arrivée (Hôpital)
                           </Typography>
@@ -837,7 +1032,7 @@ const HistoryManagement: React.FC = observer(() => {
                       </>
                     ) : (
                       <>
-                        <Box sx={{ flex: 1, minWidth: 250 }}>
+                        <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 250 } }}>
                           <Typography variant="body2" color="textSecondary" sx={commonStyles.techFont}>
                             Point de départ (Centre)
                           </Typography>
@@ -845,7 +1040,7 @@ const HistoryManagement: React.FC = observer(() => {
                             {selectedDelivery.sourceDonationCenter.latitude}, {selectedDelivery.sourceDonationCenter.longitude}
                           </Typography>
                         </Box>
-                        <Box sx={{ flex: 1, minWidth: 250 }}>
+                        <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 250 } }}>
                           <Typography variant="body2" color="textSecondary" sx={commonStyles.techFont}>
                             Point d'arrivée (Hôpital)
                           </Typography>
@@ -861,11 +1056,15 @@ const HistoryManagement: React.FC = observer(() => {
             </Stack>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
+        <DialogActions sx={{ p: { xs: 2, sm: 3 }, gap: 1 }}>
           <Button 
             onClick={handleCloseDetail}
             variant="outlined"
-            sx={commonStyles.buttonBase}
+            fullWidth
+            sx={{
+              ...commonStyles.buttonBase,
+              fontSize: { xs: '0.9rem', sm: '1rem' }
+            }}
           >
             Fermer
           </Button>

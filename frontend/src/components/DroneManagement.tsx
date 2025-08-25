@@ -228,9 +228,9 @@ const DroneManagement: React.FC = () => {
 
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" sx={{ fontFamily: 'Share Tech, monospace', color: '#5C7F9B' }}>
+    <Box sx={{ p: { xs: 2, sm: 3 } }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 2, mb: 3 }}>
+        <Typography variant="h4" sx={{ fontFamily: 'Share Tech, monospace', color: '#5C7F9B', fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' } }}>
           Gestion des Drones
         </Typography>
         <Button variant="outlined" startIcon={<RefreshOutlined />} onClick={fetchDronesData} disabled={loading}>
@@ -337,7 +337,8 @@ const DroneManagement: React.FC = () => {
       </Box>
 
       {/* Table */}
-      <TableContainer component={Paper}>
+      {/* Version Desktop */}
+      <TableContainer component={Paper} sx={{ display: { xs: 'none', md: 'block' } }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -457,8 +458,140 @@ const DroneManagement: React.FC = () => {
         </Table>
       </TableContainer>
 
+      {/* Version Mobile avec Cards */}
+      <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+        {uniqueDrones.map((drone) => {
+          const statusItem = dronesStatus.find((s) => s.droneId === drone.droneId) || {};
+          const fi = dronesFlightInfo[drone.droneId];
+          const isOnline = (statusItem as any).isOnline || false;
+          const isArmed = fi?.is_armed === true;
+          const flightMode = fi?.flight_mode || 'N/A';
+
+          return (
+            <Card key={drone.droneId} sx={{ mb: 2, borderRadius: 2, boxShadow: 2 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontFamily: 'Share Tech, monospace', fontSize: '1.1rem' }}>
+                      {drone.droneName || 'Sans nom'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      ID: {drone.droneId}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Chip
+                      label={tStatus(drone.droneStatus) || 'N/A'}
+                      size="small"
+                      sx={{
+                        backgroundColor: getStatusColor(drone.droneStatus),
+                        color: '#fff',
+                        fontSize: '0.7rem'
+                      }}
+                    />
+                    {isOnline && (
+                      <Chip
+                        label="En ligne"
+                        size="small"
+                        sx={{ backgroundColor: '#4caf50', color: '#fff', fontSize: '0.7rem' }}
+                      />
+                    )}
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5, mb: 2 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">État</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: 'Share Tech, monospace' }}>
+                      {isArmed ? 'Armé' : 'Désarmé'}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Mode</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: 'Share Tech, monospace' }}>
+                      {flightMode}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Batterie</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: 'Share Tech, monospace' }}>
+                      {percentOrNA(fi?.battery_remaining_percent)}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Centre</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: 'Share Tech, monospace', fontSize: '0.85rem' }}>
+                      {drone.centerCity || 'N/A'}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Tooltip title="Voir les détails">
+                    <IconButton 
+                      size="small" 
+                      onClick={() => setDetailViewDroneId(drone.droneId)}
+                      sx={{ border: '1px solid #e0e0e0' }}
+                    >
+                      <Visibility fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Synchroniser">
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleSyncDrone(drone.droneId)}
+                      disabled={syncing === drone.droneId || !isOnline}
+                      sx={{ border: '1px solid #e0e0e0' }}
+                    >
+                      {syncing === drone.droneId ? (
+                        <CircularProgress size={18} />
+                      ) : (
+                        <SyncOutlined fontSize="small" />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Retour base">
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleReturnHome(drone.droneId)}
+                      disabled={!isOnline || !isArmed}
+                      sx={{ border: '1px solid #e0e0e0' }}
+                    >
+                      <HomeOutlined fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Infos">
+                    <IconButton 
+                      size="small" 
+                      onClick={() => {
+                        setSelectedDrone(drone);
+                        setDialogOpen(true);
+                      }}
+                      sx={{ border: '1px solid #e0e0e0' }}
+                    >
+                      <NavigationOutlined fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </Box>
+
       {/* Dialog infos drone */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog 
+        open={dialogOpen} 
+        onClose={() => setDialogOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            margin: { xs: 2, sm: 4 },
+            width: { xs: '100%', sm: 'auto' }
+          }
+        }}
+      >
         <DialogTitle>Détails du Drone {selectedDrone?.droneId}</DialogTitle>
         <DialogContent>
           {selectedDrone && (
