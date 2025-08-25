@@ -140,21 +140,34 @@ const HistoryManagementDrone: React.FC = observer(() => {
 
 
   const openDroneMenu = async (e: React.MouseEvent<HTMLElement>, delivery: DeliveryHistory) => {
-    setDroneMenuAnchor(e.currentTarget);
-    setDroneMenuDeliveryId(delivery.deliveryId);
-    setDroneAssignedOnRow(delivery.droneId ?? null); // si ton type expose droneId
-    setDroneMenuLoading(true);
-    try {
-      // “tous les drones” comme tu veux
-      const list = await dronesApi.list();
-      setDroneOptions(list);
-    } catch (err) {
-      console.error('load drones error', err);
+  setDroneMenuAnchor(e.currentTarget);
+  setDroneMenuDeliveryId(delivery.deliveryId);
+  setDroneAssignedOnRow(delivery.droneId ?? null);
+  setDroneMenuLoading(true);
+
+  try {
+    const centerId =
+      delivery.type === 'delivery'
+        ? delivery.sourceDonationCenter?.centerId
+        : delivery.sourceDonationCenter?.centerId;
+
+    if (!centerId) {
       setDroneOptions([]);
-    } finally {
-      setDroneMenuLoading(false);
+      setError("Impossible de déterminer le centre associé à cette livraison.");
+      return;
     }
-  };
+
+    const id = typeof centerId === 'object' ? centerId.centerId : centerId;
+    const list = await dronesApi.getByCenter(id);
+    setDroneOptions(list);
+  } catch (err) {
+    console.error('load drones error', err);
+    setDroneOptions([]);
+  } finally {
+    setDroneMenuLoading(false);
+  }
+};
+
 
 
   const closeDroneMenu = () => {
