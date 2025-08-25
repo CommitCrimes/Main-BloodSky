@@ -31,6 +31,8 @@ const RoleBasedRedirect = observer(() => {
           break;
         case 'user':
         default:
+          // print the role
+          console.log('Role utilisateur non reconnu:', role);
           auth.logout();
           targetPath = '/login';
           break;

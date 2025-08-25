@@ -6,28 +6,39 @@ import { eq } from 'drizzle-orm';
 
 export const getUserRole = async (c: Context) => {
   try {
-    const userId = Number(c.req.query('userId'));
+    const userIdParam = c.req.query('userId');
     const email = c.req.query('email');
-    
-    if (!userId && !email) {
+
+    if (!userIdParam && !email) {
       throw new HTTPException(400, { message: 'userId ou email requis' });
     }
     
-    if (email === 'admin@bloodsky.fr') {
-      return c.json({
-        type: 'super_admin'
-      });
-    }
-    
-    let userIdToCheck = userId;
-    
-    if (!userId && email) {
-      const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
-      if (user.length === 0) {
+    // Récupération de l'utilisateur pour vérifier un éventuel rôle super admin
+    let userRecord;
+    if (userIdParam) {
+      const result = await db.select().from(users).where(eq(users.userId, Number(userIdParam))).limit(1);
+      if (result.length === 0) {
         throw new HTTPException(404, { message: 'Utilisateur non trouvé' });
       }
-      userIdToCheck = user[0].userId;
+      userRecord = result[0];
+    } else if (email) {
+      const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      if (result.length === 0) {
+        throw new HTTPException(404, { message: 'Utilisateur non trouvé' });
+      }
+      userRecord = result[0];
     }
+
+    if (!userRecord) {
+      // Ca devrait jamais arriver, mais Typescript est Typescript
+      throw new HTTPException(500, { message: 'Erreur interne: utilisateur introuvable' });
+    }
+
+    if (userRecord?.isSuperAdmin) {
+      return c.json({ type: 'super_admin' });
+    }
+
+    const userIdToCheck = userRecord.userId;
     
     // Verif dans user_hospital
     const hospitalRole = await db
