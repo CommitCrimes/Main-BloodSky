@@ -71,7 +71,14 @@ const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
   useEffect(() => {
     if (!open) return;
     setStatus(currentStatus);
-    setNewDate(currentStatus === 'pending' && currentDate ? format(currentDate, 'yyyy-MM-dd') : '');
+
+    if (currentStatus === 'pending' && currentDate) {
+      setNewDate(format(currentDate, 'yyyy-MM-dd'));
+    } else if (currentStatus === 'cancelled') {
+      setNewDate(format(new Date(), 'yyyy-MM-dd')); // aujourd'hui
+    } else {
+      setNewDate('');
+    }
   }, [open, currentStatus, currentDate]);
 
   const isDateRequired = status === 'pending';
@@ -120,8 +127,13 @@ const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
   }, [status, newDate, currentDate, coordinates?.lat, coordinates?.lon]);
 
   const handleSave = async () => {
-    const dateToSend =
-      status === 'pending' && newDate ? new Date(newDate) : undefined;
+    let dateToSend: Date | undefined = undefined;
+
+    if (status === 'pending' && newDate) {
+      dateToSend = new Date(newDate);
+    } else if (status === 'cancelled') {
+      dateToSend = new Date();
+    }
 
     await onSave(status, dateToSend);
     if (onUpdate) await onUpdate();
@@ -181,7 +193,7 @@ const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
               <TableContainer component={Paper} sx={{ maxHeight: 300 }}>
                 <Table size="small" stickyHeader>
                   <TableHead>
-                    <TableRow >
+                    <TableRow>
                       <TableCell sx={{ fontFamily: 'Share Tech, monospace' }}>Heure</TableCell>
                       <TableCell sx={{ fontFamily: 'Share Tech, monospace' }}>Icône</TableCell>
                       <TableCell sx={{ fontFamily: 'Share Tech, monospace' }}>Vent (m/s)</TableCell>

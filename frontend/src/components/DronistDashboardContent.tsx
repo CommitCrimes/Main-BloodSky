@@ -153,83 +153,114 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
   }, []);
 
   /** STATS LIVRAISONS (garde ton calcul) */
-  useEffect(() => {
-    type DeliveryStatus = 'pending' | 'in_transit' | 'delivered' | 'cancelled';
+/** STATS LIVRAISONS (delivered + cancelled sur 7 jours, robuste) */
+useEffect(() => {
+  type DeliveryStatus = 'pending' | 'in_transit' | 'delivered' | 'cancelled';
 
-    type DeliveryLike = {
-      deliveryId: number;
-      deliveryStatus?: string | DeliveryStatus;
-      requestDate?: string | Date | null;
-      deliveryDate?: string | Date | null;
-      dteValidation?: string | Date | null;
-    };
+  type DeliveryLike = {
+    deliveryId: number;
+    deliveryStatus?: string | DeliveryStatus | null;
+    requestDate?: string | Date | null;
+    deliveryDate?: string | Date | null;
+    dteValidation?: string | Date | null;
+  };
 
-    const parseDate = (v?: string | Date | null): Date | null =>
-      v == null ? null : v instanceof Date ? v : new Date(v);
+  const parseDate = (v?: string | Date | null): Date | null => {
+    if (v == null) return null;
+    const d = v instanceof Date ? v : new Date(v);
+    return isNaN(d.getTime()) ? null : d;
+  };
 
-    const startOfDay = (d: Date) => {
-      const x = new Date(d);
-      x.setHours(0, 0, 0, 0);
-      return x;
-    };
+  const startOfLocalDay = (d: Date) => {
+    const x = new Date(d);
+    x.setHours(0, 0, 0, 0);
+    return x;
+  };
 
-    const dayKey = (d: Date) => startOfDay(d).toISOString();
+  // Clef locale YYYY-MM-DD pour éviter les soucis d'UTC
+  const localKey = (d: Date) => {
+    const x = startOfLocalDay(d);
+    const y = x.getFullYear();
+    const m = String(x.getMonth() + 1).padStart(2, '0');
+    const dd = String(x.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+  };
 
-    const frDayShort = (d: Date) =>
-      d.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '');
+  const frDayShort = (d: Date) =>
+    d.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '');
 
-    const load = async () => {
-      const centerId = auth.user?.role?.centerId;
-      const raw = centerId != null
-        ? await deliveryApi.getByCenterId(centerId)
-        : await deliveryApi.getAll();
+  const norm = (s?: string | null) => (s ?? '').trim().toLowerCase();
 
-      const list: DeliveryLike[] = raw.map((d) => ({
-        deliveryId: (d as { deliveryId: number }).deliveryId,
-        deliveryStatus: (d as { deliveryStatus?: string }).deliveryStatus ?? 'pending',
-        requestDate: (d as { requestDate?: string | Date | null }).requestDate ?? null,
-        deliveryDate: (d as { deliveryDate?: string | Date | null }).deliveryDate ?? null,
-        dteValidation: (d as { dteValidation?: string | Date | null }).dteValidation ?? null,
-      }));
+  // Regroupe les multiples variantes possibles renvoyées par l’API
+  const classifyStatus = (s?: string | null): DeliveryStatus | 'other' => {
+    const n = norm(s);
 
-      const today = startOfDay(new Date());
-      const days = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(today);
-        d.setDate(today.getDate() - (6 - i));
-        return d;
-      });
+    if (/(deliv|livr)/.test(n)) return 'delivered';
+    if (/(cancel|cancell|canceled|annul)/.test(n)) return 'cancelled';
+    if (/(transit|in_transit|en[ _-]?transit)/.test(n)) return 'in_transit';
+    if (/(pending|program|planif|en[ _-]?attente)/.test(n)) return 'pending';
+    return 'other';
+  };
 
-      const buckets = new Map<string, { vols: number; echecs: number; date: Date }>();
-      days.forEach((d) => buckets.set(dayKey(d), { vols: 0, echecs: 0, date: d }));
+  const load = async () => {
+    const raw = await deliveryApi.getAll();
 
-      list.forEach((it) => {
-        const status = String(it.deliveryStatus).toLowerCase() as DeliveryStatus;
-        const ref =
-          status === 'delivered'
-            ? parseDate(it.deliveryDate)
-            : status === 'cancelled'
-              ? parseDate(it.dteValidation) ?? parseDate(it.requestDate)
-              : parseDate(it.requestDate);
+    const list: DeliveryLike[] = raw.map((d) => ({
+      deliveryId: (d as { deliveryId: number }).deliveryId,
+      deliveryStatus: (d as { deliveryStatus?: string | DeliveryStatus | null }).deliveryStatus ?? 'pending',
+      requestDate: (d as { requestDate?: string | Date | null }).requestDate ?? null,
+      deliveryDate: (d as { deliveryDate?: string | Date | null }).deliveryDate ?? null,
+      dteValidation: (d as { dteValidation?: string | Date | null }).dteValidation ?? null,
+    }));
 
-        if (!ref) return;
-        const slot = buckets.get(dayKey(ref));
-        if (!slot) return;
+    // Fenêtre des 7 derniers jours (J-6 → J) en LOCAL
+    const today = startOfLocalDay(new Date());
+    const days = Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() - (6 - i));
+      return d;
+    });
 
-        if (status === 'delivered') slot.vols += 1;
-        else if (status === 'cancelled') slot.echecs += 1;
-      });
+    const buckets = new Map<string, { vols: number; echecs: number; date: Date }>();
+    days.forEach((d) => buckets.set(localKey(d), { vols: 0, echecs: 0, date: d }));
 
-      setDeliveryStats(
-        days.map((d) => {
-          const b = buckets.get(dayKey(d))!;
-          return { name: frDayShort(d), vols: b.vols, echecs: b.echecs };
-        })
-      );
-    };
+    // Filled counters
+    list.forEach((it) => {
+      const kind = classifyStatus(it.deliveryStatus);
 
-    load();
-  }, [auth.user?.role?.centerId]);
+      let ref: Date | null = null;
+      if (kind === 'delivered') {
+        // delivered → dteValidation || deliveryDate || requestDate
+        ref = parseDate(it.dteValidation) ?? parseDate(it.deliveryDate) ?? parseDate(it.requestDate);
+      } else if (kind === 'cancelled') {
+        // cancelled → deliveryDate || dteValidation || requestDate
+        ref = parseDate(it.deliveryDate) ?? parseDate(it.dteValidation) ?? parseDate(it.requestDate);
+      } else {
+        return;
+      }
 
+      if (!ref) return;
+
+      const k = localKey(ref);
+      const slot = buckets.get(k);
+      if (!slot) return; // hors des 7 derniers jours
+
+      if (kind === 'delivered') slot.vols += 1;
+      else if (kind === 'cancelled') slot.echecs += 1;
+    });
+
+    // Injection dans le graphe
+    setDeliveryStats(
+      days.map((d) => {
+        const b = buckets.get(localKey(d))!;
+        return { name: frDayShort(d), vols: b.vols, echecs: b.echecs };
+      })
+    );
+  };
+
+  load();
+}, []);
+  
   /** STATUT DRONES (inchangé) */
   useEffect(() => {
     type DroneItem = { droneStatus?: string | null };

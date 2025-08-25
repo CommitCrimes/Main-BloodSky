@@ -21,6 +21,7 @@ import {
   Tooltip,
   Card,
   CardContent,
+  Menu, MenuItem, ListItemIcon, ListItemText
 } from '@mui/material';
 import {
   FlightTakeoffOutlined,
@@ -31,6 +32,7 @@ import {
   HomeOutlined,
   RefreshOutlined,
   Visibility,
+  CheckCircleOutline, BuildCircleOutlined, PowerSettingsNewOutlined
 } from '@mui/icons-material';
 import DroneDetailView from './DroneDetailView';
 import { dronesApi } from '@/api/drone';
@@ -51,6 +53,11 @@ const DroneManagement: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [syncing, setSyncing] = useState<number | null>(null);
   const [detailViewDroneId, setDetailViewDroneId] = useState<number | null>(null);
+  type DroneStatusValue = 'available' | 'maintenance' | 'hors service';
+  const [statusMenuAnchor, setStatusMenuAnchor] = useState<null | HTMLElement>(null);
+  const [statusMenuDroneId, setStatusMenuDroneId] = useState<number | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
+  const openStatusMenu = Boolean(statusMenuAnchor);
 
   const fetchDronesData = async () => {
     try {
@@ -135,6 +142,32 @@ const DroneManagement: React.FC = () => {
     fetchDronesData();
   }, []);
 
+  const handleOpenStatusMenu = (e: React.MouseEvent<HTMLElement>, droneId: number) => {
+  setStatusMenuAnchor(e.currentTarget);
+  setStatusMenuDroneId(droneId);
+};
+
+const handleCloseStatusMenu = () => {
+  setStatusMenuAnchor(null);
+  setStatusMenuDroneId(null);
+};
+
+const applyDroneStatus = async (newStatus: DroneStatusValue) => {
+  if (statusMenuDroneId == null) return;
+  try {
+    setUpdatingStatusId(statusMenuDroneId);
+    await dronesApi.update(statusMenuDroneId, { droneStatus: newStatus });
+    await fetchDronesData();
+  } catch (err) {
+    console.error('Error updating drone status:', err);
+    setError(`Erreur lors de la mise à jour du statut du drone ${statusMenuDroneId}`);
+  } finally {
+    setUpdatingStatusId(null);
+    handleCloseStatusMenu();
+  }
+};
+
+
   useEffect(() => {
     if (dronesHistory.length === 0) return;
     if (detailViewDroneId) return; // pause
@@ -147,7 +180,7 @@ const DroneManagement: React.FC = () => {
     const s = (status || '').toLowerCase();
     switch (s) {
       case 'available':
-        return 'available';
+        return 'actif ';
       case 'maintenance':
         return 'Maintenance';
       case 'hors service':
@@ -157,8 +190,9 @@ const DroneManagement: React.FC = () => {
   const getStatusColor = (status: string): string => {
     switch ((status || '').toLowerCase()) {
       case 'available':
-        return '#616161';
+        return '#10b981';
       case 'maintenance':
+        return '#f59e0b';
       case 'hors service':
         return '#f44336';
       default:
@@ -229,6 +263,21 @@ const DroneManagement: React.FC = () => {
 
   return (
     <Box sx={{ p: { xs: 2, sm: 3 } }}>
+      <Menu anchorEl={statusMenuAnchor} open={openStatusMenu} onClose={handleCloseStatusMenu}>
+  <MenuItem onClick={() => applyDroneStatus('available')}>
+    <ListItemIcon><CheckCircleOutline fontSize="small" /></ListItemIcon>
+    <ListItemText>Actif</ListItemText>
+  </MenuItem>
+  <MenuItem onClick={() => applyDroneStatus('maintenance')}>
+    <ListItemIcon><BuildCircleOutlined fontSize="small" /></ListItemIcon>
+    <ListItemText>Maintenance</ListItemText>
+  </MenuItem>
+  <MenuItem onClick={() => applyDroneStatus('hors service')}>
+    <ListItemIcon><PowerSettingsNewOutlined fontSize="small" /></ListItemIcon>
+    <ListItemText>Hors service</ListItemText>
+  </MenuItem>
+</Menu>
+
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 2, mb: 3 }}>
         <Typography variant="h4" sx={{ fontFamily: 'Share Tech, monospace', color: '#5C7F9B', fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' } }}>
           Gestion des Drones
@@ -380,17 +429,25 @@ const DroneManagement: React.FC = () => {
                       {drone.droneName || 'Sans nom'}
                     </Typography>
                   </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={tStatus(drone.droneStatus)}
-                      size="small"
-                      sx={{
-                        backgroundColor: getStatusColor(drone.droneStatus),
-                        color: 'white',
-                        fontWeight: 'bold',
-                      }}
-                    />
-                  </TableCell>
+<TableCell>
+  <Chip
+  clickable
+  onClick={(e) => handleOpenStatusMenu(e, drone.droneId)}
+  label={
+    updatingStatusId === drone.droneId
+      ? (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <CircularProgress size={14} />
+          <span>{tStatus(drone.droneStatus) || 'N/A'}</span>
+        </Box>
+      )
+      : (tStatus(drone.droneStatus) || 'N/A')
+  }
+  size="small"
+  sx={{ backgroundColor: getStatusColor(drone.droneStatus), color: '#fff', fontSize: '0.7rem' }}
+/>
+
+</TableCell>
 
                   {/* État */}
                   <TableCell>
@@ -461,9 +518,9 @@ const DroneManagement: React.FC = () => {
       {/* Version Mobile avec Cards */}
       <Box sx={{ display: { xs: 'block', md: 'none' } }}>
         {uniqueDrones.map((drone) => {
-          const statusItem = dronesStatus.find((s) => s.droneId === drone.droneId) || {};
+          const statusItem: DroneStatus | undefined = dronesStatus.find((s) => s.droneId === drone.droneId);
           const fi = dronesFlightInfo[drone.droneId];
-          const isOnline = (statusItem as any).isOnline || false;
+          const isOnline = statusItem?.isOnline || false;
           const isArmed = fi?.is_armed === true;
           const flightMode = fi?.flight_mode || 'N/A';
 
