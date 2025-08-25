@@ -11,11 +11,12 @@ type Variables = {
 };
 
 export const bloodRouter = new Hono<{ Variables: Variables }>();
+export const notificationRouter = new Hono<{ Variables: Variables }>();
 
-bloodRouter.use("/cancel-order/*", authMiddleware);
-bloodRouter.use("/status-update/*", authMiddleware);
+notificationRouter.use("/cancel-order/*", authMiddleware);
+notificationRouter.use("/status-update/*", authMiddleware);
 
-bloodRouter.get("/available", async (c) => {
+notificationRouter.get("/available", async (c) => {
   try {
     const availableBlood = await db
       .select()
