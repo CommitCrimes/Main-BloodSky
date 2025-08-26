@@ -5,9 +5,9 @@ import { db } from '../utils/db';
 import { users } from '../schemas';
 import { eq } from 'drizzle-orm';
 
-const SUPER_ADMIN_EMAILS = [
-  process.env.ADMIN_EMAIL || 'admin@bloodsky.fr',
-];
+const SUPER_ADMIN_EMAILS = process.env.ADMIN_EMAILS
+  ? process.env.ADMIN_EMAILS.split(',').map((email) => email.trim())
+  : [];
 
 export const superAdminAuth = async (c: Context, next: Next) => {
   try {
@@ -25,12 +25,6 @@ export const superAdminAuth = async (c: Context, next: Next) => {
       throw new HTTPException(401, { message: 'Token invalide' });
     }
 
-    if (!SUPER_ADMIN_EMAILS.includes(payload.email)) {
-      throw new HTTPException(403, { 
-        message: 'Accès refusé: privilèges super administrateur requis' 
-      });
-    }
-
     const user = await db
       .select()
       .from(users)
@@ -42,6 +36,14 @@ export const superAdminAuth = async (c: Context, next: Next) => {
     }
 
     const foundUser = user[0];
+
+    const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(foundUser.email) || foundUser.isSuperAdmin;
+
+    if (!isSuperAdmin) {
+      throw new HTTPException(403, {
+        message: 'Accès refusé: privilèges super administrateur requis'
+      });
+    }
 
     if (foundUser.userStatus !== 'active') {
       throw new HTTPException(403, { message: 'Compte utilisateur inactif' });

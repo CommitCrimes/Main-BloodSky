@@ -43,6 +43,9 @@ userRouter.get("/hospital", async (c) => {
   return c.json(data);
 });
 
+// GET user role
+userRouter.get("/role", getUserRole);
+
 // GET users by ID
 userRouter.get("/:id", async (c) => {
   const id = Number(c.req.param("id"));
@@ -141,8 +144,6 @@ userRouter.get("/:id/deliveries", async (c) => {
   return c.json(participations);
 });
 
-// GET user role
-userRouter.get("/role", getUserRole);
 
 //_______________POST______________//
 

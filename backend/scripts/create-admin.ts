@@ -55,6 +55,7 @@ async function createAdmin() {
       userName: 'Admin',
       userFirstname: 'BloodSky',
       userStatus: 'active',
+      isSuperAdmin: true,
     });
     
     console.log('✅ Compte administrateur créé avec succès!');

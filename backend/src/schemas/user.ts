@@ -14,4 +14,5 @@ export const users = pgTable('users', {
   urlUsed: boolean('url_used').default(false),
   resetPasswordToken: varchar('reset_password_token'),
   resetPasswordExpires: timestamp('reset_password_expires'),
+  isSuperAdmin: boolean('is_super_admin').default(false),
 });
