@@ -94,6 +94,11 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
         const response = await api.get(`/${entityApiPath}`);
         console.log(`Response received:`, response.data);
         setEntities(response.data);
+        if (type === 'add_hospital') {
+          const hospitals = response.data as Hospital[];
+          const maxId = hospitals.reduce((max, h) => Math.max(max, h.hospitalId), 0);
+          setHospitalForm(prev => ({ ...prev, hospitalId: String(maxId + 1) }));
+        }
       } catch (error) {
         console.error(`Erreur lors du chargement des ${entityLabel.toLowerCase()}s:`, error);
         console.error('Error details:', error);
@@ -103,7 +108,7 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
     };
 
     fetchEntities();
-  }, [entityApiPath, entityLabel]);
+  }, [entityApiPath, entityLabel, type]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -208,15 +213,23 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
 
   const validateHospitalForm = () => {
     const errors: { [key: string]: string } = {};
-    if (!hospitalForm.hospitalId) errors.hospitalId = 'Identifiant requis';
-    else if (!/^\d+$/.test(hospitalForm.hospitalId) || Number(hospitalForm.hospitalId) <= 0)
-      errors.hospitalId = 'Identifiant invalide';
     if (!hospitalForm.hospitalName) errors.hospitalName = 'Nom requis';
     if (!hospitalForm.hospitalCity) errors.hospitalCity = 'Ville requise';
     if (!hospitalForm.hospitalPostal || !/^\d{5}$/.test(hospitalForm.hospitalPostal)) errors.hospitalPostal = 'Code postal invalide';
     if (!hospitalForm.hospitalAdress) errors.hospitalAdress = 'Adresse requise';
-    if (!hospitalForm.hospitalLatitude || isNaN(Number(hospitalForm.hospitalLatitude))) errors.hospitalLatitude = 'Latitude invalide';
-    if (!hospitalForm.hospitalLongitude || isNaN(Number(hospitalForm.hospitalLongitude))) errors.hospitalLongitude = 'Longitude invalide';
+    if (!hospitalForm.hospitalLatitude || isNaN(Number(hospitalForm.hospitalLatitude))) {
+      errors.hospitalLatitude = 'Latitude invalide';
+    } else {
+      const lat = Number(hospitalForm.hospitalLatitude);
+      if (lat < -90 || lat > 90) errors.hospitalLatitude = 'Latitude hors bornes (-90 à 90)';
+    }
+
+    if (!hospitalForm.hospitalLongitude || isNaN(Number(hospitalForm.hospitalLongitude))) {
+      errors.hospitalLongitude = 'Longitude invalide';
+    } else {
+      const lon = Number(hospitalForm.hospitalLongitude);
+      if (lon < -180 || lon > 180) errors.hospitalLongitude = 'Longitude hors bornes (-180 à 180)';
+    }
     setHospitalErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -239,7 +252,7 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
       await api.post('/hospitals', payload);
       setHospitalSuccess('Nouvel hôpital ajouté avec succès !');
       setHospitalForm({
-        hospitalId: '',
+        hospitalId: String(Number(hospitalForm.hospitalId) + 1),
         hospitalName: '',
         hospitalCity: '',
         hospitalPostal: '',
@@ -275,12 +288,12 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
               id="hospitalId"
               name="hospitalId"
               type="text"
-              required
-              className={`mt-1 block w-full px-3 py-2 border ${hospitalErrors.hospitalId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              disabled
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 sm:text-sm"
               value={hospitalForm.hospitalId}
-              onChange={handleHospitalInputChange}
+              readOnly
+              placeholder={String(Number(hospitalForm.hospitalId) + 1)}
             />
-            {hospitalErrors.hospitalId && <p className="mt-1 text-sm text-red-600">{hospitalErrors.hospitalId}</p>}
           </div>
           <div>
             <label htmlFor="hospitalName" className="block text-sm font-medium text-gray-700">Nom de l'hôpital *</label>
@@ -316,6 +329,7 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
               type="text"
               required
               className={`mt-1 block w-full px-3 py-2 border ${hospitalErrors.hospitalPostal ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              placeholder='75001'
               value={hospitalForm.hospitalPostal}
               onChange={handleHospitalInputChange}
             />
@@ -329,6 +343,7 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
               type="text"
               required
               className={`mt-1 block w-full px-3 py-2 border ${hospitalErrors.hospitalAdress ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              placeholder='123 Rue de la Paix'
               value={hospitalForm.hospitalAdress}
               onChange={handleHospitalInputChange}
             />
@@ -339,9 +354,13 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
             <input
               id="hospitalLatitude"
               name="hospitalLatitude"
-              type="text"
+              type="number"
+              step="0.000001"
               required
               className={`mt-1 block w-full px-3 py-2 border ${hospitalErrors.hospitalLatitude ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              placeholder="48.85"
+              min={-90}
+              max={90}
               value={hospitalForm.hospitalLatitude}
               onChange={handleHospitalInputChange}
             />
@@ -352,9 +371,13 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
             <input
               id="hospitalLongitude"
               name="hospitalLongitude"
-              type="text"
+              type="number"
+              step="0.000001"
               required
               className={`mt-1 block w-full px-3 py-2 border ${hospitalErrors.hospitalLongitude ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              placeholder="2.35"
+              min={-180}
+              max={180}
               value={hospitalForm.hospitalLongitude}
               onChange={handleHospitalInputChange}
             />
