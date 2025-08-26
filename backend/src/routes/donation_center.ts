@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { donationCenters } from "../schemas/donation_center";
 import { db } from "../utils/db";
-import { eq } from "drizzle-orm";
+import { eq, ilike } from "drizzle-orm";
 
 export const donationCenterRouter = new Hono();
 
@@ -48,6 +48,20 @@ donationCenterRouter.delete("/:id", async (c) => {
   if (isNaN(id)) return c.text("Invalid ID", 400);
   await db.delete(donationCenters).where(eq(donationCenters.centerId, id));
   return c.text("Deleted");
+});
+
+// GET donation centers by city
+donationCenterRouter.get("/city/:city", async (c) => {
+  const raw = c.req.param("city") ?? "";
+  const city = raw.trim();
+  if (!city) return c.text("City is required", 400);
+
+  const data = await db
+    .select()
+    .from(donationCenters)
+    .where(ilike(donationCenters.centerCity, `%${city}%`));
+
+  return c.json(data);
 });
 
 // GET donation centers by postal code
