@@ -21,7 +21,7 @@ interface Hospital {
 }
 
 interface AdminInviteFormProps {
-  type: 'donation_center' | 'hospital' | 'add_hospital';
+  type: 'donation_center' | 'hospital' | 'add_hospital' | 'add_center';
 }
 
 interface FormData {
@@ -83,8 +83,27 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
   const [hospitalSuccess, setHospitalSuccess] = useState('');
   const [hospitalLoading, setHospitalLoading] = useState(false);
 
-  const entityLabel = type === 'donation_center' ? 'Centre de donation' : 'Hôpital';
-  const entityApiPath = type === 'donation_center' ? 'donation-centers' : 'hospitals';
+  // State for add_center form
+  const [centerForm, setCenterForm] = useState({
+    centerId: '',
+    centerCity: '',
+    centerPostal: '',
+    centerAdress: '',
+    centerLatitude: '',
+    centerLongitude: '',
+  });
+  const [centerErrors, setCenterErrors] = useState<{ [key: string]: string }>({});
+  const [centerSuccess, setCenterSuccess] = useState('');
+  const [centerLoading, setCenterLoading] = useState(false);
+
+  const entityLabel =
+    type === 'donation_center' || type === 'add_center'
+      ? 'Centre de donation'
+      : 'Hôpital';
+  const entityApiPath =
+    type === 'donation_center' || type === 'add_center'
+      ? 'donation-centers'
+      : 'hospitals';
 
   useEffect(() => {
     const fetchEntities = async () => {
@@ -94,10 +113,15 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
         const response = await api.get(`/${entityApiPath}`);
         console.log(`Response received:`, response.data);
         setEntities(response.data);
+        // Id max + 1
         if (type === 'add_hospital') {
           const hospitals = response.data as Hospital[];
           const maxId = hospitals.reduce((max, h) => Math.max(max, h.hospitalId), 0);
           setHospitalForm(prev => ({ ...prev, hospitalId: String(maxId + 1) }));
+        } else if (type === 'add_center') {
+          const centers = response.data as DonationCenter[];
+          const maxId = centers.reduce((max, c) => Math.max(max, c.centerId), 0);
+          setCenterForm(prev => ({ ...prev, centerId: String(maxId + 1) }));
         }
       } catch (error) {
         console.error(`Erreur lors du chargement des ${entityLabel.toLowerCase()}s:`, error);
@@ -267,6 +291,72 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
     }
   };
 
+  // Handler for add_center form
+  const handleCenterInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setCenterForm(prev => ({ ...prev, [name]: value }));
+    if (centerErrors[name]) {
+      setCenterErrors(prev => {
+        const updated = { ...prev };
+        delete updated[name];
+        return updated;
+      });
+    }
+    setCenterSuccess('');
+  };
+
+  const validateCenterForm = () => {
+    const errors: { [key: string]: string } = {};
+    if (!centerForm.centerCity) errors.centerCity = 'Ville requise';
+    if (!centerForm.centerPostal || !/^\d{5}$/.test(centerForm.centerPostal)) errors.centerPostal = 'Code postal invalide';
+    if (!centerForm.centerAdress) errors.centerAdress = 'Adresse requise';
+    if (!centerForm.centerLatitude || isNaN(Number(centerForm.centerLatitude))) {
+      errors.centerLatitude = 'Latitude invalide';
+    } else {
+      const lat = Number(centerForm.centerLatitude);
+      if (lat < -90 || lat > 90) errors.centerLatitude = 'Latitude hors bornes (-90 à 90)';
+    }
+    if (!centerForm.centerLongitude || isNaN(Number(centerForm.centerLongitude))) {
+      errors.centerLongitude = 'Longitude invalide';
+    } else {
+      const lon = Number(centerForm.centerLongitude);
+      if (lon < -180 || lon > 180) errors.centerLongitude = 'Longitude hors bornes (-180 à 180)';
+    }
+    setCenterErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleCenterSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!validateCenterForm()) return;
+    setCenterLoading(true);
+    setCenterErrors({});
+    try {
+      const payload = {
+        centerId: Number(centerForm.centerId),
+        centerCity: centerForm.centerCity,
+        centerPostal: Number(centerForm.centerPostal),
+        centerAdress: centerForm.centerAdress,
+        centerLatitude: Number(centerForm.centerLatitude),
+        centerLongitude: Number(centerForm.centerLongitude),
+      };
+      await api.post('/donation-centers', payload);
+      setCenterSuccess('Nouveau centre ajouté avec succès !');
+      setCenterForm({
+        centerId: String(Number(centerForm.centerId) + 1),
+        centerCity: '',
+        centerPostal: '',
+        centerAdress: '',
+        centerLatitude: '',
+        centerLongitude: '',
+      });
+    } catch {
+      setCenterErrors({ general: "Erreur lors de l'ajout du centre." });
+    } finally {
+      setCenterLoading(false);
+    }
+  };
+
   if (type === 'add_hospital') {
     return (
       <div className="bg-white shadow-md rounded-lg p-6">
@@ -390,6 +480,123 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
               className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {hospitalLoading ? 'Ajout en cours...' : 'Ajouter l\'hôpital'}
+            </button>
+          </div>
+        </form>
+      </div>
+    );
+  }
+
+  if (type === 'add_center') {
+    return (
+      <div className="bg-white shadow-md rounded-lg p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Ajouter un nouveau centre de don</h3>
+        {centerSuccess && (
+          <div className="mb-4 rounded-md bg-green-50 p-4">
+            <div className="text-sm text-green-700">{centerSuccess}</div>
+          </div>
+        )}
+        {centerErrors.general && (
+          <div className="mb-4 rounded-md bg-red-50 p-4">
+            <div className="text-sm text-red-700">{centerErrors.general}</div>
+          </div>
+        )}
+        <form onSubmit={handleCenterSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="centerId" className="block text-sm font-medium text-gray-700">Identifiant *</label>
+            <input
+              id="centerId"
+              name="centerId"
+              type="text"
+              disabled
+              className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm bg-gray-100 sm:text-sm"
+              value={centerForm.centerId}
+              readOnly
+              placeholder={String(Number(centerForm.centerId) + 1)}
+            />
+          </div>
+          <div>
+            <label htmlFor="centerCity" className="block text-sm font-medium text-gray-700">Ville *</label>
+            <input
+              id="centerCity"
+              name="centerCity"
+              type="text"
+              required
+              className={`mt-1 block w-full px-3 py-2 border ${centerErrors.centerCity ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              value={centerForm.centerCity}
+              onChange={handleCenterInputChange}
+            />
+            {centerErrors.centerCity && <p className="mt-1 text-sm text-red-600">{centerErrors.centerCity}</p>}
+          </div>
+          <div>
+            <label htmlFor="centerPostal" className="block text-sm font-medium text-gray-700">Code postal *</label>
+            <input
+              id="centerPostal"
+              name="centerPostal"
+              type="text"
+              required
+              className={`mt-1 block w-full px-3 py-2 border ${centerErrors.centerPostal ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              placeholder="75001"
+              value={centerForm.centerPostal}
+              onChange={handleCenterInputChange}
+            />
+            {centerErrors.centerPostal && <p className="mt-1 text-sm text-red-600">{centerErrors.centerPostal}</p>}
+          </div>
+          <div>
+            <label htmlFor="centerAdress" className="block text-sm font-medium text-gray-700">Adresse *</label>
+            <input
+              id="centerAdress"
+              name="centerAdress"
+              type="text"
+              required
+              className={`mt-1 block w-full px-3 py-2 border ${centerErrors.centerAdress ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              placeholder='123 Rue de la Paix'
+              value={centerForm.centerAdress}
+              onChange={handleCenterInputChange}
+            />
+            {centerErrors.centerAdress && <p className="mt-1 text-sm text-red-600">{centerErrors.centerAdress}</p>}
+          </div>
+          <div>
+            <label htmlFor="centerLatitude" className="block text-sm font-medium text-gray-700">Latitude *</label>
+            <input
+              id="centerLatitude"
+              name="centerLatitude"
+              type="number"
+              step="0.000001"
+              required
+              className={`mt-1 block w-full px-3 py-2 border ${centerErrors.centerLatitude ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              placeholder="48.85"
+              min={-90}
+              max={90}
+              value={centerForm.centerLatitude}
+              onChange={handleCenterInputChange}
+            />
+            {centerErrors.centerLatitude && <p className="mt-1 text-sm text-red-600">{centerErrors.centerLatitude}</p>}
+          </div>
+          <div>
+            <label htmlFor="centerLongitude" className="block text-sm font-medium text-gray-700">Longitude *</label>
+            <input
+              id="centerLongitude"
+              name="centerLongitude"
+              type="number"
+              step="0.000001"
+              required
+              className={`mt-1 block w-full px-3 py-2 border ${centerErrors.centerLongitude ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              placeholder="2.35"
+              min={-180}
+              max={180}
+              value={centerForm.centerLongitude}
+              onChange={handleCenterInputChange}
+            />
+            {centerErrors.centerLongitude && <p className="mt-1 text-sm text-red-600">{centerErrors.centerLongitude}</p>}
+          </div>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={centerLoading}
+              className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-pink-600 hover:bg-pink-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {centerLoading ? 'Ajout en cours...' : 'Ajouter le centre'}
             </button>
           </div>
         </form>

@@ -67,7 +67,12 @@ const AdminDashboardPage = observer(() => {
 
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<
-    "dashboard" | "invite-donation" | "invite-hospital" | "ajouter-hospital" | "searchbar"
+    | "dashboard"
+    | "invite-donation"
+    | "invite-hospital"
+    | "ajouter-hospital"
+    | "ajouter-center"
+    | "searchbar"
   >("dashboard");
 
   const [stats, setStats] = useState<Statistics | null>(null);
@@ -135,6 +140,7 @@ const AdminDashboardPage = observer(() => {
                   ["invite-donation", "Inviter Admin Centre"],
                   ["invite-hospital", "Inviter Admin Hôpital"],
                   ["ajouter-hospital", "Ajouter un hôpital"],
+                  ["ajouter-center", "Ajouter un centre"],
                   ["searchbar", "Barre de recherche"],
                 ] as const
               ).map(([key, label]) => (
@@ -223,6 +229,7 @@ const AdminDashboardPage = observer(() => {
         {activeTab === "invite-donation" && <AdminInviteForm type="donation_center" />}
         {activeTab === "invite-hospital" && <AdminInviteForm type="hospital" />}
         {activeTab === "ajouter-hospital" && <AdminInviteForm type="add_hospital" />}
+        {activeTab === "ajouter-center" && <AdminInviteForm type="add_center" />}
         {activeTab === "searchbar" && <SearchBar />}
       </div>
     </div>
