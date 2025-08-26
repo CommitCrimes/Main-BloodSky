@@ -71,6 +71,7 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
 
   // State for add_hospital form
   const [hospitalForm, setHospitalForm] = useState({
+    hospitalId: '',
     hospitalName: '',
     hospitalCity: '',
     hospitalPostal: '',
@@ -197,8 +198,9 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
     setHospitalForm(prev => ({ ...prev, [name]: value }));
     if (hospitalErrors[name]) {
       setHospitalErrors(prev => {
-        const { [name]: _removed, ...rest } = prev;
-        return rest;
+        const updated = { ...prev };
+        delete updated[name];
+        return updated;
       });
     }
     setHospitalSuccess('');
@@ -206,6 +208,9 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
 
   const validateHospitalForm = () => {
     const errors: { [key: string]: string } = {};
+    if (!hospitalForm.hospitalId) errors.hospitalId = 'Identifiant requis';
+    else if (!/^\d+$/.test(hospitalForm.hospitalId) || Number(hospitalForm.hospitalId) <= 0)
+      errors.hospitalId = 'Identifiant invalide';
     if (!hospitalForm.hospitalName) errors.hospitalName = 'Nom requis';
     if (!hospitalForm.hospitalCity) errors.hospitalCity = 'Ville requise';
     if (!hospitalForm.hospitalPostal || !/^\d{5}$/.test(hospitalForm.hospitalPostal)) errors.hospitalPostal = 'Code postal invalide';
@@ -223,6 +228,7 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
     setHospitalErrors({});
     try {
       const payload = {
+        hospitalId: Number(hospitalForm.hospitalId),
         hospitalName: hospitalForm.hospitalName,
         hospitalCity: hospitalForm.hospitalCity,
         hospitalPostal: Number(hospitalForm.hospitalPostal),
@@ -233,6 +239,7 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
       await api.post('/hospitals', payload);
       setHospitalSuccess('Nouvel hôpital ajouté avec succès !');
       setHospitalForm({
+        hospitalId: '',
         hospitalName: '',
         hospitalCity: '',
         hospitalPostal: '',
@@ -240,7 +247,7 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
         hospitalLatitude: '',
         hospitalLongitude: '',
       });
-    } catch (error) {
+    } catch {
       setHospitalErrors({ general: "Erreur lors de l'ajout de l'hôpital." });
     } finally {
       setHospitalLoading(false);
@@ -262,6 +269,19 @@ const AdminInviteForm: React.FC<AdminInviteFormProps> = ({ type }) => {
           </div>
         )}
         <form onSubmit={handleHospitalSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="hospitalId" className="block text-sm font-medium text-gray-700">Identifiant *</label>
+            <input
+              id="hospitalId"
+              name="hospitalId"
+              type="text"
+              required
+              className={`mt-1 block w-full px-3 py-2 border ${hospitalErrors.hospitalId ? 'border-red-300' : 'border-gray-300'} rounded-md shadow-sm focus:outline-none focus:ring-pink-500 focus:border-pink-500 sm:text-sm`}
+              value={hospitalForm.hospitalId}
+              onChange={handleHospitalInputChange}
+            />
+            {hospitalErrors.hospitalId && <p className="mt-1 text-sm text-red-600">{hospitalErrors.hospitalId}</p>}
+          </div>
           <div>
             <label htmlFor="hospitalName" className="block text-sm font-medium text-gray-700">Nom de l'hôpital *</label>
             <input
