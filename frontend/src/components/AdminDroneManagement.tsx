@@ -23,6 +23,7 @@ import {
   CardContent,
   TextField,
 } from "@mui/material";
+import Autocomplete from "@mui/material/Autocomplete";
 import {
   FlightTakeoffOutlined,
   NavigationOutlined,
@@ -37,6 +38,13 @@ import {
 } from "@mui/icons-material";
 import DroneDetailView from "./DroneDetailView";
 import { dronesApi } from "@/api/drone";
+import { api } from "@/api/api";
+
+interface DonationCenter {
+  centerId: number;
+  centerCity: string;
+  centerAdress: string;
+}
 import type { FlightInfo as DroneFlightInfo } from "@/types/drone";
 import type { DroneHistory } from "@/types/delivery";
 import type { DroneStatus } from "@/types/drone";
@@ -61,6 +69,14 @@ const AdminDroneManagement: React.FC = () => {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createForm, setCreateForm] = useState({ droneName: "", centerId: "" });
   const [creating, setCreating] = useState(false);
+  const [nextDroneId, setNextDroneId] = useState<number | null>(null);
+  const [cityOptions, setCityOptions] = useState<string[]>([]);
+  const [cityInput, setCityInput] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [centerOptions, setCenterOptions] = useState<DonationCenter[]>([]);
+  const [selectedCenter, setSelectedCenter] = useState<DonationCenter | null>(
+    null
+  );
 
   const fetchDronesData = async () => {
     try {
@@ -145,6 +161,48 @@ const AdminDroneManagement: React.FC = () => {
     }
   };
 
+  const handleOpenCreateDialog = async () => {
+    try {
+      const list = await dronesApi.list();
+      const maxId = list.reduce((m, d) => Math.max(m, d.droneId), 0);
+      setNextDroneId(maxId + 1);
+    } catch (err) {
+      console.error("Error fetching next drone id:", err);
+      setNextDroneId(null);
+    }
+    setCreateDialogOpen(true);
+  };
+
+  const fetchCityOptions = async (value: string) => {
+    if (!value) {
+      setCityOptions([]);
+      return;
+    }
+    try {
+      const res = await api.get(`/donation-centers/city/${value}`);
+      const centers = res.data as DonationCenter[];
+      const cities = Array.from(new Set(centers.map((c) => c.centerCity)));
+      setCityOptions(cities);
+    } catch (err) {
+      console.error("Error fetching city options:", err);
+      setCityOptions([]);
+    }
+  };
+
+  const fetchCentersByCity = async (city: string) => {
+    if (!city) {
+      setCenterOptions([]);
+      return;
+    }
+    try {
+      const res = await api.get(`/donation-centers/city/${city}`);
+      setCenterOptions(res.data as DonationCenter[]);
+    } catch (err) {
+      console.error("Error fetching centers:", err);
+      setCenterOptions([]);
+    }
+  };
+
   const handleCreateDrone = async () => {
     try {
       setCreating(true);
@@ -158,6 +216,10 @@ const AdminDroneManagement: React.FC = () => {
       });
       setCreateDialogOpen(false);
       setCreateForm({ droneName: "", centerId: "" });
+      setSelectedCity("");
+      setCityInput("");
+      setCenterOptions([]);
+      setSelectedCenter(null);
       await fetchDronesData();
     } catch (err) {
       console.error("Error creating drone:", err);
@@ -300,7 +362,7 @@ const AdminDroneManagement: React.FC = () => {
             <Button
               variant="outlined"
               startIcon={<Add />}
-              onClick={() => setCreateDialogOpen(true)}
+              onClick={handleOpenCreateDialog}
             >
               Ajouter
             </Button>
@@ -606,6 +668,13 @@ const AdminDroneManagement: React.FC = () => {
               sx={{ pt: 1, display: "flex", flexDirection: "column", gap: 2 }}
             >
               <TextField
+                label="ID du drone"
+                value={nextDroneId ?? ""}
+                placeholder={nextDroneId?.toString()}
+                disabled
+                fullWidth
+              />
+              <TextField
                 label="Nom du drone"
                 value={createForm.droneName}
                 onChange={(e) =>
@@ -613,14 +682,52 @@ const AdminDroneManagement: React.FC = () => {
                 }
                 fullWidth
               />
-              <TextField
-                label="ID du centre"
-                type="number"
-                value={createForm.centerId}
-                onChange={(e) =>
-                  setCreateForm({ ...createForm, centerId: e.target.value })
-                }
-                fullWidth
+              <Autocomplete
+                freeSolo
+                options={cityOptions}
+                value={selectedCity || null}
+                inputValue={cityInput}
+                onChange={(_, value) => {
+                  const city = value || "";
+                  setSelectedCity(city);
+                  setCityInput(city);
+                  setCreateForm({ ...createForm, centerId: "" });
+                  setSelectedCenter(null);
+                  if (city) {
+                    fetchCentersByCity(city);
+                  } else {
+                    setCenterOptions([]);
+                  }
+                }}
+                onInputChange={(_, value) => {
+                  setCityInput(value);
+                  if (value) {
+                    fetchCityOptions(value);
+                  }
+                }}
+                renderInput={(params) => (
+                  <TextField {...params} label="Ville du centre" fullWidth />
+                )}
+              />
+              <Autocomplete
+                options={centerOptions}
+                value={selectedCenter}
+                getOptionLabel={(option) => option.centerAdress}
+                onChange={(_, value) => {
+                  setSelectedCenter(value);
+                  setCreateForm({
+                    ...createForm,
+                    centerId: value ? String(value.centerId) : "",
+                  });
+                }}
+                renderOption={(props, option) => (
+                  <li {...props}>
+                    {option.centerId}. {option.centerAdress}
+                  </li>
+                )}
+                renderInput={(params) => (
+                  <TextField {...params} label="Adresse du centre" fullWidth />
+                )}
               />
             </Box>
           </DialogContent>
@@ -652,35 +759,43 @@ const AdminDroneManagement: React.FC = () => {
                     Informations générales
                   </Typography>
                   <Typography>
-                    <strong>Nom:</strong> {selectedDrone.droneName || "Sans nom"}
+                    <strong>Nom:</strong>{" "}
+                    {selectedDrone.droneName || "Sans nom"}
                   </Typography>
                   <Typography>
-                    <strong>Statut:</strong> {selectedDrone.droneStatus || "N/A"}
+                    <strong>Statut:</strong>{" "}
+                    {selectedDrone.droneStatus || "N/A"}
                   </Typography>
                   <Typography>
                     <strong>Mode de vol:</strong>{" "}
-                    {dronesFlightInfo[selectedDrone.droneId]?.flight_mode || "N/A"}
+                    {dronesFlightInfo[selectedDrone.droneId]?.flight_mode ||
+                      "N/A"}
                   </Typography>
                   <Typography>
                     <strong>Armé:</strong>{" "}
-                    {dronesFlightInfo[selectedDrone.droneId]?.is_armed ? "Oui" : "Non"}
+                    {dronesFlightInfo[selectedDrone.droneId]?.is_armed
+                      ? "Oui"
+                      : "Non"}
                   </Typography>
                   {dronesFlightInfo[selectedDrone.droneId] && (
                     <>
                       <Typography>
                         <strong>Latitude:</strong>{" "}
-                        {dronesFlightInfo[selectedDrone.droneId]?.latitude?.toFixed(6) ??
-                          "N/A"}
+                        {dronesFlightInfo[
+                          selectedDrone.droneId
+                        ]?.latitude?.toFixed(6) ?? "N/A"}
                       </Typography>
                       <Typography>
                         <strong>Longitude:</strong>{" "}
-                        {dronesFlightInfo[selectedDrone.droneId]?.longitude?.toFixed(6) ??
-                          "N/A"}
+                        {dronesFlightInfo[
+                          selectedDrone.droneId
+                        ]?.longitude?.toFixed(6) ?? "N/A"}
                       </Typography>
                       <Typography>
                         <strong>Altitude:</strong>{" "}
-                        {dronesFlightInfo[selectedDrone.droneId]?.altitude_m?.toFixed(1) ??
-                          "N/A"}{" "}
+                        {dronesFlightInfo[
+                          selectedDrone.droneId
+                        ]?.altitude_m?.toFixed(1) ?? "N/A"}{" "}
                         m
                       </Typography>
                       <Typography>
@@ -692,8 +807,8 @@ const AdminDroneManagement: React.FC = () => {
                       </Typography>
                       <Typography>
                         <strong>Direction:</strong>{" "}
-                        {dronesFlightInfo[selectedDrone.droneId]?.heading_deg !==
-                        undefined
+                        {dronesFlightInfo[selectedDrone.droneId]
+                          ?.heading_deg !== undefined
                           ? dronesFlightInfo[
                               selectedDrone.droneId
                             ]?.heading_deg?.toFixed(0)
@@ -702,8 +817,8 @@ const AdminDroneManagement: React.FC = () => {
                       </Typography>
                       <Typography>
                         <strong>Déplacement:</strong>{" "}
-                        {dronesFlightInfo[selectedDrone.droneId]?.movement_track_deg !==
-                        undefined
+                        {dronesFlightInfo[selectedDrone.droneId]
+                          ?.movement_track_deg !== undefined
                           ? dronesFlightInfo[
                               selectedDrone.droneId
                             ]?.movement_track_deg?.toFixed(0)
@@ -712,9 +827,8 @@ const AdminDroneManagement: React.FC = () => {
                       </Typography>
                       <Typography>
                         <strong>Batterie:</strong>{" "}
-                        {dronesFlightInfo[
-                          selectedDrone.droneId
-                        ]?.battery_remaining_percent !== undefined
+                        {dronesFlightInfo[selectedDrone.droneId]
+                          ?.battery_remaining_percent !== undefined
                           ? dronesFlightInfo[
                               selectedDrone.droneId
                             ]?.battery_remaining_percent?.toFixed(0)
