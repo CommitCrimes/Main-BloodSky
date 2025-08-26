@@ -1,11 +1,19 @@
-import { Container } from '@mui/material';
-import DroneManagement from '@/components/DroneManagement';
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import AdminDroneManagement from '@/components/AdminDroneManagement';
 
-const AdminDroneManagementPage = () => (
-  <Container maxWidth="xl" sx={{ py: 3 }}>
-    <DroneManagement />
-  </Container>
-);
+const AdminDroneManagementPage = () => {
+  const auth = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (auth.user?.role?.type !== 'super_admin') {
+      navigate('/dashboard');
+    }
+  }, [auth.user, navigate]);
+
+  return <AdminDroneManagement />;
+};
 
 export default AdminDroneManagementPage;
-
