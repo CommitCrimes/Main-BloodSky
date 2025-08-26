@@ -135,7 +135,7 @@ droneRouter.delete('/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (isNaN(id)) return c.text('Invalid ID', 400);
   await db.delete(drones).where(eq(drones.droneId, id));
-  return c.text('Deleted');
+  return c.json({ message: 'Deleted' });
 });
 
 // === DRONE CONTROL ENDPOINTS ===
