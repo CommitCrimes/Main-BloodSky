@@ -95,7 +95,12 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const targetStorageKey = useMemo(() => `drone:${droneId}:target`, [droneId]);
   const [currentMission, setCurrentMission] = useState<CurrentMission | null>(null);
   const [homeBusy, setHomeBusy] = useState(false);
-
+    const ALT_STORAGE_KEY = `drone:${droneId}:altitude`;
+   const [cruiseAlt, setCruiseAlt] = useState<number>(() => {
+    if (typeof window === 'undefined') return 50;
+    const v = Number(localStorage.getItem(ALT_STORAGE_KEY));
+    return Number.isFinite(v) && v > 0 ? v : 50;
+  });
 
   const withBusy = async <T,>(fn: () => Promise<T>) => {
     setMissionUploading(true);
@@ -108,7 +113,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
 
   const [missionData, setMissionData] = useState<Mission>({
     filename: `mission_drone_${droneId}_${Date.now()}.waypoints`,
-    altitude_takeoff: 30,
+    altitude_takeoff: cruiseAlt,    
     mode: 'auto',
     waypoints: []
   });
@@ -216,7 +221,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     ? {
         startlat: Number(flightInfo.latitude),
         startlon: Number(flightInfo.longitude),
-        startalt: missionData.altitude_takeoff,
+        startalt: missionData.altitude_takeoff || cruiseAlt,
       }
     : {}),
 };
@@ -265,11 +270,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
 
 
   const addWaypoint = (lat: number, lon: number) => {
-    const newWaypoint: MissionWaypoint = {
-      lat,
-      lon,
-      alt: missionData.altitude_takeoff
-    };
+    const newWaypoint: MissionWaypoint = { lat, lon, alt: missionData.altitude_takeoff || cruiseAlt };
     setWaypoints([...waypoints, newWaypoint]);
     setMissionData({
       ...missionData,
@@ -363,7 +364,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     setWaypoints([]);
     setMissionData((prev: Mission) => ({ ...prev, waypoints: [] }));
 
-    const ALT = 50;
+    const ALT = cruiseAlt;
     const mission: Mission = {
       filename: `DEFAULT_Hopital_DroneID:${droneId}_HopitalID:${hospital.hospitalId}.waypoints`,
       altitude_takeoff: ALT,
@@ -398,7 +399,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
         return;
       }
 
-      const ALT = 50;
+      const ALT = cruiseAlt;
       const mission: Mission = {
         filename: `DEFAULT_ReturnCenter_DroneID:${droneId}_CenterID:${donationCenter.centerId}.waypoints`,
         altitude_takeoff: ALT,
@@ -559,6 +560,13 @@ useEffect(() => {
   setMissionReady(true);
 }, [currentMission, flightInfo?.flight_mode, flightInfo?.is_armed]);
 
+useEffect(() => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(ALT_STORAGE_KEY, String(cruiseAlt));
+  }
+}, [ALT_STORAGE_KEY, cruiseAlt]);
+
+
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
@@ -575,30 +583,27 @@ useEffect(() => {
             Drone {droneId} - Détails
           </Typography>
         </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            variant="outlined"
-            startIcon={<Refresh />}
-            onClick={fetchFlightInfo}
-          >
-            Actualiser
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => setHospitalsDialogOpen(true)}
-            sx={{ bgcolor: '#f44336', '&:hover': { bgcolor: '#d32f2f' } }}
-          >
-            Hôpitaux
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => setAssignOpen(true)}
-            sx={{ bgcolor: '#1976d2', '&:hover': { bgcolor: '#125ea0' } }}
-          >
-            Assigner livraison
-          </Button>
+<Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+  <TextField
+    type="number"
+    label="Altitude (m)"
+    size="small"
+    value={cruiseAlt}
+    onChange={(e) => setCruiseAlt(Math.max(1, Number(e.target.value || 0)))}
+    sx={{ width: 140 }}
+    inputProps={{ min: 1, step: 1 }}
+  />
 
-        </Box>
+  <Button variant="outlined" startIcon={<Refresh />} onClick={fetchFlightInfo}>
+    Actualiser
+  </Button>
+  <Button variant="contained" onClick={() => setHospitalsDialogOpen(true)} sx={{ bgcolor: '#f44336', '&:hover': { bgcolor: '#d32f2f' } }}>
+    Hôpitaux
+  </Button>
+  <Button variant="contained" onClick={() => setAssignOpen(true)} sx={{ bgcolor: '#1976d2', '&:hover': { bgcolor: '#125ea0' } }}>
+    Assigner livraison
+  </Button>
+</Box>
       </Paper>
 
       {error && (
@@ -1048,6 +1053,7 @@ Batterie: {fixed(flightInfo?.battery_remaining_percent, 0)}%<br />
         centerId={donationCenter?.centerId ?? null}
         droneId={droneId}
         statusFilter="pending"
+        defaultAltitude={cruiseAlt}
         onMissionReady={async ({ deliveryId, hospitalId, lat, lon }) => {
           setAssignOpen(false);
           setMissionReady(true);

@@ -88,40 +88,31 @@ const DroneManagement: React.FC = () => {
     }
   };
 
-// 🔁 Remplace entièrement fetchAllDronesFlightInfo par cette version
-const fetchAllDronesFlightInfo = async () => {
-  // Grouper par droneId
-  const grouped = dronesHistory.reduce<Record<number, DroneHistory>>((acc, row) => {
-    if (!row || typeof row.droneId !== 'number') return acc;
-    if (!acc[row.droneId]) acc[row.droneId] = row;
-    return acc;
-  }, {});
-  const allIds = Object.keys(grouped).map((s) => parseInt(s, 10));
-  const serviceableIds = allIds.filter((id) => {
-    const histStatus = grouped[id]?.droneStatus; 
-    const effective = (histStatus) ?? '';
-    return isServiceableStatus(effective);
-  });
+  const fetchAllDronesFlightInfo = async () => {
+    // Grouper par droneId
+    const grouped = dronesHistory.reduce<Record<number, DroneHistory>>((acc, row) => {
+      if (!acc[row.droneId]) acc[row.droneId] = row;
+      return acc;
+    }, {});
 
-  if (serviceableIds.length === 0) {
-    return;
-  }
+    const ids = Object.keys(grouped)
+      .map((s) => parseInt(s, 10))
 
-  const results = await Promise.allSettled(
-    serviceableIds.map(async (id) => {
-      const fi = await fetchDroneFlightInfo(id);
-      return { id, fi };
-    })
-  );
+    const results = await Promise.allSettled(
+      ids.map(async (id) => {
+        const fi = await fetchDroneFlightInfo(id);
+        return { id, fi };
+      })
+    );
 
-  const next: Record<number, DroneFlightInfo> = {};
-  for (const r of results) {
-    if (r.status === 'fulfilled' && r.value.fi) {
-      next[r.value.id] = r.value.fi;
+    const next: Record<number, DroneFlightInfo> = {};
+    for (const r of results) {
+      if (r.status === 'fulfilled' && r.value.fi) {
+        next[r.value.id] = r.value.fi;
+      }
     }
-  }
-  setDronesFlightInfo(next);
-};
+    setDronesFlightInfo(next);
+  };
 
   const handleSyncDrone = async (droneId: number) => {
     try {
@@ -152,29 +143,29 @@ const fetchAllDronesFlightInfo = async () => {
   }, []);
 
   const handleOpenStatusMenu = (e: React.MouseEvent<HTMLElement>, droneId: number) => {
-    setStatusMenuAnchor(e.currentTarget);
-    setStatusMenuDroneId(droneId);
-  };
+  setStatusMenuAnchor(e.currentTarget);
+  setStatusMenuDroneId(droneId);
+};
 
-  const handleCloseStatusMenu = () => {
-    setStatusMenuAnchor(null);
-    setStatusMenuDroneId(null);
-  };
+const handleCloseStatusMenu = () => {
+  setStatusMenuAnchor(null);
+  setStatusMenuDroneId(null);
+};
 
-  const applyDroneStatus = async (newStatus: DroneStatusValue) => {
-    if (statusMenuDroneId == null) return;
-    try {
-      setUpdatingStatusId(statusMenuDroneId);
-      await dronesApi.update(statusMenuDroneId, { droneStatus: newStatus });
-      await fetchDronesData();
-    } catch (err) {
-      console.error('Error updating drone status:', err);
-      setError(`Erreur lors de la mise à jour du statut du drone ${statusMenuDroneId}`);
-    } finally {
-      setUpdatingStatusId(null);
-      handleCloseStatusMenu();
-    }
-  };
+const applyDroneStatus = async (newStatus: DroneStatusValue) => {
+  if (statusMenuDroneId == null) return;
+  try {
+    setUpdatingStatusId(statusMenuDroneId);
+    await dronesApi.update(statusMenuDroneId, { droneStatus: newStatus });
+    await fetchDronesData();
+  } catch (err) {
+    console.error('Error updating drone status:', err);
+    setError(`Erreur lors de la mise à jour du statut du drone ${statusMenuDroneId}`);
+  } finally {
+    setUpdatingStatusId(null);
+    handleCloseStatusMenu();
+  }
+};
 
 
   useEffect(() => {
@@ -196,12 +187,6 @@ const fetchAllDronesFlightInfo = async () => {
         return 'Hors service';
     }
   };
-
-  const isServiceableStatus = (status?: string | null) => {
-    const s = (status || '').toLowerCase();
-    return s !== 'maintenance' && s !== 'hors service';
-  };
-
   const getStatusColor = (status: string): string => {
     switch ((status || '').toLowerCase()) {
       case 'available':
@@ -279,19 +264,19 @@ const fetchAllDronesFlightInfo = async () => {
   return (
     <Box sx={{ p: { xs: 2, sm: 3 } }}>
       <Menu anchorEl={statusMenuAnchor} open={openStatusMenu} onClose={handleCloseStatusMenu}>
-        <MenuItem onClick={() => applyDroneStatus('available')}>
-          <ListItemIcon><CheckCircleOutline fontSize="small" /></ListItemIcon>
-          <ListItemText>Actif</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => applyDroneStatus('maintenance')}>
-          <ListItemIcon><BuildCircleOutlined fontSize="small" /></ListItemIcon>
-          <ListItemText>Maintenance</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={() => applyDroneStatus('hors service')}>
-          <ListItemIcon><PowerSettingsNewOutlined fontSize="small" /></ListItemIcon>
-          <ListItemText>Hors service</ListItemText>
-        </MenuItem>
-      </Menu>
+  <MenuItem onClick={() => applyDroneStatus('available')}>
+    <ListItemIcon><CheckCircleOutline fontSize="small" /></ListItemIcon>
+    <ListItemText>Actif</ListItemText>
+  </MenuItem>
+  <MenuItem onClick={() => applyDroneStatus('maintenance')}>
+    <ListItemIcon><BuildCircleOutlined fontSize="small" /></ListItemIcon>
+    <ListItemText>Maintenance</ListItemText>
+  </MenuItem>
+  <MenuItem onClick={() => applyDroneStatus('hors service')}>
+    <ListItemIcon><PowerSettingsNewOutlined fontSize="small" /></ListItemIcon>
+    <ListItemText>Hors service</ListItemText>
+  </MenuItem>
+</Menu>
 
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 2, mb: 3 }}>
         <Typography variant="h4" sx={{ fontFamily: 'Share Tech, monospace', color: '#5C7F9B', fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' } }}>
@@ -444,25 +429,25 @@ const fetchAllDronesFlightInfo = async () => {
                       {drone.droneName || 'Sans nom'}
                     </Typography>
                   </TableCell>
-                  <TableCell>
-                    <Chip
-                      clickable
-                      onClick={(e) => handleOpenStatusMenu(e, drone.droneId)}
-                      label={
-                        updatingStatusId === drone.droneId
-                          ? (
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                              <CircularProgress size={14} />
-                              <span>{tStatus(drone.droneStatus) || 'N/A'}</span>
-                            </Box>
-                          )
-                          : (tStatus(drone.droneStatus) || 'N/A')
-                      }
-                      size="small"
-                      sx={{ backgroundColor: getStatusColor(drone.droneStatus), color: '#fff', fontSize: '0.7rem' }}
-                    />
+<TableCell>
+  <Chip
+  clickable
+  onClick={(e) => handleOpenStatusMenu(e, drone.droneId)}
+  label={
+    updatingStatusId === drone.droneId
+      ? (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <CircularProgress size={14} />
+          <span>{tStatus(drone.droneStatus) || 'N/A'}</span>
+        </Box>
+      )
+      : (tStatus(drone.droneStatus) || 'N/A')
+  }
+  size="small"
+  sx={{ backgroundColor: getStatusColor(drone.droneStatus), color: '#fff', fontSize: '0.7rem' }}
+/>
 
-                  </TableCell>
+</TableCell>
 
                   {/* État */}
                   <TableCell>
@@ -600,8 +585,8 @@ const fetchAllDronesFlightInfo = async () => {
 
                 <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                   <Tooltip title="Voir les détails">
-                    <IconButton
-                      size="small"
+                    <IconButton 
+                      size="small" 
                       onClick={() => setDetailViewDroneId(drone.droneId)}
                       sx={{ border: '1px solid #e0e0e0' }}
                     >
@@ -609,8 +594,8 @@ const fetchAllDronesFlightInfo = async () => {
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Synchroniser">
-                    <IconButton
-                      size="small"
+                    <IconButton 
+                      size="small" 
                       onClick={() => handleSyncDrone(drone.droneId)}
                       disabled={syncing === drone.droneId || !isOnline}
                       sx={{ border: '1px solid #e0e0e0' }}
@@ -623,8 +608,8 @@ const fetchAllDronesFlightInfo = async () => {
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Retour base">
-                    <IconButton
-                      size="small"
+                    <IconButton 
+                      size="small" 
                       onClick={() => handleReturnHome(drone.droneId)}
                       disabled={!isOnline || !isArmed}
                       sx={{ border: '1px solid #e0e0e0' }}
@@ -633,8 +618,8 @@ const fetchAllDronesFlightInfo = async () => {
                     </IconButton>
                   </Tooltip>
                   <Tooltip title="Infos">
-                    <IconButton
-                      size="small"
+                    <IconButton 
+                      size="small" 
                       onClick={() => {
                         setSelectedDrone(drone);
                         setDialogOpen(true);
@@ -652,10 +637,10 @@ const fetchAllDronesFlightInfo = async () => {
       </Box>
 
       {/* Dialog infos drone */}
-      <Dialog
-        open={dialogOpen}
-        onClose={() => setDialogOpen(false)}
-        maxWidth="md"
+      <Dialog 
+        open={dialogOpen} 
+        onClose={() => setDialogOpen(false)} 
+        maxWidth="md" 
         fullWidth
         sx={{
           '& .MuiDialog-paper': {
