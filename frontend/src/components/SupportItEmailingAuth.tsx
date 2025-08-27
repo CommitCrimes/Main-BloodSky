@@ -21,10 +21,6 @@ import {
   Chip,
 } from '@mui/material';
 import { ContactSupport, Person, Mail, Shield } from '@mui/icons-material';
-
-// ———————————————————————————————————————
-// Styles communs (repris de ton autre composant)
-// ———————————————————————————————————————
 const commonStyles = {
   fontFamily: 'Share Tech, monospace',
   borderRadius: '12px',
@@ -59,9 +55,7 @@ const commonStyles = {
   },
 };
 
-// ———————————————————————————————————————
-// Sujet par rôle
-// ———————————————————————————————————————
+
 type RoleGroup = 'dronist' | 'hospital' | 'donation_center' | 'user';
 const SUBJECTS: Record<RoleGroup, string[]> = {
   dronist: [
@@ -93,9 +87,6 @@ const SUBJECTS: Record<RoleGroup, string[]> = {
   user: ['Assistance générale', 'Compte / Accès', 'Question produit', 'Autre'],
 };
 
-// ———————————————————————————————————————
-// Helpers rôle (identiques fonctionnellement)
-// ———————————————————————————————————————
 type LooseRole =
   | string
   | {
@@ -166,12 +157,10 @@ function pickFromUserRole(role: UserRole | null): ExtractedRole {
   return { code, hospitalId, centerId };
 }
 
-// ———————————————————————————————————————
 
 const ContactWidgetAuthed: React.FC = () => {
   const { user } = useAuth();
 
-  // Rôle initial
   const initialFromAuth: ExtractedRole = useMemo(() => {
     const fromAuth = user?.role ? pickFromUserRole(user.role as UserRole) : { code: 'user' as UserRoleCode };
     return fromAuth;
@@ -188,12 +177,10 @@ const ContactWidgetAuthed: React.FC = () => {
   const [status, setStatus] = useState<string>('');
   const [sending, setSending] = useState<boolean>(false);
 
-  // Infos utilisateur
   const userEmail: string = user?.email ?? '';
   const userName: string = `${user?.userFirstname ?? ''} ${user?.userName ?? ''}`.trim();
   const userId: number | undefined = toNumberOrUndefined(user?.userId);
 
-  // Rafraîchit rôle depuis l’API
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -223,11 +210,9 @@ const ContactWidgetAuthed: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userEmail, userId]);
 
-  // Sujet adapté au rôle
   const roleGroup = useMemo(() => toRoleGroup(roleCode), [roleCode]);
   const subjects = useMemo(() => SUBJECTS[roleGroup], [roleGroup]);
 
-  // Sujet par défaut
   useEffect(() => {
     if (subjects.length && !subject) {
       setSubject(subjects[0]);
@@ -304,7 +289,7 @@ const ContactWidgetAuthed: React.FC = () => {
         background: commonStyles.backgroundGradient,
         display: 'flex',
         justifyContent: 'center',
-        alignItems: 'center', // ← centrage vertical/horizontal
+        alignItems: 'center',
         p: { xs: 2, md: 4 },
       }}
     >
@@ -315,7 +300,7 @@ const ContactWidgetAuthed: React.FC = () => {
             ...commonStyles.glassmorphism,
             p: { xs: 3, md: 4 },
             width: '100%',
-            maxWidth: 720,
+            maxWidth: 900,
           }}
         >
           {/* Titre */}
@@ -337,56 +322,83 @@ const ContactWidgetAuthed: React.FC = () => {
           </Paper>
 
           {/* Bandeau infos utilisateur */}
-          <Paper
-            elevation={0}
-            sx={{
-              ...commonStyles.headerGlass,
-              p: 2,
-              mb: 3,
-            }}
-          >
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" justifyContent="space-between">
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <Person sx={{ color: '#008EFF' }} />
-                <Typography sx={commonStyles.techFontBold}>Nom :</Typography>
-                <Typography sx={commonStyles.techFont}>{userName || '—'}</Typography>
-              </Stack>
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <Mail sx={{ color: '#008EFF' }} />
-                <Typography sx={commonStyles.techFontBold}>Email :</Typography>
-                <Typography sx={commonStyles.techFont}>{userEmail || '—'}</Typography>
-              </Stack>
-              <Stack direction="row" spacing={1.5} alignItems="center">
-                <Shield sx={{ color: '#008EFF' }} />
-                <Typography sx={commonStyles.techFontBold}>Rôle :</Typography>
-                <Chip
-                  label={loadingRole ? 'Chargement…' : roleLabel}
-                  size="small"
-                  sx={{ ...commonStyles.techFont, backgroundColor: '#f0f4f8' }}
-                />
-              </Stack>
-            </Stack>
-          </Paper>
+<Paper
+  elevation={0}
+  sx={{
+    ...commonStyles.headerGlass,
+    p: 2,
+    mb: 3,
+  }}
+>
+  <Stack
+    direction={{ xs: 'column', sm: 'row' }}
+    spacing={2}
+    alignItems="center"
+    justifyContent="space-between"
+    // ✅ autoriser le retour à la ligne sur petit écran et éviter les chevauchements
+    flexWrap="wrap"
+    rowGap={1.5}
+  >
+    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+      <Person sx={{ color: '#008EFF' }} />
+      <Typography sx={commonStyles.techFontBold}>Nom :</Typography>
+      <Typography
+        sx={{ ...commonStyles.techFont }}
+        noWrap
+      >
+        {userName || '—'}
+      </Typography>
+    </Stack>
+
+    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+      <Mail sx={{ color: '#008EFF' }} />
+      <Typography sx={commonStyles.techFontBold}>Email :</Typography>
+      <Typography
+        sx={{
+          ...commonStyles.techFont,
+          minWidth: 0,               
+          textOverflow: 'ellipsis', 
+          whiteSpace: 'nowrap',
+          maxWidth: { xs: '100%', sm: 240, md: 320 }, 
+        }}
+        title={userEmail}             
+      >
+        {userEmail || '—'}
+      </Typography>
+    </Stack>
+
+    <Stack direction="row" spacing={1.5} alignItems="center" sx={{ minWidth: 0 }}>
+      <Shield sx={{ color: '#008EFF' }} />
+      <Typography sx={commonStyles.techFontBold}>Rôle :</Typography>
+      <Chip
+        label={loadingRole ? 'Chargement…' : roleLabel}
+        size="small"
+        sx={{ ...commonStyles.techFont, backgroundColor: '#f0f4f8' }}
+      />
+    </Stack>
+  </Stack>
+</Paper>
 
           {/* Formulaire */}
           <Box component="form" onSubmit={handleSubmit}>
             <Stack spacing={2.5}>
-              <FormControl fullWidth disabled={loadingRole}>
-                <InputLabel sx={commonStyles.techFont}>Sujet</InputLabel>
-                <Select
-                  label="Sujet"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  sx={{ borderRadius: commonStyles.borderRadius, ...commonStyles.techFont }}
-                >
-                  {subjects.map((s) => (
-                    <MenuItem key={s} value={s} sx={commonStyles.techFont}>
-                      {s}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
+<FormControl fullWidth disabled={loadingRole}>
+  <InputLabel id="contact-subject-label" sx={commonStyles.techFont}>Sujet</InputLabel>
+  <Select
+    labelId="contact-subject-label"   
+    id="contact-subject"             
+    label="Sujet"
+    value={subject}
+    onChange={(e) => setSubject(e.target.value)}
+    sx={{ borderRadius: commonStyles.borderRadius, ...commonStyles.techFont }}
+  >
+    {subjects.map((s) => (
+      <MenuItem key={s} value={s} sx={commonStyles.techFont}>
+        {s}
+      </MenuItem>
+    ))}
+  </Select>
+</FormControl>
               {subject === 'Autre' && (
                 <TextField
                   label="Précisez le sujet"

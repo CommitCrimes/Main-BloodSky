@@ -420,10 +420,6 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const firstValid = <T extends { lat?: number; lon?: number }>(arr: T[]) =>
     arr.find(w => Number.isFinite(w?.lat) && Number.isFinite(w?.lon)) ?? null;
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const lastValid = <T extends { lat?: number; lon?: number }>(arr: T[]) =>
-    [...arr].reverse().find(w => Number.isFinite(w?.lat) && Number.isFinite(w?.lon)) ?? null;
-
   // Lit la mission chargée et fixe le target selon le mode
 const refreshTargetFromCurrentMission = async () => {
   try {

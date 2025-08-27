@@ -84,47 +84,36 @@ const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
   const isDateRequired = status === 'pending';
   const isSaveDisabled = isDateRequired && !newDate;
 
-  // météo :
-  // - Programmer (pending) -> météo au "newDate"
-  // - Annuler (cancelled) -> météo au "currentDate"
-  useEffect(() => {
-    const fetchWeather = async () => {
-      if (!coordinates) {
-        setForecastData([]);
-        return;
-      }
+useEffect(() => {
+  const fetchWeather = async () => {
+    if (!coordinates) {
+      setForecastData([]);
+      return;
+    }
 
-      const isPendingWithDate = status === 'pending' && !!newDate;
-      const isCancelWithCurrent = status === 'cancelled' && !!currentDate;
-
-      if (!isPendingWithDate && !isCancelWithCurrent) {
-        setForecastData([]);
-        return;
-      }
-
-      const dateToUse = isPendingWithDate
+    const dateToUse =
+      status === 'pending' && !!newDate
         ? new Date(newDate)
-        : (isCancelWithCurrent ? currentDate! : null);
+        : (() => {
+            const d = new Date();
+            if (d.getHours() >= 21) d.setDate(d.getDate() + 1);
+            return d;
+          })();
 
-      if (!dateToUse) {
-        setForecastData([]);
-        return;
-      }
+    setLoadingWeather(true);
+    try {
+      const list = await getForecastByDate(coordinates.lat, coordinates.lon, dateToUse);
+      setForecastData(list);
+    } catch (err) {
+      console.error('Erreur chargement météo:', err);
+      setForecastData([]);
+    } finally {
+      setLoadingWeather(false);
+    }
+  };
 
-      setLoadingWeather(true);
-      try {
-        const list = await getForecastByDate(coordinates.lat, coordinates.lon, dateToUse);
-        setForecastData(list);
-      } catch (err) {
-        console.error('Erreur chargement météo:', err);
-        setForecastData([]);
-      } finally {
-        setLoadingWeather(false);
-      }
-    };
-
-    void fetchWeather();
-  }, [status, newDate, currentDate, coordinates?.lat, coordinates?.lon]);
+  if (open) void fetchWeather();
+}, [open, status, newDate, coordinates?.lat, coordinates?.lon]);
 
   const handleSave = async () => {
     let dateToSend: Date | undefined = undefined;

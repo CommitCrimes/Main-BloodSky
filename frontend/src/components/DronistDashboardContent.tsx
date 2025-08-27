@@ -561,10 +561,10 @@ useEffect(() => {
                       data={droneStatusData}
                       cx="50%"
                       cy="50%"
-                      outerRadius={60}
+                      outerRadius={80}
                       dataKey="value"
-                      label={({ name, value }) => `${name}: ${value}`}
-                    >
+                      label={false}      //label={({ name, value }) => `${name}: ${value}`}
+                        labelLine={false}                      >
                       {droneStatusData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
