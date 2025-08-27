@@ -78,7 +78,10 @@ export const dronesApi = {
 
   /** POST /drones */
   create: (data: Omit<Drone, "droneId">) =>
-    fetchJson<string>("/drones", { method: "POST", body: JSON.stringify(data) }),
+    fetchJson<{ message: string; droneId: number }>(
+      "/drones",
+      { method: "POST", body: JSON.stringify(data) }
+    ),
 
   /** PUT /drones/:id */
   update: (id: number, patch: DroneUpdate) =>
