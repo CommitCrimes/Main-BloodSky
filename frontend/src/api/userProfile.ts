@@ -1,8 +1,5 @@
 import { api } from './api';
-
-export interface UserRole {
-  type: 'super_admin' | 'hospital_admin' | 'donation_center_admin' | 'dronist' | 'user';
-}
+import { type UserRole } from '@/types/users';
 
 export const userProfileApi = {
 getUserRole: async (
@@ -18,7 +15,7 @@ getUserRole: async (
       return response.data;
     } catch (error) {
       console.error('Erreur lors de la détermination du rôle:', error);
-      return { type: 'user' };
+      return { type: 'user' } as UserRole;
     }
   }
 };

@@ -270,6 +270,8 @@ droneRouter.get('/:id/mission/current', async (c) => {
   if (isNaN(id)) return c.text('Invalid ID', 400);
 
   const result = await droneControlService.getMissionCurrent(id);
-  if (result.error) return c.json({ error: result.error }, 400);
+  if (result.error) {
+    return c.json({ count: 0, items: [] });
+  }
   return c.json(result.data);
 });

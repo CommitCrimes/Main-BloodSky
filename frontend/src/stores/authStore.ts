@@ -1,5 +1,6 @@
 import { authApi, type LoginRequest, type RegisterRequest } from '@/api/auth';
-import { userProfileApi, type UserRole } from '@/api/userProfile';
+import { userProfileApi } from '@/api/userProfile';
+import { type UserRole } from '@/types/users';
 import { makeAutoObservable } from 'mobx';
 import { AxiosError } from 'axios';
 
@@ -83,6 +84,8 @@ export class AuthStore {
       alert('LOGIN RÉUSSI - Rôle: ' + JSON.stringify(user.role));
       
       localStorage.setItem('user', JSON.stringify(user));
+      // Reset de la vue active pour forcer le retour au dashboard principal
+      localStorage.setItem('bloodsky-active-view', 'dashboard');
       console.log('AuthStore - User stocké dans localStorage');
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;

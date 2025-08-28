@@ -1,7 +1,7 @@
-import { pgTable, varchar, integer, decimal } from 'drizzle-orm/pg-core';
+import { pgTable, varchar, integer, decimal, serial } from 'drizzle-orm/pg-core';
 
 export const hospitals = pgTable('hospital', {
-  hospitalId: integer('hospital_id').primaryKey(),
+  hospitalId: serial('hospital_id').primaryKey(),
   hospitalName: varchar('hospital_name'),
   hospitalCity: varchar('hospital_city'),
   hospitalPostal: integer('hospital_postal'),

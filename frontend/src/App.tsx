@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import AuthProvider from './components/AuthProvider';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
+import AdminDashboardPage from './pages/SuperAdminDashboardPage.tsx';
 import AdminDroneManagementPage from './pages/AdminDroneManagementPage';
 import HospitalDashboard from './pages/HospitalDashboard';
 import DonationCenterDashboard from './pages/DonationCenterDashboard';
