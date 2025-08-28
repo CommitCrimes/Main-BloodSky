@@ -31,7 +31,7 @@ const SuperAdminDashboard = () => {
     { id: 'drones', label: 'Gestion Drones', icon: <FlightTakeoffOutlined /> },
     { id: 'hospitals', label: 'Gestion Hôpitaux', icon: <LocalHospitalOutlined /> },
     { id: 'centers', label: 'Gestion Centres', icon: <BusinessOutlined /> },
-    { id: 'deliveries', label: 'Gestion Livraisons', icon: <LocalShippingOutlined /> },
+    { id: 'deliveries', label: 'Livraisons', icon: <LocalShippingOutlined /> },
     { id: 'contact', label: 'Contact', icon: <ContactSupportOutlined /> },
   ];
 

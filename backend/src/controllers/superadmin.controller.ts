@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { db } from '../utils/db';
-import { users, userDonationCenter, userHospital, userDronists, userSupportCenters, deliveries, drones, hospitals, donationCenters, deliveryParticipations, notifications } from '../schemas';
+import { users, userDonationCenter, userHospital, userDronists, userSupportCenters, deliveries, drones, hospitals, donationCenters, deliveryParticipations, notifications, bloods } from '../schemas';
 import { eq, desc, sql } from 'drizzle-orm';
 
 // =============== GESTION DES ADMINS ===============
@@ -345,7 +345,7 @@ export const getDeliveryHistory = async (c: Context) => {
         d.delivery_urgent as "deliveryUrgent"
       FROM delivery d
         LEFT JOIN drone dr ON d.drone_id = dr.drone_id
-        LEFT JOIN blood b ON d.blood_id = b.blood_id
+        LEFT JOIN blood b ON d.delivery_id = b.delivery_id
         LEFT JOIN hospital h ON d.hospital_id = h.hospital_id
         LEFT JOIN donationcenter dc ON d.center_id = dc.center_id
     `;

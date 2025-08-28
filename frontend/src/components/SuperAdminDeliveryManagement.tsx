@@ -16,11 +16,6 @@ import {
   IconButton,
   Alert,
   CircularProgress,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
   Tabs,
   Tab,
   List,
@@ -33,7 +28,6 @@ import {
   Visibility,
   Edit,
   Delete,
-  Refresh,
   LocalShipping,
   Warning,
   CheckCircle,
@@ -45,21 +39,21 @@ import {
   ReportProblem,
   Help
 } from '@mui/icons-material';
-import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { api } from '../api/api';
 
 interface Delivery {
-  delivery_id: number;
-  drone_id?: number;
-  hospital_id: number;
-  center_id: number;
-  delivery_status?: string;
-  delivery_urgent: boolean;
-  dte_delivery?: string;
-  dte_validation?: string;
-  blood_type?: string;
+  deliveryId: number;
+  droneId?: number;
+  hospitalId: number;
+  centerId: number;
+  deliveryStatus?: string;
+  deliveryUrgent: boolean;
+  dteDelivery?: string;
+  dteValidation?: string;
+  bloodType?: string;
+  bloodQuantity?: number;
   hospitalName?: string;
-  centerName?: string;
+  centerCity?: string;
 }
 
 interface HospitalUrgentStats {
@@ -75,8 +69,6 @@ const SuperAdminDeliveryManagement: React.FC = () => {
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<string>('all');
-  const [searchTerm, setSearchTerm] = useState('');
   const [tabValue, setTabValue] = useState(0);
   const [hospitalStats, setHospitalStats] = useState<HospitalUrgentStats[]>([]);
 
@@ -104,12 +96,12 @@ const SuperAdminDeliveryManagement: React.FC = () => {
     const hospitalMap = new Map<number, HospitalUrgentStats>();
     
     deliveriesData.forEach(delivery => {
-      if (!delivery.hospital_id) return;
+      if (!delivery.hospitalId) return;
       
-      if (!hospitalMap.has(delivery.hospital_id)) {
-        hospitalMap.set(delivery.hospital_id, {
-          hospitalId: delivery.hospital_id,
-          hospitalName: delivery.hospitalName || `Hôpital ID: ${delivery.hospital_id}`,
+      if (!hospitalMap.has(delivery.hospitalId)) {
+        hospitalMap.set(delivery.hospitalId, {
+          hospitalId: delivery.hospitalId,
+          hospitalName: delivery.hospitalName || `Hôpital ID: ${delivery.hospitalId}`,
           totalDeliveries: 0,
           urgentDeliveries: 0,
           urgentPercentage: 0,
@@ -117,9 +109,9 @@ const SuperAdminDeliveryManagement: React.FC = () => {
         });
       }
       
-      const stats = hospitalMap.get(delivery.hospital_id)!;
+      const stats = hospitalMap.get(delivery.hospitalId)!;
       stats.totalDeliveries++;
-      if (delivery.delivery_urgent) {
+      if (delivery.deliveryUrgent) {
         stats.urgentDeliveries++;
       }
     });    
@@ -127,11 +119,31 @@ const SuperAdminDeliveryManagement: React.FC = () => {
       stat.urgentPercentage = stat.totalDeliveries > 0 
         ? (stat.urgentDeliveries / stat.totalDeliveries) * 100 
         : 0;
-      stat.isAbusing = stat.urgentPercentage > 30 && stat.totalDeliveries >= 5;
+      stat.isAbusing = stat.urgentPercentage > 50 && stat.totalDeliveries >= 10;
       return stat;
     });    
     statsArray.sort((a, b) => b.urgentPercentage - a.urgentPercentage);
     setHospitalStats(statsArray);
+  };
+
+  const getBloodTypeColor = (bloodType: string | undefined | null) => {
+    if (!bloodType) return 'default';
+    switch (bloodType.toLowerCase()) {
+      case 'o+':
+      case 'o-':
+        return 'error';
+      case 'a+':
+      case 'a-':
+        return 'primary';
+      case 'b+':
+      case 'b-':
+        return 'secondary';
+      case 'ab+':
+      case 'ab-':
+        return 'success';
+      default:
+        return 'default';
+    }
   };
 
   const getStatusColor = (status: string | undefined | null) => {
@@ -141,12 +153,56 @@ const SuperAdminDeliveryManagement: React.FC = () => {
         return 'warning';
       case 'in_progress':
         return 'info';
+      case 'in_transit':
+        return 'secondary';
       case 'completed':
         return 'success';
+      case 'delivered':
+        return 'primary';
       case 'cancelled':
         return 'error';
       default:
         return 'default';
+    }
+  };
+
+  const getStatusVariant = (status: string | undefined | null) => {
+    if (!status) return 'outlined';
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'filled';
+      case 'in_progress':
+        return 'filled';
+      case 'in_transit':
+        return 'filled';
+      case 'completed':
+        return 'filled';
+      case 'delivered':
+        return 'filled';
+      case 'cancelled':
+        return 'filled';
+      default:
+        return 'outlined';
+    }
+  };
+
+  const getStatusLabel = (status: string | undefined | null) => {
+    if (!status) return 'Inconnu';
+    switch (status.toLowerCase()) {
+      case 'pending':
+        return 'En attente';
+      case 'in_progress':
+        return 'En cours';
+      case 'in_transit':
+        return 'En transport';
+      case 'completed':
+        return 'Terminée';
+      case 'delivered':
+        return 'Livrée';
+      case 'cancelled':
+        return 'Annulée';
+      default:
+        return status;
     }
   };
 
@@ -157,8 +213,12 @@ const SuperAdminDeliveryManagement: React.FC = () => {
         return <Schedule />;
       case 'in_progress':
         return <FlightTakeoff />;
+      case 'in_transit':
+        return <LocalShipping />;
       case 'completed':
         return <CheckCircle />;
+      case 'delivered':
+        return <LocalHospital />;
       case 'cancelled':
         return <Cancel />;
       default:
@@ -166,14 +226,7 @@ const SuperAdminDeliveryManagement: React.FC = () => {
     }
   };
 
-  const filteredDeliveries = deliveries.filter(delivery => {
-    const matchesFilter = filter === 'all' || delivery.delivery_status === filter;
-    const matchesSearch = searchTerm === '' || 
-      delivery.delivery_id.toString().includes(searchTerm) ||
-      delivery.blood_type?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      delivery.hospitalName?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
+  const filteredDeliveries = deliveries;
 
   const statsData = [
     {
@@ -184,30 +237,22 @@ const SuperAdminDeliveryManagement: React.FC = () => {
     },
     {
       title: 'En Cours',
-      value: deliveries.filter(d => d.delivery_status === 'in_progress').length,
+      value: deliveries.filter(d => ['in_progress', 'in_transit'].includes(d.deliveryStatus || '')).length,
       icon: <FlightTakeoff />,
       color: '#2e7d32'
     },
     {
       title: 'Complétées',
-      value: deliveries.filter(d => d.delivery_status === 'completed').length,
+      value: deliveries.filter(d => ['completed', 'delivered'].includes(d.deliveryStatus || '')).length,
       icon: <CheckCircle />,
       color: '#ed6c02'
     },
     {
       title: 'Urgentes',
-      value: deliveries.filter(d => d.delivery_urgent).length,
+      value: deliveries.filter(d => d.deliveryUrgent).length,
       icon: <Warning />,
       color: '#d32f2f'
     }
-  ];
-
-  // Données pour le graphique de répartition
-  const statusDistribution = [
-    { name: 'En attente', value: deliveries.filter(d => d.delivery_status === 'pending').length, color: '#ff9800' },
-    { name: 'En cours', value: deliveries.filter(d => d.delivery_status === 'in_progress').length, color: '#2196f3' },
-    { name: 'Complétées', value: deliveries.filter(d => d.delivery_status === 'completed').length, color: '#4caf50' },
-    { name: 'Annulées', value: deliveries.filter(d => d.delivery_status === 'cancelled').length, color: '#f44336' }
   ];
 
   if (loading) {
@@ -236,8 +281,8 @@ const SuperAdminDeliveryManagement: React.FC = () => {
     <Box p={3}>
       <Paper sx={{ mb: 3 }}>
         <Tabs value={tabValue} onChange={(_e, newValue) => setTabValue(newValue)}>
-          <Tab label="Toutes les Livraisons" icon={<LocalShipping />} iconPosition="start" />
-          <Tab label="Statistiques d'Abus Urgent" icon={<Assessment />} iconPosition="start" />
+          <Tab label="Toutes les Livraisons" icon={<LocalShipping />} iconPosition="start" sx={{ m: 'auto'}}/>
+          <Tab label="Statistiques d'Abus Urgent" icon={<Assessment />} iconPosition="start" sx={{ m: 'auto'}}/>
         </Tabs>
       </Paper>
 
@@ -276,146 +321,86 @@ const SuperAdminDeliveryManagement: React.FC = () => {
             ))}
           </Box>
 
-          {/* Graphique de répartition */}
-          <Box sx={{ 
-            display: 'flex', 
-            flexWrap: 'wrap', 
-            gap: 3, 
-            mb: 4 
-          }}>
-            <Box sx={{ 
-              flex: { xs: '1 1 100%', md: '1 1 calc(50% - 12px)' },
-              minWidth: 0
-            }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Répartition par Statut
-                  </Typography>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={statusDistribution}
-                        cx="50%"
-                        cy="50%"
-                        labelLine={false}
-                        label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                      >
-                        {statusDistribution.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </Box>
-            <Box sx={{ 
-              flex: { xs: '1 1 100%', md: '1 1 calc(50% - 12px)' },
-              minWidth: 0
-            }}>
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Actions Rapides
-                  </Typography>
-                  <Box display="flex" flexDirection="column" gap={2}>
-                    <Button variant="contained" startIcon={<LocalShipping />} fullWidth>
-                      Nouvelle Livraison
-                    </Button>
-                    <Button variant="outlined" startIcon={<Warning />} fullWidth>
-                      Livraisons Urgentes
-                    </Button>
-                    <Button variant="outlined" startIcon={<FlightTakeoff />} fullWidth>
-                      Assigner Drone
-                    </Button>
-                    <Button variant="outlined" startIcon={<Refresh />} onClick={fetchDeliveries} fullWidth>
-                      Actualiser
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Box>
-          </Box>
-
-          {/* Tableau des livraisons */}
           <Card>
             <CardContent>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h5" component="h2">
-                  Liste des Livraisons
-                </Typography>
-                <Box display="flex" gap={2}>
-                  <TextField
-                    size="small"
-                    placeholder="Rechercher..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                  <FormControl size="small" sx={{ minWidth: 120 }}>
-                    <InputLabel>Statut</InputLabel>
-                    <Select
-                      value={filter}
-                      label="Statut"
-                      onChange={(e) => setFilter(e.target.value)}
-                    >
-                      <MenuItem value="all">Tous</MenuItem>
-                      <MenuItem value="pending">En attente</MenuItem>
-                      <MenuItem value="in_progress">En cours</MenuItem>
-                      <MenuItem value="completed">Complétées</MenuItem>
-                      <MenuItem value="cancelled">Annulées</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-              </Box>
 
               <TableContainer component={Paper}>
                 <Table>
                   <TableHead>
                     <TableRow>
                       <TableCell>ID</TableCell>
-                      <TableCell>Hôpital</TableCell>
-                      <TableCell>Centre</TableCell>
+                      <TableCell>Hôpital Demandeur</TableCell>
+                      <TableCell>Centre de Don</TableCell>
                       <TableCell>Type Sanguin</TableCell>
+                      <TableCell>Quantité</TableCell>
                       <TableCell>Statut</TableCell>
-                      <TableCell>Urgent</TableCell>
-                      <TableCell>Date Création</TableCell>
+                      <TableCell>Priorité</TableCell>
+                      <TableCell>Date Demande</TableCell>
+                      <TableCell>Date Validation</TableCell>
                       <TableCell>Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {filteredDeliveries.map((delivery) => (
-                      <TableRow key={delivery.delivery_id}>
-                        <TableCell>#{delivery.delivery_id}</TableCell>
+                      <TableRow key={delivery.deliveryId}>
+                        <TableCell>#{delivery.deliveryId}</TableCell>
                         <TableCell>
                           <Box display="flex" alignItems="center">
                             <LocalHospital sx={{ mr: 1, fontSize: 16 }} />
-                            {delivery.hospitalName || `ID: ${delivery.hospital_id}`}
+                            {delivery.hospitalName || `ID: ${delivery.hospitalId}`}
                           </Box>
                         </TableCell>
-                        <TableCell>{delivery.centerName || `ID: ${delivery.center_id}`}</TableCell>
+                        <TableCell>{delivery.centerCity || `ID: ${delivery.centerId}`}</TableCell>
                         <TableCell>
-                          <Chip label={delivery.blood_type || 'Non spécifié'} size="small" />
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            icon={getStatusIcon(delivery.delivery_status)}
-                            label={delivery.delivery_status}
-                            color={getStatusColor(delivery.delivery_status) as 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'}
-                            size="small"
+                          <Chip 
+                            label={delivery.bloodType || 'Non spécifié'} 
+                            color={getBloodTypeColor(delivery.bloodType) as 'default' | 'primary' | 'secondary' | 'error' | 'success' | 'warning'}
+                            size="small" 
+                            sx={{ fontWeight: 'bold' }}
                           />
                         </TableCell>
                         <TableCell>
-                          {delivery.delivery_urgent && (
-                            <Chip icon={<Warning />} label="Urgent" color="error" size="small" />
-                          )}
+                          <Chip 
+                            label={`${delivery.bloodQuantity || 1} poche${(delivery.bloodQuantity || 1) > 1 ? 's' : ''}`}
+                            color="info" 
+                            size="small" 
+                            variant="outlined"
+                            sx={{ fontWeight: 'bold' }}
+                          />
                         </TableCell>
                         <TableCell>
-                          {delivery.dte_delivery ? new Date(delivery.dte_delivery).toLocaleDateString() : '-'}
+                          <Chip
+                            icon={getStatusIcon(delivery.deliveryStatus)}
+                            label={getStatusLabel(delivery.deliveryStatus)}
+                            color={getStatusColor(delivery.deliveryStatus) as 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'}
+                            variant={getStatusVariant(delivery.deliveryStatus) as 'filled' | 'outlined'}
+                            size="small"
+                            sx={{ fontWeight: 'bold' }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            icon={delivery.deliveryUrgent ? <Warning /> : <CheckCircle />}
+                            label={delivery.deliveryUrgent ? "URGENT" : "Normal"} 
+                            color={delivery.deliveryUrgent ? "error" : "success"} 
+                            size="small"
+                            variant={delivery.deliveryUrgent ? "filled" : "outlined"}
+                            sx={{ 
+                              fontWeight: delivery.deliveryUrgent ? 'bold' : 'normal',
+                              animation: delivery.deliveryUrgent ? 'pulse 2s infinite' : 'none',
+                              '@keyframes pulse': {
+                                '0%': { opacity: 1 },
+                                '50%': { opacity: 0.7 },
+                                '100%': { opacity: 1 }
+                              }
+                            }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {delivery.dteDelivery ? new Date(delivery.dteDelivery).toLocaleDateString('fr-FR') : '-'}
+                        </TableCell>
+                        <TableCell>
+                          {delivery.dteValidation ? new Date(delivery.dteValidation).toLocaleDateString('fr-FR') : '-'}
                         </TableCell>
                         <TableCell>
                           <IconButton size="small">
@@ -439,40 +424,20 @@ const SuperAdminDeliveryManagement: React.FC = () => {
       ) : (
         /* Tab Statistiques d'Abus */
         <Box>
-          <Alert severity="warning" sx={{ mb: 3 }}>
-            <Typography variant="body2">
-              Les hôpitaux avec plus de <strong>30% de livraisons urgentes</strong> sont signalés comme potentiellement abusifs.
-              Cette analyse est basée sur un minimum de 5 livraisons.
-            </Typography>
+          <Alert severity="warning" sx={{ mb: 3, '& .MuiAlert-message': { width: '100%' } }}>
+            <div>
+              <div style={{ fontWeight: 'bold', marginBottom: '8px', fontSize: '1rem' }}>
+                📊 Critères de Détection d'Abus Urgent
+              </div>
+              <div style={{ textAlign: 'left', display: 'inline-block', fontSize: '0.875rem' }}>
+                <strong>Seuil d'alerte :</strong> Plus de 50% de demandes urgentes<br/>
+                <strong>Minimum requis :</strong> Au moins 10 livraisons effectuées<br/>
+                <strong>Indicateurs visuels :</strong> Les hôpitaux abusifs apparaissent en rouge avec l'icône ⚠️<br/>
+                <strong>Action recommandée :</strong> Contactez les hôpitaux signalés pour vérifier la justification
+              </div>
+            </div>
           </Alert>
 
-          {/* Graphique des abus */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Pourcentage de Livraisons Urgentes par Hôpital
-              </Typography>
-              <ResponsiveContainer width="100%" height={400}>
-                <BarChart data={hospitalStats.slice(0, 10)}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="hospitalName" 
-                    angle={-45} 
-                    textAnchor="end" 
-                    height={100}
-                    interval={0}
-                  />
-                  <YAxis label={{ value: 'Pourcentage (%)', angle: -90, position: 'insideLeft' }} />
-                  <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
-                  <Bar dataKey="urgentPercentage" name="% Urgent">
-                    {hospitalStats.slice(0, 10).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.isAbusing ? '#f44336' : '#4caf50'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -493,9 +458,9 @@ const SuperAdminDeliveryManagement: React.FC = () => {
                       primary={
                         <Box display="flex" alignItems="center" gap={1}>
                           <LocalHospital />
-                          <Typography variant="subtitle1">
+                          <span style={{ fontSize: '1.1rem', fontWeight: 500 }}>
                             {stat.hospitalName}
-                          </Typography>
+                          </span>
                           {stat.isAbusing && (
                             <Chip 
                               icon={<ReportProblem />} 
@@ -507,11 +472,11 @@ const SuperAdminDeliveryManagement: React.FC = () => {
                         </Box>
                       }
                       secondary={
-                        <Box>
-                          <Typography variant="body2" color="text.secondary">
+                        <Box component="div">
+                          <div style={{ fontSize: '0.875rem', color: 'rgba(0, 0, 0, 0.6)', marginBottom: '8px' }}>
                             {stat.urgentDeliveries} livraisons urgentes sur {stat.totalDeliveries} total
-                          </Typography>
-                          <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                          </div>
+                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <LinearProgress 
                               variant="determinate" 
                               value={stat.urgentPercentage} 
@@ -525,9 +490,9 @@ const SuperAdminDeliveryManagement: React.FC = () => {
                                 }
                               }}
                             />
-                            <Typography variant="body2" fontWeight="bold">
+                            <span style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
                               {stat.urgentPercentage.toFixed(1)}%
-                            </Typography>
+                            </span>
                           </Box>
                         </Box>
                       }

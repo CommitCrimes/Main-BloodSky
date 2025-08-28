@@ -13,4 +13,5 @@ export const deliveries = pgTable('delivery', {
   dteValidation: timestamp('dte_validation'),
   deliveryStatus: text('delivery_status'),
   deliveryUrgent: boolean('delivery_urgent'),
+  bloodQuantity: integer('blood_quantity').default(1),
 });
