@@ -7,7 +7,6 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Chip,
 } from '@mui/material';
 import {
   FlightTakeoff,
@@ -16,10 +15,8 @@ import {
   Business,
   LocalHospital,
   Warning,
-  CheckCircle,
-  Settings,
 } from '@mui/icons-material';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell} from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 import { api } from '../api/api';
 
 interface OverviewStats {
@@ -129,9 +126,6 @@ const SuperAdminDashboardContent: React.FC<SuperAdminDashboardContentProps> = ({
       action: () => onNavigate('deliveries')
     },
   ];
-
-  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
-
   return (
     <Box>
       {/* Vue d'ensemble */}
@@ -207,32 +201,6 @@ const SuperAdminDashboardContent: React.FC<SuperAdminDashboardContentProps> = ({
             flex: { xs: '1 1 100%', md: '1 1 calc(50% - 12px)' },
             minWidth: 0
           }}>
-            <Card>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  Répartition des livraisons par statut
-                </Typography>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={stats.deliveriesByStatus}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ status, percent }) => `${status}: ${((percent || 0) * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="count"
-                    >
-                      {stats.deliveriesByStatus.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <RechartsTooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
           </Box>
         )}
 
@@ -274,18 +242,18 @@ const SuperAdminDashboardContent: React.FC<SuperAdminDashboardContentProps> = ({
                 <Button
                   variant="outlined"
                   startIcon={<LocalHospital />}
-                  onClick={() => onNavigate('invite-hospital')}
+                  onClick={() => onNavigate('hospitals')}
                   fullWidth
                 >
-                  Inviter Admin Hôpital
+                  Gérer les Hôpitaux
                 </Button>
                 <Button
                   variant="outlined"
                   startIcon={<Business />}
-                  onClick={() => onNavigate('invite-donation')}
+                  onClick={() => onNavigate('centers')}
                   fullWidth
                 >
-                  Inviter Admin Centre
+                  Gérer les Centres
                 </Button>
               </Box>
             </CardContent>
@@ -316,35 +284,6 @@ const SuperAdminDashboardContent: React.FC<SuperAdminDashboardContentProps> = ({
             </Card>
           </Box>
         )}
-      </Box>
-
-      {/* Alerts et notifications système */}
-      <Box mt={4}>
-        <Typography variant="h6" gutterBottom>
-          État du système
-        </Typography>
-        <Box display="flex" gap={1} flexWrap="wrap">
-          <Chip 
-            icon={<CheckCircle />} 
-            label="Système opérationnel" 
-            color="success" 
-            variant="outlined" 
-          />
-          {stats.overview.urgentDeliveries > 0 && (
-            <Chip 
-              icon={<Warning />} 
-              label={`${stats.overview.urgentDeliveries} livraisons urgentes`}
-              color="warning" 
-              variant="outlined" 
-            />
-          )}
-          <Chip 
-            icon={<Settings />} 
-            label="Services actifs" 
-            color="primary" 
-            variant="outlined" 
-          />
-        </Box>
       </Box>
     </Box>
   );

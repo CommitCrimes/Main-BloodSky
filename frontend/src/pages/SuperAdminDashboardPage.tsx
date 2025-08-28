@@ -3,7 +3,6 @@ import adminImage from '@/assets/logo.png';
 import DashboardLayout from '@/components/DashboardLayout';
 import SuperAdminDashboardContent from '@/components/SuperAdminDashboardContent';
 import SuperAdminInviteForm from '@/components/SuperAdminInviteForm';
-import SuperAdminUserManagement from '@/components/SuperAdminUserManagement';
 import SuperAdminDeliveryManagement from '@/components/SuperAdminDeliveryManagement';
 import SuperAdminStatistics from '@/components/SuperAdminStatistics';
 import SuperAdminDroneManagement from '@/components/SuperAdminDroneManagement';
@@ -18,7 +17,8 @@ import {
   LocalHospitalOutlined,
   BusinessOutlined,
   ContactSupportOutlined,
-  FlightTakeoffOutlined
+  FlightTakeoffOutlined,
+  LocalShippingOutlined,
 } from '@mui/icons-material';
 
 const SuperAdminDashboard = () => {
@@ -27,10 +27,11 @@ const SuperAdminDashboard = () => {
   // Configuration spécifique pour le dashboard super admin
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: <DashboardOutlined /> },
+    { id: 'admins', label: 'Gestion Admins', icon: <GroupAddOutlined /> },
     { id: 'drones', label: 'Gestion Drones', icon: <FlightTakeoffOutlined /> },
     { id: 'hospitals', label: 'Gestion Hôpitaux', icon: <LocalHospitalOutlined /> },
     { id: 'centers', label: 'Gestion Centres', icon: <BusinessOutlined /> },
-    { id: 'admins', label: 'Gestion Admins', icon: <GroupAddOutlined /> },
+    { id: 'deliveries', label: 'Gestion Livraisons', icon: <LocalShippingOutlined /> },
     { id: 'contact', label: 'Contact', icon: <ContactSupportOutlined /> },
   ];
 
@@ -51,7 +52,6 @@ const SuperAdminDashboard = () => {
     hospitalsComponent: <SuperAdminHospitalManagement />,
     centersComponent: <SuperAdminCenterManagement />,
     adminsComponent: <SuperAdminAdminManagement />,
-    usersComponent: <SuperAdminUserManagement />,
     deliveriesComponent: <SuperAdminDeliveryManagement />,
     statisticsComponent: <SuperAdminStatistics />,
     inviteDonationComponent: <SuperAdminInviteForm type="donation_center" />,

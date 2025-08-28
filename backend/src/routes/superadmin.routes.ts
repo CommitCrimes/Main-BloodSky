@@ -40,6 +40,12 @@ superAdminRouter.delete('/admins/:id', superAdminController.deleteAdmin);
 // GET /superadmin/users - Récupérer tous les utilisateurs
 superAdminRouter.get('/users', superAdminController.getAllUsers);
 
+// PUT /superadmin/users/:id - Mettre à jour un utilisateur
+superAdminRouter.put('/users/:id', superAdminController.updateUser);
+
+// DELETE /superadmin/users/:id - Supprimer un utilisateur
+superAdminRouter.delete('/users/:id', superAdminController.deleteUser);
+
 // GET /superadmin/deliveries - Historique des livraisons
 superAdminRouter.get('/deliveries', superAdminController.getDeliveryHistory);
 

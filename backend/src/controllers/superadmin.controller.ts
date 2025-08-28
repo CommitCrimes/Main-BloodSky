@@ -211,7 +211,7 @@ export const deleteAdmin = async (c: Context) => {
 
 export const getAllUsers = async (c: Context) => {
   try {
-    const allUsers = await db
+    const allUsersWithRoles = await db
       .select({
         userId: users.userId,
         email: users.email,
@@ -220,13 +220,84 @@ export const getAllUsers = async (c: Context) => {
         userStatus: users.userStatus,
         dteCreate: users.dteCreate,
         telNumber: users.telNumber,
+        hospitalId: userHospital.hospitalId,
+        hospitalAdmin: userHospital.admin,
+        hospitalInfo: userHospital.info,
+        hospitalName: hospitals.hospitalName,
+        centerId: userDonationCenter.centerId,
+        centerAdmin: userDonationCenter.admin,
+        centerInfo: userDonationCenter.info,
+        centerCity: donationCenters.centerCity,
+        dronistId: userDronists.userId,
       })
       .from(users)
+      .leftJoin(userHospital, eq(users.userId, userHospital.userId))
+      .leftJoin(hospitals, eq(userHospital.hospitalId, hospitals.hospitalId))
+      .leftJoin(userDonationCenter, eq(users.userId, userDonationCenter.userId))
+      .leftJoin(donationCenters, eq(userDonationCenter.centerId, donationCenters.centerId))
+      .leftJoin(userDronists, eq(users.userId, userDronists.userId))
       .orderBy(desc(users.dteCreate));
 
+    const superAdminEmails = ['super.admin@bloodsky.com', 'admin@bloodsky.com'];
+    
+    const enrichedUsers = allUsersWithRoles
+      .filter(user => user.email !== 'admin@bloodsky.fr') // Masquer le super admin
+      .map(user => {
+      let roleType = 'user';
+      let role = null;
+
+      if (superAdminEmails.includes(user.email)) {
+        roleType = 'super_admin';
+        role = { type: 'super_admin', admin: true };
+      } else if (user.dronistId) {
+        roleType = 'dronist';
+        role = {
+          type: 'dronist',
+          admin: false
+        };
+      } else if (user.hospitalId && user.hospitalAdmin) {
+        roleType = 'hospital_admin';
+        role = {
+          type: 'hospital_admin',
+          hospitalId: user.hospitalId,
+          admin: user.hospitalAdmin,
+          info: user.hospitalInfo
+        };
+      } else if (user.centerId && user.centerAdmin) {
+        roleType = 'donation_center_admin';
+        role = {
+          type: 'donation_center_admin',
+          centerId: user.centerId,
+          admin: user.centerAdmin,
+          info: user.centerInfo
+        };
+      } else if (user.hospitalId || user.centerId) {
+        roleType = user.hospitalId ? 'hospital_user' : 'center_user';
+        role = {
+          type: roleType,
+          hospitalId: user.hospitalId,
+          centerId: user.centerId,
+          admin: false
+        };
+      }
+
+      return {
+        userId: user.userId,
+        email: user.email,
+        userName: user.userName,
+        userFirstname: user.userFirstname,
+        userStatus: user.userStatus,
+        dteCreate: user.dteCreate,
+        telNumber: user.telNumber,
+        role: role,
+        hospitalName: user.hospitalName,
+        centerName: user.centerCity
+      };
+    });
+
     return c.json({
-      users: allUsers,
-      total: allUsers.length,
+      users: enrichedUsers,
+      total: enrichedUsers.length,
     });
   } catch (error) {
     console.error('Erreur lors de la récupération des utilisateurs:', error);
@@ -715,7 +786,13 @@ export const deleteCenter = async (c: Context) => {
       .from(drones)
       .where(eq(drones.centerId, centerId));
 
-    const totalRelated = (associatedDeliveries[0]?.count || 0) + (associatedDrones[0]?.count || 0);
+    // Vérifier s'il y a des utilisateurs associés
+    const associatedUsers = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(userDonationCenter)
+      .where(eq(userDonationCenter.centerId, centerId));
+
+    const totalRelated = (associatedDeliveries[0]?.count || 0) + (associatedDrones[0]?.count || 0) + (associatedUsers[0]?.count || 0);
 
     if (totalRelated > 0 && force !== 'true') {
       const details = [];
@@ -725,13 +802,17 @@ export const deleteCenter = async (c: Context) => {
       if (associatedDrones[0]?.count > 0) {
         details.push(`${associatedDrones[0].count} drone(s)`);
       }
+      if (associatedUsers[0]?.count > 0) {
+        details.push(`${associatedUsers[0].count} utilisateur(s)`);
+      }
       
       return c.json({
-        message: `Impossible de supprimer le centre. ${details.join(' et ')} y sont associé(s).`,
+        message: `Impossible de supprimer le centre. ${details.join(', ')} y sont associé(s).`,
         canForce: true,
         relatedCount: totalRelated,
         deliveries: associatedDeliveries[0]?.count || 0,
-        drones: associatedDrones[0]?.count || 0
+        drones: associatedDrones[0]?.count || 0,
+        users: associatedUsers[0]?.count || 0
       }, 400);
     }
 
@@ -752,6 +833,12 @@ export const deleteCenter = async (c: Context) => {
       }
     }
 
+    // TOUJOURS dissocier les notifications (obligatoire pour éviter les contraintes)
+    await db
+      .update(notifications)
+      .set({ centerId: null })
+      .where(eq(notifications.centerId, centerId));
+
     // Supprimer les associations utilisateur-centre
     await db.delete(userDonationCenter).where(eq(userDonationCenter.centerId, centerId));
 
@@ -767,7 +854,10 @@ export const deleteCenter = async (c: Context) => {
       if (associatedDrones[0]?.count > 0) {
         details.push(`${associatedDrones[0].count} drone(s)`);
       }
-      forceMessage = ` (${details.join(' et ')} dissocié(s))`;
+      if (associatedUsers[0]?.count > 0) {
+        details.push(`${associatedUsers[0].count} utilisateur(s)`);
+      }
+      forceMessage = ` (${details.join(', ')} dissocié(s))`;
     }
 
     return c.json({ message: `Centre supprimé avec succès${forceMessage}` });
@@ -780,12 +870,122 @@ export const deleteCenter = async (c: Context) => {
   }
 };
 
+// =============== GESTION DES UTILISATEURS (UPDATE/DELETE) ===============
+
+export const updateUser = async (c: Context) => {
+  try {
+    const userId = parseInt(c.req.param('id'));
+    
+    if (isNaN(userId)) {
+      throw new HTTPException(400, { message: 'ID utilisateur invalide' });
+    }
+
+    const {
+      userFirstname,
+      userName,
+      email,
+      userStatus,
+      role
+    } = await c.req.json();
+
+    const existingUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.userId, userId))
+      .limit(1);
+
+    if (existingUser.length === 0) {
+      throw new HTTPException(404, { message: 'Utilisateur non trouvé' });
+    }
+
+    const updatedUser = await db
+      .update(users)
+      .set({
+        userFirstname: userFirstname || existingUser[0].userFirstname,
+        userName: userName || existingUser[0].userName,
+        email: email || existingUser[0].email,
+        userStatus: userStatus || existingUser[0].userStatus,
+      })
+      .where(eq(users.userId, userId))
+      .returning();
+
+    return c.json({
+      message: 'Utilisateur mis à jour avec succès',
+      user: updatedUser[0]
+    });
+
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Erreur lors de la mise à jour de l\'utilisateur:', error);
+    throw new HTTPException(500, { message: 'Échec de la mise à jour de l\'utilisateur' });
+  }
+};
+
+export const deleteUser = async (c: Context) => {
+  try {
+    const userId = parseInt(c.req.param('id'));
+    
+    if (isNaN(userId)) {
+      throw new HTTPException(400, { message: 'ID utilisateur invalide' });
+    }
+
+    const existingUser = await db
+      .select()
+      .from(users)
+      .where(eq(users.userId, userId))
+      .limit(1);
+
+    if (existingUser.length === 0) {
+      throw new HTTPException(404, { message: 'Utilisateur non trouvé' });
+    }
+    if (existingUser[0].email === 'admin@bloodsky.fr') {
+      throw new HTTPException(403, { message: 'Impossible de supprimer le super administrateur principal' });
+    }
+    // Supprimer les associations de rôles d'abord (ignorer les erreurs si les enregistrements n'existent pas)
+    try {
+      await db.delete(userHospital).where(eq(userHospital.userId, userId));
+    } catch (e) {
+      console.log('Aucun enregistrement userHospital à supprimer pour userId:', userId);
+    }
+    
+    try {
+      await db.delete(userDonationCenter).where(eq(userDonationCenter.userId, userId));
+    } catch (e) {
+      console.log('Aucun enregistrement userDonationCenter à supprimer pour userId:', userId);
+    }
+    
+    try {
+      await db.delete(userDronists).where(eq(userDronists.userId, userId));
+    } catch (e) {
+      console.log('Aucun enregistrement userDronists à supprimer pour userId:', userId);
+    }
+
+    // Supprimer l'utilisateur principal
+    await db.delete(users).where(eq(users.userId, userId));
+
+    return c.json({
+      message: 'Utilisateur supprimé avec succès'
+    });
+
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Erreur lors de la suppression de l\'utilisateur:', error);
+    throw new HTTPException(500, { message: 'Échec de la suppression de l\'utilisateur' });
+  }
+};
+
 export const superAdminController = {
   getAllAdmins,
   getAdminById,
   updateAdmin,
   deleteAdmin,
   getAllUsers,
+  updateUser,
+  deleteUser,
   getDeliveryHistory,
   getStatistics,
   getAllHospitals,

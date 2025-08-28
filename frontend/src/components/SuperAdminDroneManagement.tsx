@@ -39,7 +39,6 @@ import {
 import DroneDetailView from "./DroneDetailView";
 import { dronesApi } from "@/api/drone";
 import { api } from "@/api/api";
-import { useNavigate } from "react-router-dom";
 
 interface DonationCenter {
   centerId: number;
@@ -78,7 +77,6 @@ const AdminDroneManagement: React.FC = () => {
   const [selectedCenter, setSelectedCenter] = useState<DonationCenter | null>(
     null
   );
-  const navigate = useNavigate();
 
   const fetchDronesData = async () => {
     try {
@@ -240,10 +238,6 @@ const AdminDroneManagement: React.FC = () => {
       console.error("Error deleting drone:", err);
       setError(`Erreur lors de la suppression du drone ${droneId}`);
     }
-  };
-
-  const handleBackToDashboard = () => {
-    navigate("/admin");
   };
 
   useEffect(() => {
@@ -894,13 +888,6 @@ const AdminDroneManagement: React.FC = () => {
           <Button onClick={() => setDialogOpen(false)}>Fermer</Button>
         </DialogActions>
       </Dialog>
-
-      <Button
-        onClick={handleBackToDashboard}
-        className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-      >
-        Retour au Dashboard
-      </Button>
     </Box>
   );
 };
