@@ -271,21 +271,11 @@ test("CRUD delivery", async () => {
 
     // 17. PUT: Mettre à jour la livraison (par exemple, changer le statut)
     console.log("[TEST] PUT update delivery status");
+    // API supports partial updates for: deliveryStatus, dteValidation, droneId
     const updatedDeliveryData = {
-        deliveryId,
-        droneId,
-        bloodId,
-        hospitalId,
-        centerId,
-        dteDelivery: null,
-        dteValidation: null,
         deliveryStatus: "updatedTestStatus",
-        deliveryUrgent: true,
-        participants: [
-            { deliveryId, userId: userIdDonationCenter },
-            { deliveryId, userId: userIdHospital },
-            { deliveryId, userId: userIdDrone }
-        ]
+        dteValidation: null,
+        droneId
     };
     const resUpdateDelivery = await request("PUT", "deliveries", `/${deliveryId}`, updatedDeliveryData);
     expect(resUpdateDelivery.status).toBe(200);
@@ -297,7 +287,6 @@ test("CRUD delivery", async () => {
     expect(resAfterUpdate.status).toBe(200);
     const updatedDelivery = await resAfterUpdate.json();
     expect(updatedDelivery.deliveryStatus).toBe("updatedTestStatus");
-    expect(updatedDelivery.deliveryUrgent).toBe(true);
     expect(updatedDelivery.participants).toEqual(
         expect.arrayContaining([
             expect.objectContaining({ userId: userIdDonationCenter }),

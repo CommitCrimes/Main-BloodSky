@@ -5,6 +5,7 @@ import { userDronists } from "../schemas/user_dronist";
 import { userSupportCenters } from "../schemas/user_support_center";
 import { userHospital } from "../schemas/user_hospital";
 import { deliveryParticipations } from "../schemas/delivery_participation";
+import { notifications } from "../schemas/notification";
 import { db } from "../utils/db";
 import { eq, and } from "drizzle-orm";
 import { getUserRole } from "../controllers/user.controller";
@@ -347,7 +348,15 @@ userRouter.delete("/:id", async (c) => {
   const id = Number(c.req.param("id"));
   if (isNaN(id)) return c.text("Invalid ID", 400);
 
-  // Delete user from all related tables
+  // Delete user-related records in tables with FKs to users
+  await db
+    .delete(deliveryParticipations)
+    .where(eq(deliveryParticipations.userId, id));
+  await db
+    .delete(notifications)
+    .where(eq(notifications.userId, id));
+
+  // Delete user from all role tables
   await db
     .delete(userDonationCenter)
     .where(eq(userDonationCenter.userId, id));
