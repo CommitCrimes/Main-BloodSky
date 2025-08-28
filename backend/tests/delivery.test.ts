@@ -168,11 +168,8 @@ test("CRUD delivery", async () => {
         droneId,
         droneName: "unaryTestDrone",
         centerId,
-        droneStatus: null,
-        droneCurrentLat: null,
-        droneCurrentLong: null,
-        droneBattery: null,
-        droneImage: null
+        droneImage: null,
+        droneStatus: null
     };
     const resCreateDrone = await request("POST", "drones", "/", droneData);
     expect(resCreateDrone.status).toBe(201);
@@ -249,6 +246,15 @@ test("CRUD delivery", async () => {
     const addedParticipantDronist = await resAddParticipantDronist.text();
     console.log("[TEST] Added participant from dronist:", addedParticipantDronist);
 
+    // 16b. GET: get deliveries by centerId
+    console.log("[TEST] GET deliveries by centerId");
+    const resByCenterId = await request("GET", "deliveries", `/center/${centerId}`);
+    expect(resByCenterId.status).toBe(200);
+    const fetchedDeliveriesByCenter = await resByCenterId.json();
+    expect(Array.isArray(fetchedDeliveriesByCenter)).toBe(true);
+    const foundByCenter = fetchedDeliveriesByCenter.find((d: any) => d.deliveryId === deliveryId);
+    expect(foundByCenter).toBeDefined();
+
     // 16. GET: get delivery by droneId
     console.log("[TEST] GET delivery by droneId");
     const resByDroneId = await request("GET", "deliveries/drone", `/${droneId}`);
@@ -274,21 +280,11 @@ test("CRUD delivery", async () => {
 
     // 17. PUT: Mettre à jour la livraison (par exemple, changer le statut)
     console.log("[TEST] PUT update delivery status");
+    // API supports partial updates for: deliveryStatus, dteValidation, droneId
     const updatedDeliveryData = {
-        deliveryId,
-        droneId,
-        bloodId,
-        hospitalId,
-        centerId,
-        dteDelivery: null,
-        dteValidation: null,
         deliveryStatus: "updatedTestStatus",
-        deliveryUrgent: true,
-        participants: [
-            { deliveryId, userId: userIdDonationCenter },
-            { deliveryId, userId: userIdHospital },
-            { deliveryId, userId: userIdDrone }
-        ]
+        dteValidation: null,
+        droneId
     };
     const resUpdateDelivery = await request("PUT", "deliveries", `/${deliveryId}`, updatedDeliveryData);
     expect(resUpdateDelivery.status).toBe(200);
@@ -300,7 +296,6 @@ test("CRUD delivery", async () => {
     expect(resAfterUpdate.status).toBe(200);
     const updatedDelivery = await resAfterUpdate.json();
     expect(updatedDelivery.deliveryStatus).toBe("updatedTestStatus");
-    expect(updatedDelivery.deliveryUrgent).toBe(true);
     expect(updatedDelivery.participants).toEqual(
         expect.arrayContaining([
             expect.objectContaining({ userId: userIdDonationCenter }),
