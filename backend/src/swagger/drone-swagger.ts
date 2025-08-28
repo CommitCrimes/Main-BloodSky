@@ -97,14 +97,7 @@ export const droneSwagger: Record<string, any> = {
         responses: { "200": { description: "Aggregated history" } },
       },
     },
-    "/drones/center/{centerId}": {
-      get: {
-        summary: "Get drones by center ID",
-        tags: ["Drone"],
-        parameters: [ { name: "centerId", in: "path", required: true, schema: { type: "integer" }, example: 1 } ],
-        responses: { "200": { description: "List of drones for center" }, "404": { description: "Not found" } },
-      },
-    },
+    
     "/drones/{droneId}": {
       get: {
         summary: "Get drone by ID",
