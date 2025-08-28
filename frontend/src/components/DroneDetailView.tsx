@@ -95,7 +95,12 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const targetStorageKey = useMemo(() => `drone:${droneId}:target`, [droneId]);
   const [currentMission, setCurrentMission] = useState<CurrentMission | null>(null);
   const [homeBusy, setHomeBusy] = useState(false);
-
+    const ALT_STORAGE_KEY = `drone:${droneId}:altitude`;
+   const [cruiseAlt, setCruiseAlt] = useState<number>(() => {
+    if (typeof window === 'undefined') return 50;
+    const v = Number(localStorage.getItem(ALT_STORAGE_KEY));
+    return Number.isFinite(v) && v > 0 ? v : 50;
+  });
 
   const withBusy = async <T,>(fn: () => Promise<T>) => {
     setMissionUploading(true);
@@ -108,7 +113,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
 
   const [missionData, setMissionData] = useState<Mission>({
     filename: `mission_drone_${droneId}_${Date.now()}.waypoints`,
-    altitude_takeoff: 30,
+    altitude_takeoff: cruiseAlt,    
     mode: 'auto',
     waypoints: []
   });
@@ -215,7 +220,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     ? {
         startlat: Number(flightInfo.latitude),
         startlon: Number(flightInfo.longitude),
-        startalt: missionData.altitude_takeoff,
+        startalt:cruiseAlt || missionData.altitude_takeoff  ,
       }
     : {}),
 };
@@ -264,11 +269,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
 
 
   const addWaypoint = (lat: number, lon: number) => {
-    const newWaypoint: MissionWaypoint = {
-      lat,
-      lon,
-      alt: missionData.altitude_takeoff
-    };
+    const newWaypoint: MissionWaypoint = { lat, lon, alt:cruiseAlt || missionData.altitude_takeoff };
     setWaypoints([...waypoints, newWaypoint]);
     setMissionData({
       ...missionData,
@@ -362,7 +363,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     setWaypoints([]);
     setMissionData((prev: Mission) => ({ ...prev, waypoints: [] }));
 
-    const ALT = 50;
+    const ALT = cruiseAlt;
     const mission: Mission = {
       filename: `DEFAULT_Hopital_DroneID:${droneId}_HopitalID:${hospital.hospitalId}.waypoints`,
       altitude_takeoff: ALT,
@@ -397,7 +398,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
         return;
       }
 
-      const ALT = 50;
+      const ALT = cruiseAlt;
       const mission: Mission = {
         filename: `DEFAULT_ReturnCenter_DroneID:${droneId}_CenterID:${donationCenter.centerId}.waypoints`,
         altitude_takeoff: ALT,
@@ -558,6 +559,13 @@ useEffect(() => {
   setMissionReady(true);
 }, [currentMission, flightInfo?.flight_mode, flightInfo?.is_armed]);
 
+useEffect(() => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(ALT_STORAGE_KEY, String(cruiseAlt));
+  }
+}, [ALT_STORAGE_KEY, cruiseAlt]);
+
+
   return (
     <Box sx={{ 
       height: { xs: 'auto', sm: '100vh' }, 
@@ -613,6 +621,16 @@ size="small"
           flexDirection: { xs: 'column', sm: 'row' },
           width: { xs: '100%', sm: 'auto' }
         }}>
+           <TextField
+    type="number"
+    label="Altitude (m)"
+    size="small"
+    value={cruiseAlt}
+    onChange={(e) => setCruiseAlt(Number(e.target.value || 0))} 
+    onBlur={() => setCruiseAlt(Math.max(15, cruiseAlt))}       
+    sx={{ width: 140 }}
+    inputProps={{ min: 15, step: 1 }}
+  />
           <Button
             variant="outlined"
             startIcon={<Refresh />}
@@ -1488,6 +1506,7 @@ variant="outlined"
         centerId={donationCenter?.centerId ?? null}
         droneId={droneId}
         statusFilter="pending"
+        defaultAltitude={cruiseAlt}
         onMissionReady={async ({ deliveryId, hospitalId, lat, lon }) => {
           setAssignOpen(false);
           setMissionReady(true);

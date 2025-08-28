@@ -24,7 +24,9 @@ type Props = {
   statusFilter?: DeliveryStatus;
   onAssigned?: (deliveryId: number) => void;
   onMissionReady?: (payload: { deliveryId: number; filename: string; hospitalId: number; lat: number; lon: number }) => void;
+  defaultAltitude?: number;
 };
+
 
 // ----------------- Helpers -----------------
 const parseDate = (s?: string | null) => (s ? new Date(s) : null);
@@ -91,7 +93,7 @@ const toNum = (s?: string | null) => Number(String(s ?? '').trim().replace(',', 
 
 // ----------------- Component -----------------
 const AssignDeliveryDialog: React.FC<Props> = ({
-  open, onClose, centerId, droneId, statusFilter = 'pending', onAssigned, onMissionReady
+  open, onClose, centerId, droneId, statusFilter = 'pending', onAssigned, onMissionReady,defaultAltitude = 50
 }) => {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
@@ -103,7 +105,6 @@ const AssignDeliveryDialog: React.FC<Props> = ({
   // Caches libellés
   const [centerMap, setCenterMap] = useState<Record<number, string>>({});
   const [hospitalMap, setHospitalMap] = useState<Record<number, string>>({});
-
   const resolveLabels = async (list: DeliveryWithParticipants[]) => {
     const missingCenterIds = Array.from(
       new Set(list.map(d => d.centerId).filter((id): id is number => id != null && !(id in centerMap)))
@@ -196,7 +197,7 @@ const handleLoadMission = async (d: DeliveryWithParticipants) => {
       throw new Error('Coordonnées hôpital invalides');
     }
 
-    const ALT = 50;
+    const ALT = defaultAltitude ?? 50;
     const filename = `DEFAULT_Delivery_DroneID_${droneId}_HopitalID:${d.hospitalId}.waypoints`;
 
     const fi = await dronesApi.getFlightInfo(droneId).catch(() => null);

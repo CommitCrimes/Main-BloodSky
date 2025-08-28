@@ -4,6 +4,7 @@ import { deliveryParticipations } from "../schemas/delivery_participation";
 import { db } from "../utils/db";
 import { eq, and } from "drizzle-orm";
 import { NotificationService } from "../services/notification.service";
+import { DeliveryValidationService } from "../services/delivery-validation.service";
 
 
 export const deliveryRouter = new Hono();
@@ -102,11 +103,11 @@ deliveryRouter.post("/participation", async (c) => {
 
   try {
     await db.insert(deliveryParticipations).values({ deliveryId, userId });
-    await db
-      .update(deliveries)
-      .set({ deliveryStatus: 'delivered', dteValidation: new Date() })
-      .where(eq(deliveries.deliveryId, deliveryId));
-    return c.text("User added and delivery validated", 201);
+    const validated = await DeliveryValidationService.validateIfHospitalParticipant(deliveryId, userId);
+    if (validated) {
+      return c.text("User added to delivery and delivery validated", 201);
+    }
+    return c.text("User added to delivery (no validation applied)", 201);
   } catch (err) {
     console.error(err);
     return c.text("Failed to add user to delivery", 500);

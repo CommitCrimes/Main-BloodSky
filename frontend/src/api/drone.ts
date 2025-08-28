@@ -84,8 +84,11 @@ export const dronesApi = {
     ),
 
   /** PUT /drones/:id */
-  update: (id: number, patch: DroneUpdate) =>
-    fetchJson<string>(`/drones/${id}`, { method: "PUT", body: JSON.stringify(patch) }),
+  update: async (id: number, patch: DroneUpdate) => {
+    const res = await fetch(`${BASE}/drones/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    return;
+  },
 
   /** DELETE /drones/:id */
   remove: (id: number) => fetchJson<string>(`/drones/${id}`, { method: "DELETE" }),
