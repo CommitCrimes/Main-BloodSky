@@ -1,7 +1,7 @@
 import { Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { db } from '../utils/db';
-import { users, userDonationCenter, userHospital, userDronists, userSupportCenters, deliveries, drones, hospitals, donationCenters, deliveryParticipations } from '../schemas';
+import { users, userDonationCenter, userHospital, userDronists, userSupportCenters, deliveries, drones, hospitals, donationCenters, deliveryParticipations, notifications } from '../schemas';
 import { eq, desc, sql } from 'drizzle-orm';
 
 // =============== GESTION DES ADMINS ===============
@@ -342,6 +342,444 @@ export const getStatistics = async (c: Context) => {
   }
 };
 
+// =============== GESTION DES HÔPITAUX ===============
+
+export const getAllHospitals = async (c: Context) => {
+  try {
+    const allHospitals = await db
+      .select()
+      .from(hospitals)
+      .orderBy(hospitals.hospitalName);
+
+    console.log('🏥 Hospitals data returned:', JSON.stringify(allHospitals, null, 2));
+    return c.json(allHospitals);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des hôpitaux:', error);
+    throw new HTTPException(500, { message: 'Échec de la récupération des hôpitaux' });
+  }
+};
+
+export const getHospitalById = async (c: Context) => {
+  try {
+    const hospitalId = parseInt(c.req.param('id'));
+    
+    if (isNaN(hospitalId)) {
+      throw new HTTPException(400, { message: 'ID hôpital invalide' });
+    }
+
+    const hospital = await db
+      .select()
+      .from(hospitals)
+      .where(eq(hospitals.hospitalId, hospitalId))
+      .limit(1);
+
+    if (hospital.length === 0) {
+      throw new HTTPException(404, { message: 'Hôpital non trouvé' });
+    }
+
+    return c.json(hospital[0]);
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Erreur lors de la récupération de l\'hôpital:', error);
+    throw new HTTPException(500, { message: 'Échec de la récupération de l\'hôpital' });
+  }
+};
+
+export const createHospital = async (c: Context) => {
+  try {
+    const {
+      hospital_name,
+      hospital_city,
+      hospital_postal,
+      hospital_adress,
+      hospital_latitude,
+      hospital_longitude
+    } = await c.req.json();
+
+    if (!hospital_name || !hospital_adress || !hospital_city || !hospital_postal) {
+      throw new HTTPException(400, { 
+        message: 'Nom, adresse, ville et code postal sont requis' 
+      });
+    }
+
+    const newHospital = await db
+      .insert(hospitals)
+      .values({
+        hospitalName: hospital_name,
+        hospitalCity: hospital_city,
+        hospitalPostal: hospital_postal,
+        hospitalAdress: hospital_adress,
+        hospitalLatitude: hospital_latitude || null,
+        hospitalLongitude: hospital_longitude || null,
+      })
+      .returning();
+
+    return c.json(newHospital[0], 201);
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Erreur lors de la création de l\'hôpital:', error);
+    throw new HTTPException(500, { message: 'Échec de la création de l\'hôpital' });
+  }
+};
+
+export const updateHospital = async (c: Context) => {
+  try {
+    const hospitalId = parseInt(c.req.param('id'));
+    
+    if (isNaN(hospitalId)) {
+      throw new HTTPException(400, { message: 'ID hôpital invalide' });
+    }
+
+    const {
+      hospital_name,
+      hospital_city,
+      hospital_postal,
+      hospital_adress,
+      hospital_latitude,
+      hospital_longitude
+    } = await c.req.json();
+
+    const existingHospital = await db
+      .select()
+      .from(hospitals)
+      .where(eq(hospitals.hospitalId, hospitalId))
+      .limit(1);
+    
+    if (existingHospital.length === 0) {
+      throw new HTTPException(404, { message: 'Hôpital non trouvé' });
+    }
+
+    const updatedFields: any = {};
+    if (hospital_name !== undefined) updatedFields.hospitalName = hospital_name;
+    if (hospital_city !== undefined) updatedFields.hospitalCity = hospital_city;
+    if (hospital_postal !== undefined) updatedFields.hospitalPostal = hospital_postal;
+    if (hospital_adress !== undefined) updatedFields.hospitalAdress = hospital_adress;
+    if (hospital_latitude !== undefined) updatedFields.hospitalLatitude = hospital_latitude;
+    if (hospital_longitude !== undefined) updatedFields.hospitalLongitude = hospital_longitude;
+
+    const updatedHospital = await db
+      .update(hospitals)
+      .set(updatedFields)
+      .where(eq(hospitals.hospitalId, hospitalId))
+      .returning();
+
+    return c.json(updatedHospital[0]);
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Erreur lors de la mise à jour de l\'hôpital:', error);
+    throw new HTTPException(500, { message: 'Échec de la mise à jour de l\'hôpital' });
+  }
+};
+
+export const deleteHospital = async (c: Context) => {
+  try {
+    const hospitalId = parseInt(c.req.param('id'));
+    const { force } = c.req.query();
+    
+    if (isNaN(hospitalId)) {
+      throw new HTTPException(400, { message: 'ID hôpital invalide' });
+    }
+
+    const existingHospital = await db
+      .select()
+      .from(hospitals)
+      .where(eq(hospitals.hospitalId, hospitalId))
+      .limit(1);
+    
+    if (existingHospital.length === 0) {
+      throw new HTTPException(404, { message: 'Hôpital non trouvé' });
+    }
+
+    // Vérifier s'il y a des données associées
+    const associatedDeliveries = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(deliveries)
+      .where(eq(deliveries.hospitalId, hospitalId));
+
+    const associatedUsers = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(userHospital)
+      .where(eq(userHospital.hospitalId, hospitalId));
+
+    const totalAssociated = (associatedDeliveries[0]?.count || 0) + (associatedUsers[0]?.count || 0);
+
+    if (totalAssociated > 0 && force !== 'true') {
+      return c.json({
+        message: `Impossible de supprimer l'hôpital. ${associatedDeliveries[0]?.count || 0} livraison(s) et ${associatedUsers[0]?.count || 0} utilisateur(s) y sont associé(s).`,
+        canForce: true,
+        deliveriesCount: associatedDeliveries[0]?.count || 0,
+        usersCount: associatedUsers[0]?.count || 0
+      }, 400);
+    }
+
+    // TOUJOURS dissocier les notifications (obligatoire pour éviter les contraintes)
+    await db
+      .update(notifications)
+      .set({ hospitalId: null })
+      .where(eq(notifications.hospitalId, hospitalId));
+
+    // Si force=true, dissocier les livraisons aussi
+    if (force === 'true') {
+      // Dissocier les livraisons (hospitalId = null)
+      await db
+        .update(deliveries)
+        .set({ hospitalId: null })
+        .where(eq(deliveries.hospitalId, hospitalId));
+    }
+
+    // TOUJOURS supprimer les associations utilisateur-hôpital
+    await db.delete(userHospital).where(eq(userHospital.hospitalId, hospitalId));
+
+    // Supprimer l'hôpital
+    await db.delete(hospitals).where(eq(hospitals.hospitalId, hospitalId));
+
+    const forceMessage = force === 'true' && totalAssociated > 0 
+      ? ` (${associatedDeliveries[0]?.count || 0} livraison(s) et ${associatedUsers[0]?.count || 0} utilisateur(s) dissocié(s))` 
+      : '';
+
+    return c.json({ message: `Hôpital supprimé avec succès${forceMessage}` });
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Erreur lors de la suppression de l\'hôpital:', error);
+    throw new HTTPException(500, { message: 'Échec de la suppression de l\'hôpital' });
+  }
+};
+
+// =============== GESTION DES CENTRES DE DON ===============
+
+export const getAllCenters = async (c: Context) => {
+  try {
+    const allCenters = await db
+      .select()
+      .from(donationCenters)
+      .orderBy(donationCenters.centerCity);
+
+    console.log('🏢 Centers data returned:', JSON.stringify(allCenters, null, 2));
+    return c.json(allCenters);
+  } catch (error) {
+    console.error('Erreur lors de la récupération des centres:', error);
+    throw new HTTPException(500, { message: 'Échec de la récupération des centres' });
+  }
+};
+
+export const getCenterById = async (c: Context) => {
+  try {
+    const centerId = parseInt(c.req.param('id'));
+    
+    if (isNaN(centerId)) {
+      throw new HTTPException(400, { message: 'ID centre invalide' });
+    }
+
+    const center = await db
+      .select()
+      .from(donationCenters)
+      .where(eq(donationCenters.centerId, centerId))
+      .limit(1);
+
+    if (center.length === 0) {
+      throw new HTTPException(404, { message: 'Centre non trouvé' });
+    }
+
+    return c.json(center[0]);
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Erreur lors de la récupération du centre:', error);
+    throw new HTTPException(500, { message: 'Échec de la récupération du centre' });
+  }
+};
+
+export const createCenter = async (c: Context) => {
+  try {
+    const {
+      center_city,
+      center_postal,
+      center_adress,
+      center_latitude,
+      center_longitude
+    } = await c.req.json();
+
+    if (!center_city || !center_adress || !center_postal) {
+      throw new HTTPException(400, { 
+        message: 'Nom, adresse et code postal sont requis' 
+      });
+    }
+
+    const newCenter = await db
+      .insert(donationCenters)
+      .values({
+        centerCity: center_city,
+        centerPostal: center_postal,
+        centerAdress: center_adress,
+        centerLatitude: center_latitude || null,
+        centerLongitude: center_longitude || null,
+      })
+      .returning();
+
+    return c.json(newCenter[0], 201);
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Erreur lors de la création du centre:', error);
+    throw new HTTPException(500, { message: 'Échec de la création du centre' });
+  }
+};
+
+export const updateCenter = async (c: Context) => {
+  try {
+    const centerId = parseInt(c.req.param('id'));
+    
+    if (isNaN(centerId)) {
+      throw new HTTPException(400, { message: 'ID centre invalide' });
+    }
+
+    const {
+      center_city,
+      center_postal,
+      center_adress,
+      center_latitude,
+      center_longitude
+    } = await c.req.json();
+
+    const existingCenter = await db
+      .select()
+      .from(donationCenters)
+      .where(eq(donationCenters.centerId, centerId))
+      .limit(1);
+    
+    if (existingCenter.length === 0) {
+      throw new HTTPException(404, { message: 'Centre non trouvé' });
+    }
+
+    const updatedFields: any = {};
+    if (center_city !== undefined) updatedFields.centerCity = center_city;
+    if (center_postal !== undefined) updatedFields.centerPostal = center_postal;
+    if (center_adress !== undefined) updatedFields.centerAdress = center_adress;
+    if (center_latitude !== undefined) updatedFields.centerLatitude = center_latitude;
+    if (center_longitude !== undefined) updatedFields.centerLongitude = center_longitude;
+
+    const updatedCenter = await db
+      .update(donationCenters)
+      .set(updatedFields)
+      .where(eq(donationCenters.centerId, centerId))
+      .returning();
+
+    return c.json(updatedCenter[0]);
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Erreur lors de la mise à jour du centre:', error);
+    throw new HTTPException(500, { message: 'Échec de la mise à jour du centre' });
+  }
+};
+
+export const deleteCenter = async (c: Context) => {
+  try {
+    const centerId = parseInt(c.req.param('id'));
+    const { force } = c.req.query();
+    
+    if (isNaN(centerId)) {
+      throw new HTTPException(400, { message: 'ID centre invalide' });
+    }
+
+    const existingCenter = await db
+      .select()
+      .from(donationCenters)
+      .where(eq(donationCenters.centerId, centerId))
+      .limit(1);
+    
+    if (existingCenter.length === 0) {
+      throw new HTTPException(404, { message: 'Centre non trouvé' });
+    }
+
+    // Vérifier s'il y a des livraisons associées
+    const associatedDeliveries = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(deliveries)
+      .where(eq(deliveries.centerId, centerId));
+
+    // Vérifier s'il y a des drones associés
+    const associatedDrones = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(drones)
+      .where(eq(drones.centerId, centerId));
+
+    const totalRelated = (associatedDeliveries[0]?.count || 0) + (associatedDrones[0]?.count || 0);
+
+    if (totalRelated > 0 && force !== 'true') {
+      const details = [];
+      if (associatedDeliveries[0]?.count > 0) {
+        details.push(`${associatedDeliveries[0].count} livraison(s)`);
+      }
+      if (associatedDrones[0]?.count > 0) {
+        details.push(`${associatedDrones[0].count} drone(s)`);
+      }
+      
+      return c.json({
+        message: `Impossible de supprimer le centre. ${details.join(' et ')} y sont associé(s).`,
+        canForce: true,
+        relatedCount: totalRelated,
+        deliveries: associatedDeliveries[0]?.count || 0,
+        drones: associatedDrones[0]?.count || 0
+      }, 400);
+    }
+
+    // Si force=true, mettre à NULL les références
+    if (force === 'true') {
+      if (associatedDeliveries[0]?.count > 0) {
+        await db
+          .update(deliveries)
+          .set({ centerId: null })
+          .where(eq(deliveries.centerId, centerId));
+      }
+      
+      if (associatedDrones[0]?.count > 0) {
+        await db
+          .update(drones)
+          .set({ centerId: null })
+          .where(eq(drones.centerId, centerId));
+      }
+    }
+
+    // Supprimer les associations utilisateur-centre
+    await db.delete(userDonationCenter).where(eq(userDonationCenter.centerId, centerId));
+
+    // Supprimer le centre
+    await db.delete(donationCenters).where(eq(donationCenters.centerId, centerId));
+
+    let forceMessage = '';
+    if (force === 'true' && totalRelated > 0) {
+      const details = [];
+      if (associatedDeliveries[0]?.count > 0) {
+        details.push(`${associatedDeliveries[0].count} livraison(s)`);
+      }
+      if (associatedDrones[0]?.count > 0) {
+        details.push(`${associatedDrones[0].count} drone(s)`);
+      }
+      forceMessage = ` (${details.join(' et ')} dissocié(s))`;
+    }
+
+    return c.json({ message: `Centre supprimé avec succès${forceMessage}` });
+  } catch (error) {
+    if (error instanceof HTTPException) {
+      throw error;
+    }
+    console.error('Erreur lors de la suppression du centre:', error);
+    throw new HTTPException(500, { message: 'Échec de la suppression du centre' });
+  }
+};
+
 export const superAdminController = {
   getAllAdmins,
   getAdminById,
@@ -350,4 +788,14 @@ export const superAdminController = {
   getAllUsers,
   getDeliveryHistory,
   getStatistics,
+  getAllHospitals,
+  getHospitalById,
+  createHospital,
+  updateHospital,
+  deleteHospital,
+  getAllCenters,
+  getCenterById,
+  createCenter,
+  updateCenter,
+  deleteCenter,
 };

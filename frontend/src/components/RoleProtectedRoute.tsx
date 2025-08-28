@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { useAuth } from '../hooks/useAuth';
-import type { UserRole } from '@/api/userProfile';
+import type { UserRole } from '@/types/users';
 
 interface RoleProtectedRouteProps {
   allowedRoles: UserRole['type'][];
