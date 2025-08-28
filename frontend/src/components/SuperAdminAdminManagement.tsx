@@ -1,4 +1,13 @@
 import React, { useState, useEffect } from 'react';
+
+const commonStyles = {
+  gradientText: {
+    background: 'linear-gradient(45deg, #981A0E, #C41E3A)',
+    backgroundClip: 'text' as const,
+    WebkitBackgroundClip: 'text' as const,
+    WebkitTextFillColor: 'transparent' as const,
+  },
+};
 import {
   Box,
   Card,
@@ -64,7 +73,11 @@ interface TabPanelProps {
 
 const TabPanel = ({ children, value, index }: TabPanelProps) => (
   <div role="tabpanel" hidden={value !== index}>
-    {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    {value === index && (
+      <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+        {children}
+      </Box>
+    )}
   </div>
 );
 
@@ -168,13 +181,48 @@ const SuperAdminAdminManagement: React.FC = () => {
   };
 
   return (
-    <Box p={3}>
-      <Typography variant="h4" component="h1" gutterBottom>
+    <Box sx={{ 
+      px: { xs: 2, sm: 3, md: 4, lg: 5 },
+      py: { xs: 2, sm: 3 },
+      maxWidth: '1400px',
+      mx: 'auto'
+    }}>
+      <Typography 
+        variant="h4" 
+        component="h1" 
+        gutterBottom
+        sx={{
+          fontSize: { xs: '1.8rem', sm: '2.2rem' },
+          mb: 0.5,
+          fontFamily: 'Iceland, cursive',
+          ...commonStyles.gradientText,
+          textAlign: { xs: 'center', sm: 'left' }
+        }}
+      >
         Gestion des Administrateurs
       </Typography>
 
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={tabValue} onChange={(_, newValue) => setTabValue(newValue)}>
+      <Box sx={{ 
+        borderBottom: 1, 
+        borderColor: 'divider', 
+        mb: { xs: 2, sm: 3 },
+        '& .MuiTabs-root': {
+          minHeight: { xs: 40, sm: 48 }
+        }
+      }}>
+        <Tabs 
+          value={tabValue} 
+          onChange={(_, newValue) => setTabValue(newValue)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            '& .MuiTab-root': {
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              minWidth: { xs: 120, sm: 160 },
+              padding: { xs: '8px 12px', sm: '12px 16px' }
+            }
+          }}
+        >
           <Tab label="Inviter Admin Hôpital" />
           <Tab label="Inviter Admin Centre de Don" />
           <Tab label="Liste des Administrateurs" />
@@ -182,40 +230,97 @@ const SuperAdminAdminManagement: React.FC = () => {
       </Box>
 
       <TabPanel value={tabValue} index={0}>
-        <Card sx={{ maxWidth: 800, mx: 'auto' }}>
-          <CardContent>
-            <Typography variant="h5" component="h2" gutterBottom>
+        <Card sx={{ 
+          maxWidth: { xs: '100%', md: 800 }, 
+          mx: 'auto',
+          border: '1px solid #e0e0e0',
+          boxShadow: { xs: 1, sm: 2 }
+        }}>
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+            <Typography 
+              variant="h5" 
+              component="h2" 
+              gutterBottom
+              sx={{
+                fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                fontWeight: 'bold',
+                textAlign: { xs: 'center', sm: 'left' },
+                mb: { xs: 2, sm: 3 }
+              }}
+            >
               Inviter un Administrateur d'Hôpital
             </Typography>
-            <Divider sx={{ mb: 3 }} />
+            <Divider sx={{ mb: { xs: 2, sm: 3 } }} />
             <SuperAdminInviteForm type="hospital" />
           </CardContent>
         </Card>
       </TabPanel>
 
       <TabPanel value={tabValue} index={1}>
-        <Card sx={{ maxWidth: 800, mx: 'auto' }}>
-          <CardContent>
-            <Typography variant="h5" component="h2" gutterBottom>
+        <Card sx={{ 
+          maxWidth: { xs: '100%', md: 800 }, 
+          mx: 'auto',
+          border: '1px solid #e0e0e0',
+          boxShadow: { xs: 1, sm: 2 }
+        }}>
+          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+            <Typography 
+              variant="h5" 
+              component="h2" 
+              gutterBottom
+              sx={{
+                fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                fontWeight: 'bold',
+                textAlign: { xs: 'center', sm: 'left' },
+                mb: { xs: 2, sm: 3 }
+              }}
+            >
               Inviter un Administrateur de Centre de Don
             </Typography>
-            <Divider sx={{ mb: 3 }} />
+            <Divider sx={{ mb: { xs: 2, sm: 3 } }} />
             <SuperAdminInviteForm type="donation_center" />
           </CardContent>
         </Card>
       </TabPanel>
 
       <TabPanel value={tabValue} index={2}>
-        <Card>
-          <CardContent>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-              <Typography variant="h5" component="h2">
+        <Card sx={{ 
+          border: '1px solid #e0e0e0',
+          boxShadow: { xs: 1, sm: 2 }
+        }}>
+          <CardContent sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
+            <Box 
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column', sm: 'row' },
+                justifyContent: { xs: 'center', sm: 'space-between' },
+                alignItems: { xs: 'center', sm: 'center' },
+                gap: { xs: 2, sm: 0 },
+                mb: { xs: 2, sm: 3 }
+              }}
+            >
+              <Typography 
+                variant="h5" 
+                component="h2"
+                sx={{
+                  fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                  fontWeight: 'bold',
+                  textAlign: { xs: 'center', sm: 'left' }
+                }}
+              >
                 Liste des Administrateurs
               </Typography>
               <Button
                 startIcon={<Refresh />}
                 onClick={fetchAdmins}
                 disabled={loading}
+                size="medium"
+                sx={{
+                  fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                  minWidth: { xs: 120, sm: 'auto' },
+                  py: { xs: 0.5, sm: 1 },
+                  px: { xs: 1, sm: 2 }
+                }}
               >
                 Actualiser
               </Button>
@@ -240,93 +345,250 @@ const SuperAdminAdminManagement: React.FC = () => {
             )}
 
             {!loading && !error && (
-              <TableContainer component={Paper}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Nom</TableCell>
-                      <TableCell>Email</TableCell>
-                      <TableCell>Type</TableCell>
-                      <TableCell>Affiliation</TableCell>
-                      <TableCell>Statut</TableCell>
-                      <TableCell align="center">Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
+              <>
+                {/* Vue desktop - tableau */}
+                <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+                  <TableContainer 
+                    component={Paper}
+                    sx={{ 
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 2
+                    }}
+                  >
+                    <Table>
+                      <TableHead>
+                        <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Nom</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Email</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Type</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Affiliation</TableCell>
+                          <TableCell sx={{ fontWeight: 'bold' }}>Statut</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 'bold' }}>Actions</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {admins.map((admin) => (
+                          <TableRow key={`${admin.userId}-${admin.entityType}-${admin.entityId}`} hover>
+                            <TableCell>
+                              <Box display="flex" alignItems="center">
+                                <Person sx={{ mr: 1 }} />
+                                {admin.userFirstname} {admin.userName}
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Box display="flex" alignItems="center">
+                                <Email sx={{ mr: 1, fontSize: 18 }} />
+                                {admin.email}
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                icon={<AdminPanelSettings />}
+                                label={admin.entityType === 'hospital' ? 'Admin Hôpital' : 'Admin Centre'}
+                                color={admin.entityType === 'hospital' ? 'primary' : 'secondary'}
+                                size="small"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Box display="flex" alignItems="center">
+                                {admin.entityType === 'hospital' && <LocalHospital sx={{ mr: 1, fontSize: 18 }} />}
+                                {admin.entityType === 'donation_center' && <BusinessCenter sx={{ mr: 1, fontSize: 18 }} />}
+                                {admin.entityName}
+                              </Box>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={admin.userStatus === 'active' ? 'Actif' : 'Inactif'}
+                                color={admin.userStatus === 'active' ? 'success' : 'default'}
+                                size="small"
+                              />
+                            </TableCell>
+                            <TableCell align="center">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handleOpenEditDialog(admin)}
+                              >
+                                <Edit />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => handleOpenDeleteDialog(admin)}
+                              >
+                                <Delete />
+                              </IconButton>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+
+                {/* Vue mobile/tablet - cartes */}
+                <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+                  <Box sx={{ 
+                    display: 'grid',
+                    gap: { xs: 2, sm: 3 },
+                    gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }
+                  }}>
                     {admins.map((admin) => (
-                      <TableRow key={`${admin.userId}-${admin.entityType}-${admin.entityId}`} hover>
-                        <TableCell>
-                          <Box display="flex" alignItems="center">
-                            <Person sx={{ mr: 1 }} />
-                            {admin.userFirstname} {admin.userName}
+                      <Card 
+                        key={`${admin.userId}-${admin.entityType}-${admin.entityId}`}
+                        sx={{ 
+                          border: '1px solid #e0e0e0',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            boxShadow: 2,
+                            transform: 'translateY(-2px)'
+                          }
+                        }}
+                      >
+                        <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+                          <Box sx={{ mb: 2 }}>
+                            <Box display="flex" alignItems="center" gap={1} mb={1}>
+                              <Person sx={{ fontSize: 18 }} />
+                              <Typography variant="subtitle1" sx={{ 
+                                fontWeight: 'bold',
+                                fontSize: { xs: '0.875rem', sm: '1rem' }
+                              }}>
+                                {admin.userFirstname} {admin.userName}
+                              </Typography>
+                            </Box>
+                            
+                            <Box display="flex" alignItems="center" gap={1} mb={1}>
+                              <Email sx={{ fontSize: 16, color: 'text.secondary' }} />
+                              <Typography variant="body2" sx={{ 
+                                color: 'text.secondary',
+                                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                                wordBreak: 'break-word'
+                              }}>
+                                {admin.email}
+                              </Typography>
+                            </Box>
                           </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Box display="flex" alignItems="center">
-                            <Email sx={{ mr: 1, fontSize: 18 }} />
-                            {admin.email}
+
+                          <Box sx={{ mb: 2 }}>
+                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>
+                                Type
+                              </Typography>
+                              <Chip
+                                icon={<AdminPanelSettings sx={{ fontSize: 14 }} />}
+                                label={admin.entityType === 'hospital' ? 'Admin Hôpital' : 'Admin Centre'}
+                                color={admin.entityType === 'hospital' ? 'primary' : 'secondary'}
+                                size="small"
+                                sx={{ fontSize: '0.6rem', height: 20 }}
+                              />
+                            </Box>
+
+                            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>
+                                Affiliation
+                              </Typography>
+                              <Box display="flex" alignItems="center" gap={0.5}>
+                                {admin.entityType === 'hospital' && <LocalHospital sx={{ fontSize: 14 }} />}
+                                {admin.entityType === 'donation_center' && <BusinessCenter sx={{ fontSize: 14 }} />}
+                                <Typography variant="body2" sx={{ 
+                                  fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                                  maxWidth: 120,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap'
+                                }}>
+                                  {admin.entityName}
+                                </Typography>
+                              </Box>
+                            </Box>
+
+                            <Box display="flex" justifyContent="space-between" alignItems="center">
+                              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>
+                                Statut
+                              </Typography>
+                              <Chip
+                                label={admin.userStatus === 'active' ? 'Actif' : 'Inactif'}
+                                color={admin.userStatus === 'active' ? 'success' : 'default'}
+                                size="small"
+                                sx={{ fontSize: '0.6rem', height: 20 }}
+                              />
+                            </Box>
                           </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            icon={<AdminPanelSettings />}
-                            label={admin.entityType === 'hospital' ? 'Admin Hôpital' : 'Admin Centre'}
-                            color={admin.entityType === 'hospital' ? 'primary' : 'secondary'}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Box display="flex" alignItems="center">
-                            {admin.entityType === 'hospital' && <LocalHospital sx={{ mr: 1, fontSize: 18 }} />}
-                            {admin.entityType === 'donation_center' && <BusinessCenter sx={{ mr: 1, fontSize: 18 }} />}
-                            <Typography variant="body2">
-                              {admin.entityName}
-                            </Typography>
+
+                          <Box display="flex" justifyContent="center" gap={1}>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="primary"
+                              startIcon={<Edit />}
+                              onClick={() => handleOpenEditDialog(admin)}
+                              sx={{ 
+                                fontSize: '0.7rem',
+                                px: 1.5,
+                                py: 0.5
+                              }}
+                            >
+                              Modifier
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                              startIcon={<Delete />}
+                              onClick={() => handleOpenDeleteDialog(admin)}
+                              sx={{ 
+                                fontSize: '0.7rem',
+                                px: 1.5,
+                                py: 0.5
+                              }}
+                            >
+                              Supprimer
+                            </Button>
                           </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={admin.userStatus === 'active' ? 'Actif' : 'Inactif'}
-                            color={admin.userStatus === 'active' ? 'success' : 'default'}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell align="center">
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleOpenEditDialog(admin)}
-                          >
-                            <Edit />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleOpenDeleteDialog(admin)}
-                          >
-                            <Delete />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
+                        </CardContent>
+                      </Card>
                     ))}
-                  </TableBody>
-                </Table>
-                {admins.length === 0 && !loading && (
-                  <Box sx={{ p: 3, textAlign: 'center' }}>
-                    <Typography color="text.secondary">
+                  </Box>
+                </Box>
+
+                {admins.length === 0 && (
+                  <Box sx={{ p: { xs: 2, sm: 3 }, textAlign: 'center' }}>
+                    <Typography color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                       Aucun administrateur trouvé
                     </Typography>
                   </Box>
                 )}
-              </TableContainer>
+              </>
             )}
           </CardContent>
         </Card>
       </TabPanel>
-      <Dialog open={openEditDialog} onClose={handleCloseEditDialog} maxWidth="sm" fullWidth>
-        <DialogTitle>Modifier l'Administrateur</DialogTitle>
-        <DialogContent>
-          <Box mt={2}>
+      <Dialog 
+        open={openEditDialog} 
+        onClose={handleCloseEditDialog} 
+        maxWidth="sm" 
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            m: { xs: 0, sm: 2 },
+            maxHeight: { xs: '100%', sm: '90vh' },
+            width: { xs: '100%', sm: 'auto' },
+            height: { xs: '100%', sm: 'auto' }
+          },
+          '& .MuiDialog-container': {
+            alignItems: { xs: 'stretch', sm: 'center' }
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          fontSize: { xs: '1.1rem', sm: '1.25rem' },
+          fontWeight: 'bold',
+          pb: { xs: 1, sm: 2 }
+        }}>
+          Modifier l'Administrateur
+        </DialogTitle>
+        <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
+          <Box mt={{ xs: 1, sm: 2 }}>
             <TextField
               autoFocus
               margin="dense"
@@ -370,24 +632,85 @@ const SuperAdminAdminManagement: React.FC = () => {
             </FormControl>
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseEditDialog}>Annuler</Button>
-          <Button variant="contained" onClick={handleSaveEdit}>
+        <DialogActions sx={{ 
+          p: { xs: 2, sm: 3 },
+          gap: { xs: 1, sm: 2 },
+          flexDirection: { xs: 'column', sm: 'row' }
+        }}>
+          <Button 
+            onClick={handleCloseEditDialog}
+            sx={{ 
+              order: { xs: 2, sm: 1 },
+              width: { xs: '100%', sm: 'auto' }
+            }}
+          >
+            Annuler
+          </Button>
+          <Button 
+            variant="contained" 
+            onClick={handleSaveEdit}
+            sx={{ 
+              order: { xs: 1, sm: 2 },
+              width: { xs: '100%', sm: 'auto' }
+            }}
+          >
             Sauvegarder
           </Button>
         </DialogActions>
       </Dialog>
-      <Dialog open={openDeleteDialog} onClose={handleCloseDeleteDialog}>
-        <DialogTitle>Supprimer l'Administrateur</DialogTitle>
-        <DialogContent>
-          <Typography>
+      
+      <Dialog 
+        open={openDeleteDialog} 
+        onClose={handleCloseDeleteDialog}
+        maxWidth="xs"
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            m: { xs: 0, sm: 2 },
+            width: { xs: '100%', sm: 'auto' },
+            height: { xs: '100%', sm: 'auto' }
+          },
+          '& .MuiDialog-container': {
+            alignItems: { xs: 'stretch', sm: 'center' }
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          fontSize: { xs: '1.1rem', sm: '1.25rem' },
+          fontWeight: 'bold',
+          pb: { xs: 1, sm: 2 }
+        }}>
+          Supprimer l'Administrateur
+        </DialogTitle>
+        <DialogContent sx={{ px: { xs: 2, sm: 3 } }}>
+          <Typography sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
             Êtes-vous sûr de vouloir supprimer l'administrateur {selectedAdmin?.userFirstname} {selectedAdmin?.userName} ?
             Cette action est irréversible.
           </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDeleteDialog}>Annuler</Button>
-          <Button variant="contained" color="error" onClick={handleConfirmDelete}>
+        <DialogActions sx={{ 
+          p: { xs: 2, sm: 3 },
+          gap: { xs: 1, sm: 2 },
+          flexDirection: { xs: 'column', sm: 'row' }
+        }}>
+          <Button 
+            onClick={handleCloseDeleteDialog}
+            sx={{ 
+              order: { xs: 2, sm: 1 },
+              width: { xs: '100%', sm: 'auto' }
+            }}
+          >
+            Annuler
+          </Button>
+          <Button 
+            variant="contained" 
+            color="error" 
+            onClick={handleConfirmDelete}
+            sx={{ 
+              order: { xs: 1, sm: 2 },
+              width: { xs: '100%', sm: 'auto' }
+            }}
+          >
             Supprimer
           </Button>
         </DialogActions>

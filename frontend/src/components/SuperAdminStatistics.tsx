@@ -1,4 +1,13 @@
 import React, { useState, useEffect } from 'react';
+
+const commonStyles = {
+  gradientText: {
+    background: 'linear-gradient(45deg, #981A0E, #C41E3A)',
+    backgroundClip: 'text' as const,
+    WebkitBackgroundClip: 'text' as const,
+    WebkitTextFillColor: 'transparent' as const,
+  },
+};
 import {
   Box,
   Card,
@@ -156,7 +165,16 @@ const SuperAdminStatistics: React.FC = () => {
     <Box p={3}>
       {/* Contrôles */}
       <Box display="flex" justifyContent="between" alignItems="center" mb={4}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
+        <Typography 
+          variant="h4" 
+          component="h1" 
+          sx={{
+            fontSize: { xs: '1.8rem', sm: '2.2rem' },
+            mb: 0.5,
+            fontFamily: 'Iceland, cursive',
+            ...commonStyles.gradientText,
+          }}
+        >
           Statistiques Détaillées
         </Typography>
         <FormControl size="small" sx={{ minWidth: 120 }}>

@@ -1,4 +1,13 @@
 import React, { useState, useEffect } from 'react';
+
+const commonStyles = {
+  gradientText: {
+    background: 'linear-gradient(45deg, #981A0E, #C41E3A)',
+    backgroundClip: 'text' as const,
+    WebkitBackgroundClip: 'text' as const,
+    WebkitTextFillColor: 'transparent' as const,
+  },
+};
 import {
   Box,
   Card,
@@ -241,7 +250,18 @@ const SuperAdminCenterManagement: React.FC = () => {
 
   return (
     <Box p={3}>
-      <Typography variant="h4" component="h1" gutterBottom>
+      <Typography 
+        variant="h4" 
+        component="h1" 
+        gutterBottom
+        sx={{
+          fontSize: { xs: '1.8rem', sm: '2.2rem' },
+          mb: 0.5,
+          fontFamily: 'Iceland, cursive',
+          ...commonStyles.gradientText,
+          textAlign: { xs: 'center', sm: 'left' }
+        }}
+      >
         Gestion des Centres de Don
       </Typography>
 

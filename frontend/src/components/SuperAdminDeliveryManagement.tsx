@@ -1,4 +1,13 @@
 import React, { useState, useEffect } from 'react';
+
+const commonStyles = {
+  gradientText: {
+    background: 'linear-gradient(45deg, #981A0E, #C41E3A)',
+    backgroundClip: 'text' as const,
+    WebkitBackgroundClip: 'text' as const,
+    WebkitTextFillColor: 'transparent' as const,
+  },
+};
 import {
   Box,
   Card,
@@ -13,7 +22,6 @@ import {
   TableRow,
   Paper,
   Chip,
-  IconButton,
   Alert,
   CircularProgress,
   Tabs,
@@ -25,9 +33,6 @@ import {
   LinearProgress
 } from '@mui/material';
 import {
-  Visibility,
-  Edit,
-  Delete,
   LocalShipping,
   Warning,
   CheckCircle,
@@ -278,11 +283,57 @@ const SuperAdminDeliveryManagement: React.FC = () => {
   }
 
   return (
-    <Box p={3}>
-      <Paper sx={{ mb: 3 }}>
-        <Tabs value={tabValue} onChange={(_e, newValue) => setTabValue(newValue)}>
-          <Tab label="Toutes les Livraisons" icon={<LocalShipping />} iconPosition="start" sx={{ m: 'auto'}}/>
-          <Tab label="Statistiques d'Abus Urgent" icon={<Assessment />} iconPosition="start" sx={{ m: 'auto'}}/>
+    <Box sx={{ 
+      px: { xs: 2, sm: 3, md: 4, lg: 5 },
+      py: { xs: 2, sm: 3 },
+      maxWidth: '1400px',
+      mx: 'auto'
+    }}>
+      <Typography 
+        variant="h4" 
+        component="h1" 
+        gutterBottom
+        sx={{
+          fontSize: { xs: '1.8rem', sm: '2.2rem' },
+          mb: 0.5,
+          fontFamily: 'Iceland, cursive',
+          ...commonStyles.gradientText,
+          textAlign: { xs: 'center', sm: 'left' }
+        }}
+      >
+        Gestion des Livraisons
+      </Typography>
+
+      <Paper sx={{ 
+        mb: { xs: 2, sm: 3 },
+        overflow: 'auto'
+      }}>
+        <Tabs 
+          value={tabValue} 
+          onChange={(_e, newValue) => setTabValue(newValue)}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          sx={{
+            '& .MuiTab-root': {
+              fontSize: { xs: '0.8rem', sm: '0.875rem' },
+              minWidth: { xs: 140, sm: 180 },
+              px: { xs: 1, sm: 2 }
+            }
+          }}
+        >
+          <Tab 
+            label="Toutes les Livraisons" 
+            icon={<LocalShipping />} 
+            iconPosition="start" 
+            sx={{ m: 'auto' }}
+          />
+          <Tab 
+            label="Statistiques d'Abus Urgent" 
+            icon={<Assessment />} 
+            iconPosition="start" 
+            sx={{ m: 'auto' }}
+          />
         </Tabs>
       </Paper>
 
@@ -290,134 +341,307 @@ const SuperAdminDeliveryManagement: React.FC = () => {
         <>
           {/* Statistiques */}
           <Box sx={{ 
-            display: 'flex', 
-            flexWrap: 'wrap', 
-            gap: 3, 
-            mb: 4 
+            display: 'grid',
+            gridTemplateColumns: { 
+              xs: '1fr', 
+              sm: 'repeat(2, 1fr)', 
+              md: 'repeat(4, 1fr)' 
+            },
+            gap: { xs: 2, sm: 2.5, md: 3 },
+            mb: { xs: 3, sm: 4 }
           }}>
             {statsData.map((stat, index) => (
-              <Box key={index} sx={{ 
-                flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 12px)', md: '1 1 calc(25% - 12px)' },
-                minWidth: 0
+              <Card key={index} sx={{ 
+                transition: 'all 0.2s ease',
+                '&:hover': {
+                  boxShadow: 2,
+                  transform: 'translateY(-2px)'
+                }
               }}>
-                <Card>
-                  <CardContent>
-                    <Box display="flex" alignItems="center" justifyContent="space-between">
-                      <Box>
-                        <Typography color="text.secondary" gutterBottom variant="body2">
-                          {stat.title}
-                        </Typography>
-                        <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-                          {stat.value}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ color: stat.color }}>
-                        {React.cloneElement(stat.icon, { fontSize: 'large' })}
-                      </Box>
+                <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+                  <Box display="flex" alignItems="center" justifyContent="space-between">
+                    <Box>
+                      <Typography 
+                        color="text.secondary" 
+                        gutterBottom 
+                        variant="body2"
+                        sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                      >
+                        {stat.title}
+                      </Typography>
+                      <Typography 
+                        variant="h4" 
+                        component="div" 
+                        sx={{ 
+                          fontWeight: 'bold',
+                          fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                          color: stat.color
+                        }}
+                      >
+                        {stat.value}
+                      </Typography>
                     </Box>
-                  </CardContent>
-                </Card>
-              </Box>
+                    <Box sx={{ color: stat.color }}>
+                      {React.cloneElement(stat.icon, { 
+                        fontSize: 'large',
+                        sx: { fontSize: { xs: 28, sm: 32, md: 36 } }
+                      })}
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
             ))}
           </Box>
 
-          <Card>
-            <CardContent>
+          <Card sx={{ overflow: 'hidden' }}>
+            <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+              <Typography 
+                variant="h5" 
+                component="h2"
+                sx={{
+                  fontSize: { xs: '1.25rem', sm: '1.5rem' },
+                  fontWeight: 'bold',
+                  textAlign: { xs: 'center', sm: 'left' },
+                  mb: { xs: 2, sm: 3 }
+                }}
+              >
+                Liste des Livraisons ({filteredDeliveries.length})
+              </Typography>
 
-              <TableContainer component={Paper}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>ID</TableCell>
-                      <TableCell>Hôpital Demandeur</TableCell>
-                      <TableCell>Centre de Don</TableCell>
-                      <TableCell>Type Sanguin</TableCell>
-                      <TableCell>Quantité</TableCell>
-                      <TableCell>Statut</TableCell>
-                      <TableCell>Priorité</TableCell>
-                      <TableCell>Date Demande</TableCell>
-                      <TableCell>Date Validation</TableCell>
-                      <TableCell>Actions</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredDeliveries.map((delivery) => (
-                      <TableRow key={delivery.deliveryId}>
-                        <TableCell>#{delivery.deliveryId}</TableCell>
-                        <TableCell>
-                          <Box display="flex" alignItems="center">
-                            <LocalHospital sx={{ mr: 1, fontSize: 16 }} />
-                            {delivery.hospitalName || `ID: ${delivery.hospitalId}`}
-                          </Box>
-                        </TableCell>
-                        <TableCell>{delivery.centerCity || `ID: ${delivery.centerId}`}</TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={delivery.bloodType || 'Non spécifié'} 
-                            color={getBloodTypeColor(delivery.bloodType) as 'default' | 'primary' | 'secondary' | 'error' | 'success' | 'warning'}
-                            size="small" 
-                            sx={{ fontWeight: 'bold' }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            label={`${delivery.bloodQuantity || 1} poche${(delivery.bloodQuantity || 1) > 1 ? 's' : ''}`}
-                            color="info" 
-                            size="small" 
-                            variant="outlined"
-                            sx={{ fontWeight: 'bold' }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            icon={getStatusIcon(delivery.deliveryStatus)}
-                            label={getStatusLabel(delivery.deliveryStatus)}
-                            color={getStatusColor(delivery.deliveryStatus) as 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'}
-                            variant={getStatusVariant(delivery.deliveryStatus) as 'filled' | 'outlined'}
-                            size="small"
-                            sx={{ fontWeight: 'bold' }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip 
-                            icon={delivery.deliveryUrgent ? <Warning /> : <CheckCircle />}
-                            label={delivery.deliveryUrgent ? "URGENT" : "Normal"} 
-                            color={delivery.deliveryUrgent ? "error" : "success"} 
-                            size="small"
-                            variant={delivery.deliveryUrgent ? "filled" : "outlined"}
-                            sx={{ 
-                              fontWeight: delivery.deliveryUrgent ? 'bold' : 'normal',
-                              animation: delivery.deliveryUrgent ? 'pulse 2s infinite' : 'none',
-                              '@keyframes pulse': {
-                                '0%': { opacity: 1 },
-                                '50%': { opacity: 0.7 },
-                                '100%': { opacity: 1 }
-                              }
-                            }}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {delivery.dteDelivery ? new Date(delivery.dteDelivery).toLocaleDateString('fr-FR') : '-'}
-                        </TableCell>
-                        <TableCell>
-                          {delivery.dteValidation ? new Date(delivery.dteValidation).toLocaleDateString('fr-FR') : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <IconButton size="small">
-                            <Visibility />
-                          </IconButton>
-                          <IconButton size="small">
-                            <Edit />
-                          </IconButton>
-                          <IconButton size="small" color="error">
-                            <Delete />
-                          </IconButton>
-                        </TableCell>
+              {/* Vue desktop - tableau */}
+              <Box sx={{ display: { xs: 'none', lg: 'block' } }}>
+                <TableContainer component={Paper} sx={{ border: '1px solid #e0e0e0' }}>
+                  <Table>
+                    <TableHead>
+                      <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                        <TableCell sx={{ fontWeight: 'bold' }}>ID</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Hôpital Demandeur</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Centre de Don</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Type Sanguin</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Quantité</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Statut</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Priorité</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Date Demande</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>Date Validation</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {filteredDeliveries.map((delivery) => (
+                        <TableRow key={delivery.deliveryId} hover>
+                          <TableCell>
+                            <Typography fontWeight="medium">#{delivery.deliveryId}</Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Box display="flex" alignItems="center">
+                              <LocalHospital sx={{ mr: 1, fontSize: 16, color: '#f44336' }} />
+                              {delivery.hospitalName || `ID: ${delivery.hospitalId}`}
+                            </Box>
+                          </TableCell>
+                          <TableCell>{delivery.centerCity || `ID: ${delivery.centerId}`}</TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={delivery.bloodType || 'Non spécifié'} 
+                              color={getBloodTypeColor(delivery.bloodType) as 'default' | 'primary' | 'secondary' | 'error' | 'success' | 'warning'}
+                              size="small" 
+                              sx={{ fontWeight: 'bold' }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={`${delivery.bloodQuantity || 1} poche${(delivery.bloodQuantity || 1) > 1 ? 's' : ''}`}
+                              color="info" 
+                              size="small" 
+                              variant="outlined"
+                              sx={{ fontWeight: 'bold' }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              icon={getStatusIcon(delivery.deliveryStatus)}
+                              label={getStatusLabel(delivery.deliveryStatus)}
+                              color={getStatusColor(delivery.deliveryStatus) as 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'}
+                              variant={getStatusVariant(delivery.deliveryStatus) as 'filled' | 'outlined'}
+                              size="small"
+                              sx={{ fontWeight: 'bold' }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Chip 
+                              icon={delivery.deliveryUrgent ? <Warning /> : <CheckCircle />}
+                              label={delivery.deliveryUrgent ? "URGENT" : "Normal"} 
+                              color={delivery.deliveryUrgent ? "error" : "success"} 
+                              size="small"
+                              variant={delivery.deliveryUrgent ? "filled" : "outlined"}
+                              sx={{ 
+                                fontWeight: delivery.deliveryUrgent ? 'bold' : 'normal',
+                                animation: delivery.deliveryUrgent ? 'pulse 2s infinite' : 'none',
+                                '@keyframes pulse': {
+                                  '0%': { opacity: 1 },
+                                  '50%': { opacity: 0.7 },
+                                  '100%': { opacity: 1 }
+                                }
+                              }}
+                            />
+                          </TableCell>
+                          <TableCell>
+                            {delivery.dteDelivery ? new Date(delivery.dteDelivery).toLocaleDateString('fr-FR') : '-'}
+                          </TableCell>
+                          <TableCell>
+                            {delivery.dteValidation ? new Date(delivery.dteValidation).toLocaleDateString('fr-FR') : '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+
+              {/* Vue mobile/tablet - cartes */}
+              <Box sx={{ display: { xs: 'block', lg: 'none' } }}>
+                <Box sx={{ 
+                  display: 'grid',
+                  gap: { xs: 2, sm: 2.5 },
+                  gridTemplateColumns: { xs: '1fr', md: 'repeat(1, 1fr)' }
+                }}>
+                  {filteredDeliveries.map((delivery) => (
+                    <Card 
+                      key={delivery.deliveryId}
+                      sx={{ 
+                        border: '1px solid #e0e0e0',
+                        transition: 'all 0.2s ease',
+                        backgroundColor: delivery.deliveryUrgent ? '#fff3e0' : 'inherit',
+                        '&:hover': {
+                          boxShadow: 2,
+                          transform: 'translateY(-2px)'
+                        }
+                      }}
+                    >
+                      <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+                        <Box sx={{ mb: 2 }}>
+                          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+                            <Typography 
+                              variant="h6" 
+                              sx={{ 
+                                fontWeight: 'bold',
+                                fontSize: { xs: '1rem', sm: '1.1rem' },
+                                color: '#1976d2'
+                              }}
+                            >
+                              Livraison #{delivery.deliveryId}
+                            </Typography>
+                            <Chip 
+                              icon={delivery.deliveryUrgent ? <Warning /> : <CheckCircle />}
+                              label={delivery.deliveryUrgent ? "URGENT" : "Normal"} 
+                              color={delivery.deliveryUrgent ? "error" : "success"} 
+                              size="small"
+                              variant={delivery.deliveryUrgent ? "filled" : "outlined"}
+                              sx={{ 
+                                fontWeight: delivery.deliveryUrgent ? 'bold' : 'normal',
+                                animation: delivery.deliveryUrgent ? 'pulse 2s infinite' : 'none',
+                                '@keyframes pulse': {
+                                  '0%': { opacity: 1 },
+                                  '50%': { opacity: 0.7 },
+                                  '100%': { opacity: 1 }
+                                }
+                              }}
+                            />
+                          </Box>
+                        </Box>
+
+                        <Box sx={{ mb: 1.5 }}>
+                          <Box mb={1}>
+                            <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary', display: 'block' }}>
+                              Hôpital Demandeur
+                            </Typography>
+                            <Box display="flex" alignItems="center" mt={0.25}>
+                              <LocalHospital sx={{ mr: 1, fontSize: 16, color: '#f44336' }} />
+                              <Typography 
+                                variant="body2" 
+                                component="span"
+                                sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
+                              >
+                                {delivery.hospitalName || `ID: ${delivery.hospitalId}`}
+                              </Typography>
+                            </Box>
+                          </Box>
+
+                          <Box mb={1}>
+                            <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary', display: 'block' }}>
+                              Centre de Don
+                            </Typography>
+                            <Typography 
+                              variant="body2" 
+                              component="span"
+                              sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
+                            >
+                              {delivery.centerCity || `ID: ${delivery.centerId}`}
+                            </Typography>
+                          </Box>
+
+                          <Box display="flex" flexWrap="wrap" gap={1} mb={1.5}>
+                            <Chip 
+                              label={delivery.bloodType || 'Non spécifié'} 
+                              color={getBloodTypeColor(delivery.bloodType) as 'default' | 'primary' | 'secondary' | 'error' | 'success' | 'warning'}
+                              size="small" 
+                              sx={{ fontWeight: 'bold' }}
+                            />
+                            <Chip 
+                              label={`${delivery.bloodQuantity || 1} poche${(delivery.bloodQuantity || 1) > 1 ? 's' : ''}`}
+                              color="info" 
+                              size="small" 
+                              variant="outlined"
+                              sx={{ fontWeight: 'bold' }}
+                            />
+                            <Chip
+                              icon={getStatusIcon(delivery.deliveryStatus)}
+                              label={getStatusLabel(delivery.deliveryStatus)}
+                              color={getStatusColor(delivery.deliveryStatus) as 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'}
+                              variant={getStatusVariant(delivery.deliveryStatus) as 'filled' | 'outlined'}
+                              size="small"
+                              sx={{ fontWeight: 'bold' }}
+                            />
+                          </Box>
+
+                          <Box display="flex" justifyContent="space-between">
+                            <Box sx={{ flex: 1, mr: 2 }}>
+                              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary', display: 'block' }}>
+                                Date Demande
+                              </Typography>
+                              <Typography 
+                                variant="body2" 
+                                component="span"
+                                sx={{ fontSize: { xs: '0.75rem', sm: '0.8rem' } }}
+                              >
+                                {delivery.dteDelivery ? new Date(delivery.dteDelivery).toLocaleDateString('fr-FR') : '-'}
+                              </Typography>
+                            </Box>
+                            <Box sx={{ flex: 1 }}>
+                              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary', display: 'block' }}>
+                                Date Validation
+                              </Typography>
+                              <Typography 
+                                variant="body2" 
+                                component="span"
+                                sx={{ fontSize: { xs: '0.75rem', sm: '0.8rem' } }}
+                              >
+                                {delivery.dteValidation ? new Date(delivery.dteValidation).toLocaleDateString('fr-FR') : '-'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+                
+                {filteredDeliveries.length === 0 && (
+                  <Box sx={{ p: { xs: 2, sm: 3 }, textAlign: 'center' }}>
+                    <Typography color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                      Aucune livraison trouvée
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
             </CardContent>
           </Card>
         </>
@@ -472,11 +696,19 @@ const SuperAdminDeliveryManagement: React.FC = () => {
                         </Box>
                       }
                       secondary={
-                        <Box component="div">
-                          <div style={{ fontSize: '0.875rem', color: 'rgba(0, 0, 0, 0.6)', marginBottom: '8px' }}>
+                        <Box component="span" sx={{ display: 'block' }}>
+                          <Typography 
+                            component="span" 
+                            sx={{ 
+                              fontSize: '0.875rem', 
+                              color: 'rgba(0, 0, 0, 0.6)', 
+                              display: 'block',
+                              mb: 1
+                            }}
+                          >
                             {stat.urgentDeliveries} livraisons urgentes sur {stat.totalDeliveries} total
-                          </div>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          </Typography>
+                          <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
                             <LinearProgress 
                               variant="determinate" 
                               value={stat.urgentPercentage} 
@@ -490,9 +722,12 @@ const SuperAdminDeliveryManagement: React.FC = () => {
                                 }
                               }}
                             />
-                            <span style={{ fontSize: '0.875rem', fontWeight: 'bold' }}>
+                            <Typography 
+                              component="span" 
+                              sx={{ fontSize: '0.875rem', fontWeight: 'bold' }}
+                            >
                               {stat.urgentPercentage.toFixed(1)}%
-                            </span>
+                            </Typography>
                           </Box>
                         </Box>
                       }
