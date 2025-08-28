@@ -103,6 +103,16 @@ bun run lint
 
 - Formater le code :
 
+##### Tests d'intégration de l'API Drone
+
+Certaines fonctionnalités (comme `/status`, `/sync` ou `/delivery-mission`) communiquent avec une API Drone externe.
+Les tests correspondants (`drone-api.test.ts`) sont ignorés par défaut afin de garder des exécutions déterministes.
+Pour les exécuter, assurez-vous que le service Drone est disponible et définissez la variable d'environnement `DRONE_API_TESTS=true` :
+
+```bash
+DRONE_API_TESTS=true bun run test
+```
+
 ```bash
 bun run format
 ```

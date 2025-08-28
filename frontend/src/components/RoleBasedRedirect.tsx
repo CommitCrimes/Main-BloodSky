@@ -30,7 +30,11 @@ const RoleBasedRedirect = observer(() => {
           targetPath = '/dronist';
           break;
         case 'user':
+          console.log('Utilisateur sans rôle spécialisé:', role);
+          targetPath = '/login';
+          break;
         default:
+          console.log('Role utilisateur non reconnu:', role);
           auth.logout();
           targetPath = '/login';
           break;

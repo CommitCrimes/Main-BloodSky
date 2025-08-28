@@ -233,5 +233,42 @@ export const donation_centerSwagger: Record<string, any> = {
         },
       },
     },
+    "/donation-centers/city/{city}": {
+      get: {
+        summary: "Get centers by city",
+        tags: ["Donation-center"],
+        parameters: [
+          {
+            name: "city",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            example: "Nantes",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "List of centers by city",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  example: [
+                    {
+                      centerId: 1,
+                      centerCity: "Donation-center City",
+                      centerPostal: 75001,
+                      centerAdress: "30 rue du poivre",
+                      centerLatitude: 47.2184,
+                      centerLongitude: -1.5536,
+                    },
+                  ],
+                },
+              },
+            },
+          },
+        },
+      },
+    },
   },
 };

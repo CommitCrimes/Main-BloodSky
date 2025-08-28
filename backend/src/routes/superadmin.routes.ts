@@ -40,8 +40,48 @@ superAdminRouter.delete('/admins/:id', superAdminController.deleteAdmin);
 // GET /superadmin/users - Récupérer tous les utilisateurs
 superAdminRouter.get('/users', superAdminController.getAllUsers);
 
+// PUT /superadmin/users/:id - Mettre à jour un utilisateur
+superAdminRouter.put('/users/:id', superAdminController.updateUser);
+
+// DELETE /superadmin/users/:id - Supprimer un utilisateur
+superAdminRouter.delete('/users/:id', superAdminController.deleteUser);
+
 // GET /superadmin/deliveries - Historique des livraisons
 superAdminRouter.get('/deliveries', superAdminController.getDeliveryHistory);
 
 // GET /superadmin/statistics - Statistiques globales
 superAdminRouter.get('/statistics', superAdminController.getStatistics);
+
+// =============== GESTION DES HÔPITAUX ===============
+
+// GET /superadmin/hospitals - Récupérer tous les hôpitaux
+superAdminRouter.get('/hospitals', superAdminController.getAllHospitals);
+
+// GET /superadmin/hospitals/:id - Récupérer un hôpital par ID
+superAdminRouter.get('/hospitals/:id', superAdminController.getHospitalById);
+
+// POST /superadmin/hospitals - Créer un nouvel hôpital
+superAdminRouter.post('/hospitals', superAdminController.createHospital);
+
+// PUT /superadmin/hospitals/:id - Mettre à jour un hôpital
+superAdminRouter.put('/hospitals/:id', superAdminController.updateHospital);
+
+// DELETE /superadmin/hospitals/:id - Supprimer un hôpital
+superAdminRouter.delete('/hospitals/:id', superAdminController.deleteHospital);
+
+// =============== GESTION DES CENTRES DE DON ===============
+
+// GET /superadmin/centers - Récupérer tous les centres de don
+superAdminRouter.get('/centers', superAdminController.getAllCenters);
+
+// GET /superadmin/centers/:id - Récupérer un centre par ID
+superAdminRouter.get('/centers/:id', superAdminController.getCenterById);
+
+// POST /superadmin/centers - Créer un nouveau centre de don
+superAdminRouter.post('/centers', superAdminController.createCenter);
+
+// PUT /superadmin/centers/:id - Mettre à jour un centre de don
+superAdminRouter.put('/centers/:id', superAdminController.updateCenter);
+
+// DELETE /superadmin/centers/:id - Supprimer un centre de don
+superAdminRouter.delete('/centers/:id', superAdminController.deleteCenter);

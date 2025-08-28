@@ -52,22 +52,8 @@ test("CRUD drone", async () => {
         droneId,
         droneName: "Test Drone",
         centerId: centerId,
-        droneStatus: null,
-        droneCurrentLat: null,
-        droneCurrentLong: null,
-        droneBattery: null,
         droneImage: null,
-        droneApiUrl: "http://localhost:5000",
-        droneApiId: 1,
-        altitudeM: null,
-        horizontalSpeedMS: null,
-        verticalSpeedMS: null,
-        headingDeg: null,
-        flightMode: null,
-        isArmed: false,
-        missionStatus: null,
-        currentMissionId: null,
-        lastSyncAt: null
+        droneStatus: null
     };
     const resCreate = await request("POST", "drones", "/", droneData);
     expect(resCreate.status).toBe(201);
@@ -84,29 +70,30 @@ test("CRUD drone", async () => {
     console.log("[TEST] PUT update drone");
     const updatedDroneData = {
         droneName: "Updated Drone",
-        droneStatus: "ACTIVE",
-        droneCurrentLat: 48.8566,
-        droneCurrentLong: 2.3522,
-        droneBattery: "75%",
-        altitudeM: 50.5,
-        horizontalSpeedMS: 10.2,
-        verticalSpeedMS: 0.5,
-        headingDeg: 45.0,
-        flightMode: "AUTO",
-        isArmed: true,
-        missionStatus: "ACTIVE"
+        centerId: centerId,
+        droneImage: null,
+        droneStatus: "ACTIVE"
     };
     const resUpdate = await request("PUT", "drones", `/${droneId}`, updatedDroneData);
-    expect(resUpdate.status).toBe(200);
+  expect(resUpdate.status).toBe(200);
 
-    // 7. GET: Verify the drone update by retrieving it by ID (by center ID)
-    console.log("[TEST] GET drone by center ID");
-    const resByCenter = await request("GET", "drones", `/center/${centerId}`);
-    expect(resByCenter.status).toBe(200);
-    const dronesByCenter = await resByCenter.json();
-    expect(dronesByCenter.length).toBeGreaterThan(0);
-    const droneMatch = dronesByCenter.find((d: any) => d.droneId === droneId);
-    expect(droneMatch).toBeDefined();
+  // 7. GET: Verify the drone update by retrieving it by ID (by center ID)
+  console.log("[TEST] GET drone by center ID");
+  const resByCenter = await request("GET", "drones", `/center/${centerId}`);
+  expect(resByCenter.status).toBe(200);
+  const dronesByCenter = await resByCenter.json();
+  expect(dronesByCenter.length).toBeGreaterThan(0);
+  const droneMatch = dronesByCenter.find((d: any) => d.droneId === droneId);
+  expect(droneMatch).toBeDefined();
+
+  // 7b. GET: Verify drones history endpoint returns an array and includes our drone
+  console.log("[TEST] GET drones history");
+  const resHistory = await request("GET", "drones", "/history");
+  expect(resHistory.status).toBe(200);
+  const history = await resHistory.json();
+  expect(Array.isArray(history)).toBe(true);
+  const historyMatch = history.find((h: any) => h.droneId === droneId);
+  expect(historyMatch).toBeDefined();
 
     // 8. DELETE: Delete the drone
     console.log("[TEST] DELETE drone");
@@ -124,58 +111,4 @@ test("CRUD drone", async () => {
     expect(resDeleteCenter.status).toBe(200);
 
     console.log("[TEST] CRUD drone test completed successfully");
-});
-
-// Test drone control endpoints
-test("Drone control endpoints", async () => {
-    // Create a test drone first
-    const resAll = await request("GET", "drones", "/");
-    const all = await resAll.json();
-    const maxId = all.reduce((max: number, d: any) => Math.max(max, d.droneId), 0);
-    const droneId = maxId + 1;
-
-    const droneData = {
-        droneId,
-        droneName: "Control Test Drone",
-        centerId: 1,
-        droneApiUrl: "http://localhost:5000",
-        droneApiId: 1,
-        isArmed: false,
-        missionStatus: "IDLE"
-    };
-
-    const resCreate = await request("POST", "drones", "/", droneData);
-    expect(resCreate.status).toBe(201);
-
-    // Test drone status endpoint
-    console.log("[TEST] GET drone status");
-    const resStatus = await request("GET", "drones", "/status");
-    expect(resStatus.status).toBe(200);
-    const status = await resStatus.json();
-    expect(Array.isArray(status)).toBe(true);
-
-    // Test force sync endpoint
-    console.log("[TEST] POST force sync drone");
-    const resSync = await request("POST", "drones", `/${droneId}/sync`);
-    // Note: This might fail if the drone API is not running, which is expected
-    console.log("Sync response status:", resSync.status);
-
-    // Test create delivery mission endpoint
-    console.log("[TEST] POST create delivery mission");
-    const deliveryMission = {
-        pickupLat: 48.8566,
-        pickupLon: 2.3522,
-        deliveryLat: 48.8606,
-        deliveryLon: 2.3376,
-        altitude: 50
-    };
-    const resDelivery = await request("POST", "drones", `/${droneId}/delivery-mission`, deliveryMission);
-    console.log("Delivery mission response status:", resDelivery.status);
-
-    // Clean up
-    console.log("[TEST] DELETE test drone");
-    const resDelete = await request("DELETE", "drones", `/${droneId}`);
-    expect(resDelete.status).toBe(200);
-
-    console.log("[TEST] Drone control endpoints test completed");
 });

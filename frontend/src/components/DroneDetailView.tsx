@@ -167,9 +167,8 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     try {
       const raw = await dronesApi.getMissionCurrent(droneId);
       setCurrentMissionSafe(normalizeCurrent(raw));
-    } catch (e) {
-      console.warn('getMissionCurrent failed:', e);
-
+    } catch {
+      setCurrentMissionSafe(null);
     }
   };
 
@@ -568,23 +567,61 @@ useEffect(() => {
 
 
   return (
-    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ 
+      height: { xs: 'auto', sm: '100vh' }, 
+      minHeight: '100vh',
+      display: 'flex', 
+      flexDirection: 'column',
+      px: { xs: 1, sm: 2 },
+      py: { xs: 1, sm: 0 }
+    }}>
       {/* Header */}
-      <Paper sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Paper sx={{ 
+        p: { xs: 1.5, sm: 2 }, 
+        mb: { xs: 1, sm: 2 }, 
+        display: 'flex', 
+        flexDirection: { xs: 'column', md: 'row' },
+        alignItems: { xs: 'stretch', md: 'center' }, 
+        justifyContent: { xs: 'flex-start', md: 'space-between' },
+        gap: { xs: 2, md: 0 }
+      }}>
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: { xs: 1, sm: 2 },
+          flexWrap: { xs: 'wrap', sm: 'nowrap' }
+        }}>
           <Button
             variant="outlined"
             startIcon={<ArrowBack />}
             onClick={onBack}
+size="small"
+            sx={{
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              px: { xs: 1, sm: 2 },
+              py: { xs: 0.5, sm: 1 }
+            }}
           >
             Retour
           </Button>
-          <Typography variant="h5" sx={{ fontFamily: 'Share Tech, monospace' }}>
+          <Typography 
+            variant="h5" 
+            sx={{ 
+              fontFamily: 'Share Tech, monospace',
+              fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
+              fontWeight: 'bold'
+            }}
+          >
             Drone {droneId} - Détails
           </Typography>
         </Box>
-<Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-  <TextField
+        <Box sx={{ 
+          display: 'flex', 
+          gap: { xs: 0.5, sm: 1 },
+          flexDirection: { xs: 'column', sm: 'row' },
+          width: { xs: '100%', sm: 'auto' }
+        }}>
+           <TextField
     type="number"
     label="Altitude (m)"
     size="small"
@@ -594,17 +631,48 @@ useEffect(() => {
     sx={{ width: 140 }}
     inputProps={{ min: 15, step: 1 }}
   />
-
-  <Button variant="outlined" startIcon={<Refresh />} onClick={fetchFlightInfo}>
-    Actualiser
-  </Button>
-  <Button variant="contained" onClick={() => setHospitalsDialogOpen(true)} sx={{ bgcolor: '#f44336', '&:hover': { bgcolor: '#d32f2f' } }}>
-    Hôpitaux
-  </Button>
-  <Button variant="contained" onClick={() => setAssignOpen(true)} sx={{ bgcolor: '#1976d2', '&:hover': { bgcolor: '#125ea0' } }}>
-    Assigner livraison
-  </Button>
-</Box>
+          <Button
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={fetchFlightInfo}
+size="small"
+            sx={{
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              px: { xs: 1.5, sm: 2 },
+              py: { xs: 0.5, sm: 1 }
+            }}
+          >
+            Actualiser
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => setHospitalsDialogOpen(true)}
+size="small"
+            sx={{ 
+              bgcolor: '#f44336', 
+              '&:hover': { bgcolor: '#d32f2f' },
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              px: { xs: 1.5, sm: 2 },
+              py: { xs: 0.5, sm: 1 }
+            }}
+          >
+            Hôpitaux
+          </Button>
+          <Button
+            variant="contained"
+            onClick={() => setAssignOpen(true)}
+size="small"
+            sx={{ 
+              bgcolor: '#1976d2', 
+              '&:hover': { bgcolor: '#125ea0' },
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              px: { xs: 1.5, sm: 2 },
+              py: { xs: 0.5, sm: 1 }
+            }}
+          >
+            Assigner livraison
+          </Button>
+        </Box>
       </Paper>
 
       {error && (
@@ -615,79 +683,200 @@ useEffect(() => {
 
       {/* Flight Info Cards */}
       {flightInfo && (
-        <Paper sx={{ p: 1, mb: 1 }}>
-          <Typography variant="h6" gutterBottom>
+        <Paper sx={{ 
+          p: { xs: 1, sm: 1.5 }, 
+          mb: { xs: 1, sm: 1.5 } 
+        }}>
+          <Typography 
+            variant="h6" 
+            gutterBottom
+            sx={{
+              fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
+              fontWeight: 'bold'
+            }}
+          >
             Informations de vol
           </Typography>
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <Box sx={{ flex: '1 1 200px', minWidth: 200 }}>
-              <Card variant="outlined">
-                <CardContent sx={{ textAlign: 'center' }}>
-                  <LocationOn sx={{ fontSize: 30, color: '#2196f3' }} />
-                  <Typography variant="body2" color="text.secondary">
-                    Position
-                  </Typography>
-<Typography variant="body1">
-  {fixed(flightInfo?.latitude, 6)}, {fixed(flightInfo?.longitude, 6)}
-</Typography>
-                </CardContent>
-              </Card>
-            </Box>
-            <Box sx={{ flex: '1 1 200px', minWidth: 200 }}>
-              <Card variant="outlined">
-                <CardContent sx={{ textAlign: 'center' }}>
-                  <Height sx={{ fontSize: 30, color: '#4caf50' }} />
-                  <Typography variant="body2" color="text.secondary">
-                    Altitude
-                  </Typography>
-<Typography variant="body1">
-  {fixed(flightInfo?.altitude_m, 1)} m
-</Typography>
-                </CardContent>
-              </Card>
-            </Box>
-            <Box sx={{ flex: '1 1 200px', minWidth: 200 }}>
-              <Card variant="outlined">
-                <CardContent sx={{ textAlign: 'center' }}>
-                  <Speed sx={{ fontSize: 30, color: '#ff9800' }} />
-                  <Typography variant="body2" color="text.secondary">
-                    Vitesse
-                  </Typography>
-<Typography variant="body1">
-  {fixed(flightInfo?.horizontal_speed_m_s, 1)} m/s
-</Typography>
-                </CardContent>
-              </Card>
-            </Box>
-            <Box sx={{ flex: '1 1 200px', minWidth: 200 }}>
-              <Card variant="outlined">
-                <CardContent sx={{ textAlign: 'center' }}>
-                  <Navigation sx={{ fontSize: 30, color: '#9c27b0' }} />
-                  <Typography variant="body2" color="text.secondary">
-                    Direction
-                  </Typography>
-<Typography variant="body1">
-  {fixed(flightInfo?.heading_deg, 0)}°
-</Typography>
-                </CardContent>
-              </Card>
-            </Box>
+          <Box sx={{ 
+            display: 'grid',
+            gridTemplateColumns: { 
+              xs: '1fr', 
+              sm: 'repeat(2, 1fr)', 
+              md: 'repeat(4, 1fr)' 
+            },
+            gap: { xs: 1.5, sm: 2 },
+            mb: { xs: 1.5, sm: 2 }
+          }}>
+            <Card variant="outlined" sx={{ height: 'fit-content' }}>
+              <CardContent sx={{ 
+                textAlign: 'center',
+                p: { xs: 1.5, sm: 2 },
+                '&:last-child': { pb: { xs: 1.5, sm: 2 } }
+              }}>
+                <LocationOn sx={{ 
+                  fontSize: { xs: 24, sm: 30 }, 
+                  color: '#2196f3',
+                  mb: { xs: 0.5, sm: 1 }
+                }} />
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                  sx={{ 
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    mb: 0.5
+                  }}
+                >
+                  Position
+                </Typography>
+                <Typography 
+                  variant="body1"
+                  sx={{
+                    fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
+                    fontWeight: 'medium',
+                    wordBreak: 'break-all'
+                  }}
+                >
+                  {fixed(flightInfo?.latitude, 6)}, {fixed(flightInfo?.longitude, 6)}
+                </Typography>
+              </CardContent>
+            </Card>
+            
+            <Card variant="outlined" sx={{ height: 'fit-content' }}>
+              <CardContent sx={{ 
+                textAlign: 'center',
+                p: { xs: 1.5, sm: 2 },
+                '&:last-child': { pb: { xs: 1.5, sm: 2 } }
+              }}>
+                <Height sx={{ 
+                  fontSize: { xs: 24, sm: 30 }, 
+                  color: '#4caf50',
+                  mb: { xs: 0.5, sm: 1 }
+                }} />
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                  sx={{ 
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    mb: 0.5
+                  }}
+                >
+                  Altitude
+                </Typography>
+                <Typography 
+                  variant="body1"
+                  sx={{
+                    fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {fixed(flightInfo?.altitude_m, 1)} m
+                </Typography>
+              </CardContent>
+            </Card>
+            
+            <Card variant="outlined" sx={{ height: 'fit-content' }}>
+              <CardContent sx={{ 
+                textAlign: 'center',
+                p: { xs: 1.5, sm: 2 },
+                '&:last-child': { pb: { xs: 1.5, sm: 2 } }
+              }}>
+                <Speed sx={{ 
+                  fontSize: { xs: 24, sm: 30 }, 
+                  color: '#ff9800',
+                  mb: { xs: 0.5, sm: 1 }
+                }} />
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                  sx={{ 
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    mb: 0.5
+                  }}
+                >
+                  Vitesse
+                </Typography>
+                <Typography 
+                  variant="body1"
+                  sx={{
+                    fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {fixed(flightInfo?.horizontal_speed_m_s, 1)} m/s
+                </Typography>
+              </CardContent>
+            </Card>
+            
+            <Card variant="outlined" sx={{ height: 'fit-content' }}>
+              <CardContent sx={{ 
+                textAlign: 'center',
+                p: { xs: 1.5, sm: 2 },
+                '&:last-child': { pb: { xs: 1.5, sm: 2 } }
+              }}>
+                <Navigation sx={{ 
+                  fontSize: { xs: 24, sm: 30 }, 
+                  color: '#9c27b0',
+                  mb: { xs: 0.5, sm: 1 }
+                }} />
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary"
+                  sx={{ 
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    mb: 0.5
+                  }}
+                >
+                  Direction
+                </Typography>
+                <Typography 
+                  variant="body1"
+                  sx={{
+                    fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {fixed(flightInfo?.heading_deg, 0)}°
+                </Typography>
+              </CardContent>
+            </Card>
           </Box>
-          <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+          
+          <Box sx={{ 
+            display: 'flex', 
+            gap: { xs: 0.5, sm: 1 }, 
+            flexWrap: 'wrap',
+            justifyContent: { xs: 'center', sm: 'flex-start' }
+          }}>
             <Chip
               label={flightInfo.is_armed ? 'ARMÉ' : 'DÉSARMÉ'}
               color={flightInfo.is_armed ? 'error' : 'default'}
+  size="small"
+              sx={{
+                fontSize: { xs: '0.7rem', sm: '0.8rem' },
+                fontWeight: 'bold'
+              }}
             />
             <Chip
               label={flightInfo.flight_mode}
               color="info"
+  size="small"
+              sx={{
+                fontSize: { xs: '0.7rem', sm: '0.8rem' },
+                fontWeight: 'bold'
+              }}
             />
           </Box>
         </Paper>
       )}
 
       {/* Map */}
-      <Paper sx={{ flex: 1, p: 1, position: 'relative' }}>
+      <Paper sx={{ 
+        flex: 1, 
+        p: { xs: 0.5, sm: 1 }, 
+        position: 'relative',
+        minHeight: { xs: '60vh', sm: '50vh', md: '60vh' },
+        height: { xs: 'auto', sm: 'auto' }
+      }}>
         {flightInfo && (
           <MapContainer
   center={[Number(flightInfo?.latitude ?? 0), Number(flightInfo?.longitude ?? 0)]}
@@ -790,50 +979,117 @@ Batterie: {fixed(flightInfo?.battery_remaining_percent, 0)}%<br />
           </MapContainer>
         )}
         {/* Control Buttons */}
-        <Box sx={{ position: 'absolute', bottom: 16, right: 16, display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <Box sx={{ 
+          position: 'absolute', 
+          bottom: { xs: 8, sm: 16 }, 
+          right: { xs: 8, sm: 16 }, 
+          display: 'flex', 
+          flexDirection: 'column', 
+          gap: { xs: 0.5, sm: 1 },
+          zIndex: 1000
+        }}>
           <Fab
             color="primary"
             onClick={() => setMissionDialogOpen(true)}
-            size="small"
+size="small"
+            sx={{ 
+              width: { xs: 40, sm: 56 },
+              height: { xs: 40, sm: 56 },
+              boxShadow: 2
+            }}
           >
-            <Add />
+            <Add sx={{ fontSize: { xs: 20, sm: 24 } }} />
           </Fab>
           <Fab
             color="secondary"
             onClick={handleStartMission}
-            size="small"
+size="small"
             disabled={!canStart}
+            sx={{ 
+              width: { xs: 40, sm: 56 },
+              height: { xs: 40, sm: 56 },
+              boxShadow: 2
+            }}
           >
-            <PlayArrow />
+            <PlayArrow sx={{ fontSize: { xs: 20, sm: 24 } }} />
           </Fab>
           <Fab
             color="default"
             onClick={handleReturnHome}
-            size="small"
+size="small"
             disabled={homeBusy}
+            sx={{ 
+              width: { xs: 40, sm: 56 },
+              height: { xs: 40, sm: 56 },
+              boxShadow: 2
+            }}
           >
-            {homeBusy ? <CircularProgress size={20} /> : <Home />}
+            {homeBusy ? 
+              <CircularProgress size={20} /> : 
+              <Home sx={{ fontSize: { xs: 20, sm: 24 } }} />
+            }
           </Fab>
           <Fab
             color="inherit"
             onClick={() => setModifyDialogOpen(true)}
-            size="small"
+size="small"
+            sx={{ 
+              width: { xs: 40, sm: 56 },
+              height: { xs: 40, sm: 56 },
+              boxShadow: 2
+            }}
           >
-            <Edit />
+            <Edit sx={{ fontSize: { xs: 20, sm: 24 } }} />
           </Fab>
         </Box>
       </Paper>
 
       {/* Mission Creation Dialog */}
-      <Dialog open={missionDialogOpen} onClose={() => setMissionDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>Créer une mission</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+      <Dialog 
+        open={missionDialogOpen} 
+        onClose={() => setMissionDialogOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            m: { xs: 1, sm: 2 },
+            maxHeight: { xs: 'calc(100vh - 16px)', sm: 'calc(100vh - 64px)' },
+            width: { xs: 'calc(100vw - 16px)', sm: 'auto' }
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          fontSize: { xs: '1.1rem', sm: '1.25rem' },
+          px: { xs: 2, sm: 3 },
+          py: { xs: 1.5, sm: 2 }
+        }}>
+          Créer une mission
+        </DialogTitle>
+        <DialogContent sx={{
+          px: { xs: 2, sm: 3 },
+          pb: { xs: 1, sm: 2 },
+          overflow: 'auto'
+        }}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: { xs: 2, sm: 2.5 }, 
+            pt: { xs: 1, sm: 2 } 
+          }}>
             <TextField
               label="Nom du fichier"
               value={missionData.filename}
               onChange={(e) => setMissionData({ ...missionData, filename: e.target.value })}
               fullWidth
+  size="small"
+              sx={{
+                '& .MuiInputBase-input': {
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                },
+                '& .MuiInputLabel-root': {
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }
+              }}
             />
             <TextField
               label="Altitude de décollage (m)"
@@ -841,64 +1097,147 @@ Batterie: {fixed(flightInfo?.battery_remaining_percent, 0)}%<br />
               value={missionData.altitude_takeoff}
               onChange={(e) => setMissionData({ ...missionData, altitude_takeoff: Number(e.target.value) })}
               fullWidth
+  size="small"
+              sx={{
+                '& .MuiInputBase-input': {
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                },
+                '& .MuiInputLabel-root': {
+                  fontSize: { xs: '0.875rem', sm: '1rem' }
+                }
+              }}
             />
-            <FormControl fullWidth>
-              <InputLabel>Mode</InputLabel>
+            <FormControl fullWidth size="small">
+              <InputLabel sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>Mode</InputLabel>
               <Select
                 value={missionData.mode}
                 onChange={(e) => setMissionData({ ...missionData, mode: e.target.value as 'auto' | 'man' })}
+                sx={{
+                  '& .MuiSelect-select': {
+                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                  }
+                }}
               >
-                <MenuItem value="auto">Auto (avec décollage/atterrissage)</MenuItem>
-                <MenuItem value="man">Manuel (waypoints seulement)</MenuItem>
+                <MenuItem value="auto" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                  Auto (avec décollage/atterrissage)
+                </MenuItem>
+                <MenuItem value="man" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                  Manuel (waypoints seulement)
+                </MenuItem>
               </Select>
             </FormControl>
 
-            <Typography variant="subtitle2">
+            <Typography 
+              variant="subtitle2"
+              sx={{
+                fontSize: { xs: '0.9rem', sm: '1rem' },
+                fontWeight: 'bold'
+              }}
+            >
               Waypoints ({waypoints.length})
             </Typography>
-            {waypoints.map((wp, index) => (
-              <Box key={index} sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <TextField
-                  label="Latitude"
-                  type="number"
-                  value={wp.lat}
-                  onChange={(e) => {
-                    const newWaypoints = [...waypoints];
-                    newWaypoints[index] = { ...wp, lat: Number(e.target.value) };
-                    setWaypoints(newWaypoints);
-                    setMissionData({ ...missionData, waypoints: newWaypoints });
+            <Box sx={{ 
+              maxHeight: { xs: '200px', sm: '300px' }, 
+              overflow: 'auto',
+              border: waypoints.length > 3 ? '1px solid #e0e0e0' : 'none',
+              borderRadius: waypoints.length > 3 ? 1 : 0,
+              p: waypoints.length > 3 ? 1 : 0
+            }}>
+              {waypoints.map((wp, index) => (
+                <Box 
+                  key={index} 
+                  sx={{ 
+                    display: 'flex', 
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    gap: { xs: 1, sm: 1 }, 
+                    alignItems: { xs: 'stretch', sm: 'center' },
+                    mb: { xs: 2, sm: 1.5 },
+                    p: { xs: 1, sm: 0 },
+                    border: { xs: '1px solid #e0e0e0', sm: 'none' },
+                    borderRadius: { xs: 1, sm: 0 }
                   }}
-                  size="small"
-                />
-                <TextField
-                  label="Longitude"
-                  type="number"
-                  value={wp.lon}
-                  onChange={(e) => {
-                    const newWaypoints = [...waypoints];
-                    newWaypoints[index] = { ...wp, lon: Number(e.target.value) };
-                    setWaypoints(newWaypoints);
-                    setMissionData({ ...missionData, waypoints: newWaypoints });
-                  }}
-                  size="small"
-                />
-                <TextField
-                  label="Altitude"
-                  type="number"
-                  value={wp.alt}
-                  onChange={(e) => {
-                    const newWaypoints = [...waypoints];
-                    newWaypoints[index] = { ...wp, alt: Number(e.target.value) };
-                    setWaypoints(newWaypoints);
-                    setMissionData({ ...missionData, waypoints: newWaypoints });
-                  }}
-                  size="small"
-                />
-                <Button onClick={() => removeWaypoint(index)} color="error">
-                  Supprimer
-                </Button>
-              </Box>
-            ))}
+                >
+                  <TextField
+                    label="Latitude"
+                    type="number"
+                    value={wp.lat}
+                    onChange={(e) => {
+                      const newWaypoints = [...waypoints];
+                      newWaypoints[index] = { ...wp, lat: Number(e.target.value) };
+                      setWaypoints(newWaypoints);
+                      setMissionData({ ...missionData, waypoints: newWaypoints });
+                    }}
+                    size="small"
+                    sx={{ 
+                      flex: { xs: 'none', sm: 1 },
+                      '& .MuiInputBase-input': {
+                        fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                      }
+                    }}
+                  />
+                  <TextField
+                    label="Longitude"
+                    type="number"
+                    value={wp.lon}
+                    onChange={(e) => {
+                      const newWaypoints = [...waypoints];
+                      newWaypoints[index] = { ...wp, lon: Number(e.target.value) };
+                      setWaypoints(newWaypoints);
+                      setMissionData({ ...missionData, waypoints: newWaypoints });
+                    }}
+                    size="small"
+                    sx={{ 
+                      flex: { xs: 'none', sm: 1 },
+                      '& .MuiInputBase-input': {
+                        fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                      }
+                    }}
+                  />
+                  <TextField
+                    label="Altitude"
+                    type="number"
+                    value={wp.alt}
+                    onChange={(e) => {
+                      const newWaypoints = [...waypoints];
+                      newWaypoints[index] = { ...wp, alt: Number(e.target.value) };
+                      setWaypoints(newWaypoints);
+                      setMissionData({ ...missionData, waypoints: newWaypoints });
+                    }}
+                    size="small"
+                    sx={{ 
+                      flex: { xs: 'none', sm: 1 },
+                      '& .MuiInputBase-input': {
+                        fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                      },
+                      '& .MuiInputLabel-root': {
+                        fontSize: { xs: '0.8rem', sm: '0.875rem' }
+                      }
+                    }}
+                  />
+                  <Button 
+                    onClick={() => removeWaypoint(index)} 
+                    color="error"
+                    size="small"
+variant="outlined"
+                    sx={{
+                      fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                      px: { xs: 2, sm: 1 },
+                      py: { xs: 0.75, sm: 0.5 },
+                      minWidth: { xs: 'auto', sm: 'auto' },
+                      alignSelf: { xs: 'stretch', sm: 'center' }
+                    }}
+                  >
+                    Supprimer
+                  </Button>
+                </Box>
+              ))}
+            </Box>
 
             <Button
               onClick={() => {
@@ -917,19 +1256,64 @@ Batterie: {fixed(flightInfo?.battery_remaining_percent, 0)}%<br />
             </Typography>
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setMissionDialogOpen(false)}>Annuler</Button>
-          <Button onClick={handleCreateMission} variant="contained">
+        <DialogActions sx={{
+          px: { xs: 2, sm: 3 },
+          py: { xs: 1.5, sm: 2 },
+          gap: { xs: 1, sm: 1.5 },
+          flexDirection: { xs: 'column', sm: 'row' },
+          '& .MuiButton-root': {
+            width: { xs: '100%', sm: 'auto' },
+            fontSize: { xs: '0.875rem', sm: '1rem' },
+            py: { xs: 1, sm: 0.75 }
+          }
+        }}>
+          <Button 
+            onClick={() => setMissionDialogOpen(false)}
+            sx={{ order: { xs: 2, sm: 1 } }}
+          >
+            Annuler
+          </Button>
+          <Button 
+            onClick={handleCreateMission} 
+            variant="contained"
+            sx={{ order: { xs: 1, sm: 2 } }}
+          >
             Créer la mission
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Mission Modification Dialog */}
-      <Dialog open={modifyDialogOpen} onClose={() => setModifyDialogOpen(false)} maxWidth="sm" fullWidth>
-        <DialogTitle>Modifier une mission</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+      <Dialog 
+        open={modifyDialogOpen} 
+        onClose={() => setModifyDialogOpen(false)} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            m: { xs: 1, sm: 2 },
+            maxHeight: { xs: 'calc(100vh - 16px)', sm: 'calc(100vh - 64px)' },
+            width: { xs: 'calc(100vw - 16px)', sm: 'auto' }
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          fontSize: { xs: '1.1rem', sm: '1.25rem' },
+          px: { xs: 2, sm: 3 },
+          py: { xs: 1.5, sm: 2 }
+        }}>
+          Modifier une mission
+        </DialogTitle>
+        <DialogContent sx={{
+          px: { xs: 2, sm: 3 },
+          pb: { xs: 1, sm: 2 }
+        }}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: { xs: 2, sm: 2.5 }, 
+            pt: { xs: 1, sm: 2 } 
+          }}>
             <TextField
               label="Nom du fichier de mission"
               placeholder="missions/mission_auto.waypoints"
@@ -979,12 +1363,37 @@ Batterie: {fixed(flightInfo?.battery_remaining_percent, 0)}%<br />
       </Dialog>
 
       {/* Hospitals Dialog */}
-      <Dialog open={hospitalsDialogOpen} onClose={() => setHospitalsDialogOpen(false)} maxWidth="md" fullWidth>
-        <DialogTitle>
+      <Dialog 
+        open={hospitalsDialogOpen} 
+        onClose={() => setHospitalsDialogOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            m: { xs: 1, sm: 2 },
+            maxHeight: { xs: 'calc(100vh - 16px)', sm: 'calc(100vh - 64px)' },
+            width: { xs: 'calc(100vw - 16px)', sm: 'auto' }
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          fontSize: { xs: '1.1rem', sm: '1.25rem' },
+          px: { xs: 2, sm: 3 },
+          py: { xs: 1.5, sm: 2 }
+        }}>
           Sélectionner un hôpital pour créer une mission
         </DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+        <DialogContent sx={{
+          px: { xs: 2, sm: 3 },
+          pb: { xs: 1, sm: 2 },
+          overflow: 'auto'
+        }}>
+          <Box sx={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            gap: { xs: 1.5, sm: 2 }, 
+            pt: { xs: 1, sm: 2 } 
+          }}>
             {hospitals.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <CircularProgress />
@@ -1000,7 +1409,7 @@ Batterie: {fixed(flightInfo?.battery_remaining_percent, 0)}%<br />
                   <Paper
                     key={hospital.hospitalId}
                     sx={{
-                      p: 2,
+                      p: { xs: 1.5, sm: 2 },
                       cursor: busy ? 'default' : 'pointer',
                       opacity: busy ? 0.6 : 1,
                       pointerEvents: busy ? 'none' : 'auto',
@@ -1016,24 +1425,67 @@ Batterie: {fixed(flightInfo?.battery_remaining_percent, 0)}%<br />
                       }
                     }}
                   >
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#f44336' }}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      justifyContent: { xs: 'flex-start', sm: 'space-between' }, 
+                      alignItems: { xs: 'stretch', sm: 'center' },
+                      gap: { xs: 1.5, sm: 0 }
+                    }}>
+                      <Box sx={{ flex: 1 }}>
+                        <Typography 
+                          variant="h6" 
+                          sx={{ 
+                            fontWeight: 'bold', 
+                            color: '#f44336',
+                            fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' }
+                          }}
+                        >
                           {hospital.hospitalName}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary"
+                          sx={{ 
+                            fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                            mb: { xs: 0.5, sm: 0 }
+                          }}
+                        >
                           {hospital.hospitalAdress}, {hospital.hospitalCity} - {hospital.hospitalPostal}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        <Typography 
+                          variant="caption" 
+                          color="text.secondary"
+                          sx={{ 
+                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
+                            display: 'block',
+                            wordBreak: 'break-all'
+                          }}
+                        >
                           Lat: {parseFloat(hospital.hospitalLatitude).toFixed(6)}, Lon: {parseFloat(hospital.hospitalLongitude).toFixed(6)}
                         </Typography>
                       </Box>
 
-                      <Box sx={{ textAlign: 'right', display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography variant="body2" color="primary">
+                      <Box sx={{ 
+                        textAlign: { xs: 'center', sm: 'right' }, 
+                        display: 'flex', 
+                        flexDirection: { xs: 'row', sm: 'row' },
+                        alignItems: 'center', 
+                        justifyContent: { xs: 'center', sm: 'flex-end' },
+                        gap: 1,
+                        mt: { xs: 1, sm: 0 }
+                      }}>
+                        <Typography 
+                          variant="body2" 
+                          color="primary"
+                          sx={{ 
+                            fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                            textAlign: 'center'
+                          }}
+                        >
                           Cliquer pour créer mission
                         </Typography>
-                        {busy && <CircularProgress size={16} />} {/* spinner uniquement pour CET hôpital */}
+                        {busy && <CircularProgress size={16} />}
                       </Box>
                     </Box>
                   </Paper>

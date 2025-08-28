@@ -55,7 +55,13 @@ export interface UserProfile {
 }
 
 async function getUserRole(userId: string, userEmail: string): Promise<UserRole | undefined> {
-  if (userEmail === 'admin@bloodsky.fr') {
+  const user = await db
+    .select({ isSuperAdmin: users.isSuperAdmin })
+    .from(users)
+    .where(eq(users.userId, parseInt(userId)))
+    .limit(1);
+
+  if (user.length > 0 && user[0].isSuperAdmin) {
     return { type: 'super_admin' };
   }
 
