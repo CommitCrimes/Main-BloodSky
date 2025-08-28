@@ -33,6 +33,22 @@ test("CRUD blood sample", async () => {
 
   const resCreate = await request("POST", "blood", "/", bloodData);
   expect(resCreate.status).toBe(201);
+  
+  // 2b. GET available and stats include the newly created sample
+  console.log("[TEST] GET available blood");
+  const resAvailable = await request("GET", "blood", "/available");
+  expect(resAvailable.status).toBe(200);
+  const available = await resAvailable.json();
+  const aPlusGroup = available.find((g: any) => g.bloodType === "A+");
+  expect(aPlusGroup).toBeDefined();
+  expect(aPlusGroup.bloodIds).toContain(bloodId);
+
+  console.log("[TEST] GET blood stats");
+  const resStats = await request("GET", "blood", "/stats");
+  expect(resStats.status).toBe(200);
+  const stats = await resStats.json();
+  const statAPlus = stats.find((s: any) => s.bloodType === "A+");
+  expect(statAPlus).toBeDefined();
 
   // 3. GET by ID
   console.log("[TEST] GET blood sample by ID");

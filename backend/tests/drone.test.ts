@@ -75,16 +75,25 @@ test("CRUD drone", async () => {
         droneStatus: "ACTIVE"
     };
     const resUpdate = await request("PUT", "drones", `/${droneId}`, updatedDroneData);
-    expect(resUpdate.status).toBe(200);
+  expect(resUpdate.status).toBe(200);
 
-    // 7. GET: Verify the drone update by retrieving it by ID (by center ID)
-    console.log("[TEST] GET drone by center ID");
-    const resByCenter = await request("GET", "drones", `/center/${centerId}`);
-    expect(resByCenter.status).toBe(200);
-    const dronesByCenter = await resByCenter.json();
-    expect(dronesByCenter.length).toBeGreaterThan(0);
-    const droneMatch = dronesByCenter.find((d: any) => d.droneId === droneId);
-    expect(droneMatch).toBeDefined();
+  // 7. GET: Verify the drone update by retrieving it by ID (by center ID)
+  console.log("[TEST] GET drone by center ID");
+  const resByCenter = await request("GET", "drones", `/center/${centerId}`);
+  expect(resByCenter.status).toBe(200);
+  const dronesByCenter = await resByCenter.json();
+  expect(dronesByCenter.length).toBeGreaterThan(0);
+  const droneMatch = dronesByCenter.find((d: any) => d.droneId === droneId);
+  expect(droneMatch).toBeDefined();
+
+  // 7b. GET: Verify drones history endpoint returns an array and includes our drone
+  console.log("[TEST] GET drones history");
+  const resHistory = await request("GET", "drones", "/history");
+  expect(resHistory.status).toBe(200);
+  const history = await resHistory.json();
+  expect(Array.isArray(history)).toBe(true);
+  const historyMatch = history.find((h: any) => h.droneId === droneId);
+  expect(historyMatch).toBeDefined();
 
     // 8. DELETE: Delete the drone
     console.log("[TEST] DELETE drone");

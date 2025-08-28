@@ -246,6 +246,15 @@ test("CRUD delivery", async () => {
     const addedParticipantDronist = await resAddParticipantDronist.text();
     console.log("[TEST] Added participant from dronist:", addedParticipantDronist);
 
+    // 16b. GET: get deliveries by centerId
+    console.log("[TEST] GET deliveries by centerId");
+    const resByCenterId = await request("GET", "deliveries", `/center/${centerId}`);
+    expect(resByCenterId.status).toBe(200);
+    const fetchedDeliveriesByCenter = await resByCenterId.json();
+    expect(Array.isArray(fetchedDeliveriesByCenter)).toBe(true);
+    const foundByCenter = fetchedDeliveriesByCenter.find((d: any) => d.deliveryId === deliveryId);
+    expect(foundByCenter).toBeDefined();
+
     // 16. GET: get delivery by droneId
     console.log("[TEST] GET delivery by droneId");
     const resByDroneId = await request("GET", "deliveries/drone", `/${droneId}`);

@@ -91,6 +91,11 @@ test("CRUD user", async () => {
     expect(resCreate.status).toBe(201);
     console.log("[TEST] Created user with ID:", userId);
 
+    // 6b. GET: Retrieve the user by name
+    console.log("[TEST] GET user by name");
+    const resGetByName = await request("GET", "users", `/name/${encodeURIComponent(userData.userName)}`);
+    expect(resGetByName.status).toBe(200);
+
     // 7. POST: Create a new user with donation role
     console.log("[TEST] POST create new user with donation role");
     const userDonationCenterData = {
@@ -166,6 +171,28 @@ test("CRUD user", async () => {
     const resCreateUserHospital = await request("POST", "users", "/hospital", userHospitalData);
     expect(resCreateUserHospital.status).toBe(201);
     console.log("[TEST] Created hospital user");
+
+    // 10b. GET: Verify listing endpoints for each role contain the created users
+    console.log("[TEST] GET users listing for roles");
+    const resListDonation = await request("GET", "users", "/donation-center");
+    expect(resListDonation.status).toBe(200);
+    const listDonation = await resListDonation.json();
+    expect(listDonation.find((u: any) => u.userId === userDonationId)).toBeDefined();
+
+    const resListDronist = await request("GET", "users", "/dronist");
+    expect(resListDronist.status).toBe(200);
+    const listDronist = await resListDronist.json();
+    expect(listDronist.find((u: any) => u.userId === userDronistId)).toBeDefined();
+
+    const resListSupport = await request("GET", "users", "/support-center");
+    expect(resListSupport.status).toBe(200);
+    const listSupport = await resListSupport.json();
+    expect(listSupport.find((u: any) => u.userId === userSupportId)).toBeDefined();
+
+    const resListHospital = await request("GET", "users", "/hospital");
+    expect(resListHospital.status).toBe(200);
+    const listHospital = await resListHospital.json();
+    expect(listHospital.find((u: any) => u.userId === userHospitalId)).toBeDefined();
 
     // 11. GET: Retrieve the user by ID
     console.log("[TEST] GET user by ID");
