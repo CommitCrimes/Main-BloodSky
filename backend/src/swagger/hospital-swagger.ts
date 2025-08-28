@@ -1,6 +1,6 @@
 export const hospitalSwagger: Record<string, any> = {
   paths: {
-    "/hospital": {
+    "/hospitals": {
       get: {
         summary: "Get all hospitals",
         tags: ["Hospital"],
@@ -68,7 +68,7 @@ export const hospitalSwagger: Record<string, any> = {
         },
       },
     },
-    "/hospital/{hospitalId}": {
+    "/hospitals/{hospitalId}": {
       get: {
         summary: "Get an hospital by Id",
         tags: ["Hospital"],
@@ -183,7 +183,7 @@ export const hospitalSwagger: Record<string, any> = {
         },
       },
     },
-    "/hospital/postal/{hospital_postal}": {
+    "/hospitals/postal/{hospital_postal}": {
       get: {
         summary: "Get hospital by postal code",
         tags: ["Hospital"],
@@ -219,6 +219,45 @@ export const hospitalSwagger: Record<string, any> = {
             },
           },
           "404": { description: "No hospital found with this postal code" },
+        },
+      },
+    },
+    "/hospitals/city/{city}": {
+      get: {
+        summary: "Get hospitals by city",
+        tags: ["Hospital"],
+        parameters: [
+          {
+            name: "city",
+            in: "path",
+            required: true,
+            schema: { type: "string" },
+            example: "Nantes",
+          },
+        ],
+        responses: {
+          "200": {
+            description: "List of hospitals matching city",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      hospitalId: { type: "integer", example: 1 },
+                      hospitalName: { type: "string", example: "CHU de Nantes" },
+                      hospitalCity: { type: "string", example: "Nantes" },
+                      hospitalPostal: { type: "integer", example: 44000 },
+                      hospitalAdress: { type: "string", example: "1 rue de l'Hôpital" },
+                      hospitalLatitude: { type: "number", example: 47.2184 },
+                      hospitalLongitude: { type: "number", example: -1.5536 },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },
