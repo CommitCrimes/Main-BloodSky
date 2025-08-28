@@ -221,7 +221,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     ? {
         startlat: Number(flightInfo.latitude),
         startlon: Number(flightInfo.longitude),
-        startalt: missionData.altitude_takeoff || cruiseAlt,
+        startalt:cruiseAlt || missionData.altitude_takeoff  ,
       }
     : {}),
 };
@@ -270,7 +270,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
 
 
   const addWaypoint = (lat: number, lon: number) => {
-    const newWaypoint: MissionWaypoint = { lat, lon, alt: missionData.altitude_takeoff || cruiseAlt };
+    const newWaypoint: MissionWaypoint = { lat, lon, alt:cruiseAlt || missionData.altitude_takeoff };
     setWaypoints([...waypoints, newWaypoint]);
     setMissionData({
       ...missionData,
@@ -589,9 +589,10 @@ useEffect(() => {
     label="Altitude (m)"
     size="small"
     value={cruiseAlt}
-    onChange={(e) => setCruiseAlt(Math.max(1, Number(e.target.value || 0)))}
+    onChange={(e) => setCruiseAlt(Number(e.target.value || 0))} 
+    onBlur={() => setCruiseAlt(Math.max(15, cruiseAlt))}       
     sx={{ width: 140 }}
-    inputProps={{ min: 1, step: 1 }}
+    inputProps={{ min: 15, step: 1 }}
   />
 
   <Button variant="outlined" startIcon={<Refresh />} onClick={fetchFlightInfo}>
