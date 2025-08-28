@@ -168,11 +168,8 @@ test("CRUD delivery", async () => {
         droneId,
         droneName: "unaryTestDrone",
         centerId,
-        droneStatus: null,
-        droneCurrentLat: null,
-        droneCurrentLong: null,
-        droneBattery: null,
-        droneImage: null
+        droneImage: null,
+        droneStatus: null
     };
     const resCreateDrone = await request("POST", "drones", "/", droneData);
     expect(resCreateDrone.status).toBe(201);

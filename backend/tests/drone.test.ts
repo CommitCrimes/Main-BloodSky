@@ -52,22 +52,8 @@ test("CRUD drone", async () => {
         droneId,
         droneName: "Test Drone",
         centerId: centerId,
-        droneStatus: null,
-        droneCurrentLat: null,
-        droneCurrentLong: null,
-        droneBattery: null,
         droneImage: null,
-        droneApiUrl: "http://localhost:5000",
-        droneApiId: 1,
-        altitudeM: null,
-        horizontalSpeedMS: null,
-        verticalSpeedMS: null,
-        headingDeg: null,
-        flightMode: null,
-        isArmed: false,
-        missionStatus: null,
-        currentMissionId: null,
-        lastSyncAt: null
+        droneStatus: null
     };
     const resCreate = await request("POST", "drones", "/", droneData);
     expect(resCreate.status).toBe(201);
@@ -84,17 +70,9 @@ test("CRUD drone", async () => {
     console.log("[TEST] PUT update drone");
     const updatedDroneData = {
         droneName: "Updated Drone",
-        droneStatus: "ACTIVE",
-        droneCurrentLat: 48.8566,
-        droneCurrentLong: 2.3522,
-        droneBattery: "75%",
-        altitudeM: 50.5,
-        horizontalSpeedMS: 10.2,
-        verticalSpeedMS: 0.5,
-        headingDeg: 45.0,
-        flightMode: "AUTO",
-        isArmed: true,
-        missionStatus: "ACTIVE"
+        centerId: centerId,
+        droneImage: null,
+        droneStatus: "ACTIVE"
     };
     const resUpdate = await request("PUT", "drones", `/${droneId}`, updatedDroneData);
     expect(resUpdate.status).toBe(200);
@@ -138,10 +116,8 @@ test("Drone control endpoints", async () => {
         droneId,
         droneName: "Control Test Drone",
         centerId: 1,
-        droneApiUrl: "http://localhost:5000",
-        droneApiId: 1,
-        isArmed: false,
-        missionStatus: "IDLE"
+        droneImage: null,
+        droneStatus: null
     };
 
     const resCreate = await request("POST", "drones", "/", droneData);
