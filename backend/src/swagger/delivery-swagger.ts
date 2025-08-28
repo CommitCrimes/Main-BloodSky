@@ -324,5 +324,53 @@ export const deliverySwagger: Record<string, any> = {
         },
       },
     },
+    "/deliveries/center/{centerId}": {
+      get: {
+        summary: "Get deliveries by center ID (with participants)",
+        tags: ["Delivery"],
+        parameters: [
+          { name: "centerId", in: "path", required: true, schema: { type: "integer" }, example: 1 },
+        ],
+        responses: { "200": { description: "List of deliveries for center" }, "404": { description: "Not found" } },
+      },
+    },
+    "/deliveries/drone/{droneId}": {
+      get: {
+        summary: "Get deliveries by drone ID (with participants)",
+        tags: ["Delivery"],
+        parameters: [
+          { name: "droneId", in: "path", required: true, schema: { type: "integer" }, example: 2 },
+        ],
+        responses: { "200": { description: "List of deliveries for drone" }, "404": { description: "Not found" } },
+      },
+    },
+    "/deliveries/participation": {
+      post: {
+        summary: "Add a user participation and validate delivery",
+        tags: ["Delivery"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { type: "object", properties: { deliveryId: { type: "integer" }, userId: { type: "integer" } }, required: ["deliveryId", "userId"] },
+            },
+          },
+        },
+        responses: { "201": { description: "User added and delivery validated" }, "400": { description: "Invalid input" } },
+      },
+      delete: {
+        summary: "Remove a user participation",
+        tags: ["Delivery"],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: { type: "object", properties: { deliveryId: { type: "integer" }, userId: { type: "integer" } }, required: ["deliveryId", "userId"] },
+            },
+          },
+        },
+        responses: { "200": { description: "User removed from delivery" }, "404": { description: "Participation not found" } },
+      },
+    },
   },
 };

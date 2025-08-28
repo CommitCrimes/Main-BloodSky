@@ -11,16 +11,14 @@ export const bloodSwagger: Record<string, any> = {
             content: {
               "application/json": {
                 schema: {
-                  type: "object",
-                  example: {
-                    "O+": 25,
-                    "O-": 18,
-                    "A+": 32,
-                    "A-": 15,
-                    "B+": 22,
-                    "B-": 8,
-                    "AB+": 12,
-                    "AB-": 5
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      bloodType: { type: "string", example: "O+" },
+                      availableQuantity: { type: "integer", example: 25 },
+                      bloodIds: { type: "array", items: { type: "integer" }, example: [1, 2, 3] }
+                    }
                   }
                 }
               }
@@ -40,16 +38,13 @@ export const bloodSwagger: Record<string, any> = {
             content: {
               "application/json": {
                 schema: {
-                  type: "object",
-                  example: {
-                    totalStock: 137,
-                    byType: {
-                      "O+": { available: 25, percentage: 18.2 },
-                      "O-": { available: 18, percentage: 13.1 },
-                      "A+": { available: 32, percentage: 23.4 },
-                      "A-": { available: 15, percentage: 10.9 }
-                    },
-                    lastUpdate: "2024-03-15T14:30:00Z"
+                  type: "array",
+                  items: {
+                    type: "object",
+                    properties: {
+                      bloodType: { type: "string", example: "O+" },
+                      count: { type: "integer", example: 25 }
+                    }
                   }
                 }
               }
@@ -193,6 +188,39 @@ export const bloodSwagger: Record<string, any> = {
           "404": {
             description: "Commande non trouvée"
           }
+        }
+      }
+    },
+    "/blood/status-update/{deliveryId}": {
+      post: {
+        summary: "Update order status",
+        description: "Accept or refuse an order (center or dronist)",
+        tags: ["Blood"],
+        parameters: [
+          { name: "deliveryId", in: "path", required: true, schema: { type: "integer" }, example: 789 }
+        ],
+        requestBody: {
+          required: true,
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  status: {
+                    type: "string",
+                    enum: ["accepted_center", "refused_center", "accepted_dronist", "refused_dronist"],
+                    example: "accepted_center"
+                  }
+                },
+                required: ["status"]
+              }
+            }
+          }
+        },
+        responses: {
+          "200": { description: "Status updated" },
+          "400": { description: "Invalid status" },
+          "404": { description: "Delivery not found" }
         }
       }
     },

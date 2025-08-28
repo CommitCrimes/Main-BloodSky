@@ -97,13 +97,13 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "/users/{userId}": {
+    "/users/{id}": {
       get: {
         summary: "Get user by ID",
         tags: ["User"],
         parameters: [
           {
-            name: "userId",
+            name: "id",
             in: "path",
             required: true,
             schema: {
@@ -145,7 +145,7 @@ export const userSwagger: Record<string, any> = {
         tags: ["User"],
         parameters: [
           {
-            name: "userId",
+            name: "id",
             in: "path",
             required: true,
             schema: {
@@ -209,7 +209,7 @@ export const userSwagger: Record<string, any> = {
         tags: ["User"],
         parameters: [
           {
-            name: "userId",
+            name: "id",
             in: "path",
             required: true,
             schema: {
@@ -239,7 +239,7 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "/users/donation-centers": {
+    "/users/donation-center": {
       get: {
         summary: "Get all user donation centers",
         tags: ["User"],
@@ -366,44 +366,6 @@ export const userSwagger: Record<string, any> = {
           },
         },
       },
-      post: {
-        summary: "Create a new dronist user",
-        tags: ["User"],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  info: { type: "string", example: "info du dronist user" },
-                },
-                required: ["info"],
-              },
-              example: {
-                userId: 3,
-                info: "New dronist info",
-              },
-            },
-          },
-        },
-        responses: {
-          "201": {
-            description: "Dronist user created successfully",
-            content: {
-              "application/json": {
-                example: {
-                  userId: 3,
-                  info: "info du dronist user",
-                },
-              },
-            },
-          },
-          "400": {
-            description: "Invalid input",
-          },
-        },
-      },
     },
     "/users/support-center": {
       get: {
@@ -422,47 +384,6 @@ export const userSwagger: Record<string, any> = {
                 ],
               },
             },
-          },
-        },
-      },
-      post: {
-        summary: "Create a new support center user",
-        tags: ["User"],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  info: {
-                    type: "string",
-                    example: "info du support center user",
-                  },
-                },
-                required: ["info"],
-              },
-              example: {
-                userId: 5,
-                info: "New support center user info",
-              },
-            },
-          },
-        },
-        responses: {
-          "201": {
-            description: "Support center user created successfully",
-            content: {
-              "application/json": {
-                example: {
-                  userId: 5,
-                  info: "info du support center user",
-                },
-              },
-            },
-          },
-          "400": {
-            description: "Invalid input",
           },
         },
       },
@@ -863,13 +784,13 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "/users/{userId}/deliveries": {
+    "/users/{id}/deliveries": {
       get: {
         summary: "Get deliveries participation associated with user Id",
         tags: ["User"],
         parameters: [
           {
-            name: "userId",
+            name: "id",
             in: "path",
             required: true,
             schema: { type: "integer" },
@@ -900,13 +821,13 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "/users/donation-center/{userId}": {
+    "/users/donation-center/{id}": {
       put: {
         summary: "Update user then user in donation center",
         tags: ["User"],
         parameters: [
           {
-            name: "userId",
+            name: "id",
             in: "path",
             required: true,
             schema: {
@@ -961,13 +882,13 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "/users/hospital/{userId}": {
+    "/users/hospital/{id}": {
       put: {
         summary: "Update user then user in hospital",
         tags: ["User"],
         parameters: [
           {
-            name: "userId",
+            name: "id",
             in: "path",
             required: true,
             schema: {
@@ -1022,13 +943,13 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "/users/dronist/{userId}": {
+    "/users/dronist/{id}": {
       put: {
         summary: "Update user then user in dronist",
         tags: ["User"],
         parameters: [
           {
-            name: "userId",
+            name: "id",
             in: "path",
             required: true,
             schema: {
@@ -1079,13 +1000,13 @@ export const userSwagger: Record<string, any> = {
         },
       },
     },
-    "/users/support-center/{userId}": {
+    "/users/support-center/{id}": {
       put: {
         summary: "Update user then user in support-center",
         tags: ["User"],
         parameters: [
           {
-            name: "userId",
+            name: "id",
             in: "path",
             required: true,
             schema: {

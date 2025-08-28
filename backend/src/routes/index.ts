@@ -6,7 +6,6 @@ import { droneRouter } from './drone';
 import { hospitalRouter } from './hospital';
 import { donationCenterRouter } from './donation_center';
 import { userRouter } from './user';
-import { entitiesRouter } from './entities.routes';
 import { superAdminRouter } from './superadmin.routes';
 import { hospitalAdminRouter } from './hospital-admin.routes';
 import { donationCenterAdminRouter } from './donation-center-admin.routes';
@@ -390,46 +389,6 @@ export const createRouter = () => {
           }
         }
       },
-      '/donation-centers': {
-        get: {
-          summary: 'Get all donation centers',
-          tags: ['Entities'],
-          responses: {
-            '200': {
-              description: 'List of donation centers',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'array',
-                    items: { $ref: '#/components/schemas/DonationCenter' }
-                  }
-                }
-              }
-            },
-            '500': { description: 'Internal server error' }
-          }
-        }
-      },
-      '/hospitals': {
-        get: {
-          summary: 'Get all hospitals',
-          tags: ['Entities'],
-          responses: {
-            '200': {
-              description: 'List of hospitals',
-              content: {
-                'application/json': {
-                  schema: {
-                    type: 'array',
-                    items: { $ref: '#/components/schemas/Hospital' }
-                  }
-                }
-              }
-            },
-            '500': { description: 'Internal server error' }
-          }
-        }
-      },
       '/superadmin/admins': {
         get: {
           summary: 'Get all administrators',
@@ -691,7 +650,6 @@ export const createRouter = () => {
   }));
 
     // Routes publiques
-    api.route('/', entitiesRouter);
     api.route('/auth', authRouter);
     api.route('/deliveries', deliveryRouter);
     api.route('/blood', bloodRouter);
