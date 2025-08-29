@@ -6,20 +6,31 @@ import HistoryManagement from '@/components/HistoryManagement';
 import OrderBlood from '@/components/OrderBlood';
 import DashboardLayout from '@/components/DashboardLayout';
 import ContactWidgetAuthed from '@/components/SupportItEmailingAuth';
+import type { UserRole, HospitalAdminRole } from '../types/users'; // <-- importe le bon rôle
+
+function isHospitalAdmin(role: UserRole | undefined): role is HospitalAdminRole {
+  return role?.type === 'hospital_admin';
+}
+
 const HospitalDashboard = () => {
   const auth = useAuth();
+  const role = auth.user?.role;
 
-  // Configuration pour le dashboard hôpital
+  // Narrowing
+  const hospitalId = isHospitalAdmin(role) ? role.hospitalId : undefined;
+  const canManageUsers = isHospitalAdmin(role) && !!role.admin;
+
   const dashboardConfig = {
-    title: `Bon retour ${auth.user?.userFirstname}`,
-    subtitle: 'Vue d\'ensemble de votre hôpital',
+    title: `Bon retour ${auth.user?.userFirstname ?? ''}`,
+    subtitle: "Vue d'ensemble de votre hôpital",
     centerImage: coeurImage,
     centerImageAlt: 'Cœur Dashboard',
     position: [48.8566, 2.3522] as [number, number],
     chartTitle: 'Livraisons',
-    userManagementComponent: auth.user?.role?.admin && auth.user?.role?.hospitalId ? (
-      <HospitalUserManagement hospitalId={auth.user.role.hospitalId} />
-    ) : undefined,
+    userManagementComponent:
+      canManageUsers && hospitalId ? (
+        <HospitalUserManagement hospitalId={hospitalId} />
+      ) : undefined,
     profileManagementComponent: <ProfileManagement />,
     historyManagementComponent: <HistoryManagement />,
     orderBloodComponent: <OrderBlood />,

@@ -59,6 +59,7 @@ import type {
 } from '../types/history';
 import { historyApi } from '../api/history';
 import { orderApi } from '../api/order';
+import type { UserRole, DonationCenterAdminRole, HospitalAdminRole } from '../types/users';
 
 const commonStyles = {
   fontFamily: 'Share Tech, monospace',
@@ -120,8 +121,25 @@ const HistoryManagement: React.FC = observer(() => {
   const [error, setError] = useState<string | null>(null);
   const [cancellingDelivery, setCancellingDelivery] = useState<number | null>(null);
 
-  const userType = auth.user?.role?.centerId ? 'donation_center' : 'hospital';
-  const userEntityId = auth.user?.role?.centerId || auth.user?.role?.hospitalId;
+function isDonationCenterRole(role: UserRole | undefined): role is DonationCenterAdminRole {
+  return role?.type === 'donation_center_admin';
+}
+
+function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
+  return role?.type === 'hospital_admin';
+}
+
+  const role = auth.user?.role;
+  let userType: 'donation_center' | 'hospital' = 'hospital';
+  let userEntityId: number | undefined = undefined;
+
+  if (isDonationCenterRole(role)) {
+    userType = 'donation_center';
+    userEntityId = role.centerId;
+  } else if (isHospitalRole(role)) {
+    userType = 'hospital';
+    userEntityId = role.hospitalId;
+  }
 
 
   const reloadHistoryData = useCallback(async () => {

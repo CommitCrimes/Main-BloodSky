@@ -62,6 +62,7 @@ import EditStatusDeliveryPopup from './EditStatusDeliveryPopup';
 import { deliveryApi } from '@/api/delivery';
 import { dronesApi } from '@/api/drone';
 import type { Drone } from '@/types';
+import type { UserRole, DonationCenterAdminRole, HospitalAdminRole } from '../types/users';
 
 
 const commonStyles = {
@@ -129,8 +130,24 @@ const HistoryManagementDrone: React.FC = observer(() => {
   const [deliveryToEdit, setDeliveryToEdit] = useState<DeliveryHistory | null>(null);
 
 
-  const userType = auth.user?.role?.centerId ? 'donation_center' : 'hospital';
-  const userEntityId = auth.user?.role?.centerId || auth.user?.role?.hospitalId;
+  // Type guards for role
+function isDonationCenterRole(role: UserRole | undefined): role is DonationCenterAdminRole {
+  return role?.type === 'donation_center_admin';
+}
+function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
+  return role?.type === 'hospital_admin';
+}
+
+  let userType: 'donation_center' | 'hospital' | undefined;
+  let userEntityId: number | undefined;
+
+  if (isDonationCenterRole(auth.user?.role)) {
+    userType = 'donation_center';
+    userEntityId = auth.user?.role.centerId;
+  } else if (isHospitalRole(auth.user?.role)) {
+    userType = 'hospital';
+    userEntityId = auth.user?.role.hospitalId;
+  }
 
   const [droneMenuAnchor, setDroneMenuAnchor] = useState<null | HTMLElement>(null);
   const [droneMenuDeliveryId, setDroneMenuDeliveryId] = useState<number | null>(null);
