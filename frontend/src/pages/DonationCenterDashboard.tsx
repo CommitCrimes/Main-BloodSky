@@ -1,30 +1,44 @@
 import { useAuth } from '@/hooks/useAuth';
-import pocheSangImage from '@/assets/poche_sang.png';
-import DonationCenterUserManagement from '@/components/DonationCenterUserManagement';
+import coeurImage from '@/assets/coeur_dashboard.png';
+import HospitalUserManagement from '@/components/HospitalUserManagement';
 import ProfileManagement from '@/components/ProfileManagement';
 import HistoryManagement from '@/components/HistoryManagement';
+import OrderBlood from '@/components/OrderBlood';
 import DashboardLayout from '@/components/DashboardLayout';
-import ContactWidhetAuthed from '@/components/SupportItEmailingAuth';
-const DonationCenterDashboard = () => {
-  const auth = useAuth();
+import ContactWidgetAuthed from '@/components/SupportItEmailingAuth';
+import type { UserRole, HospitalAdminRole } from '@/types/users';
 
-  // Configuration pour le dashboard centre de donation
+function isHospitalAdmin(
+  role: UserRole | undefined
+): role is HospitalAdminRole {
+  return role?.type === 'hospital_admin';
+}
+
+const HospitalDashboard = () => {
+  const auth = useAuth();
+  const role = auth.user?.role;
+
+  const hospitalId = isHospitalAdmin(role) ? role.hospitalId : undefined;
+  const canManageUsers = isHospitalAdmin(role) && !!role.admin;
+
   const dashboardConfig = {
-    title: `Bon retour ${auth.user?.userFirstname}`,
-    subtitle: 'Vue d\'ensemble de votre centre de donation',
-    centerImage: pocheSangImage,
-    centerImageAlt: 'Poche de Sang Dashboard',
+    title: `Bon retour ${auth.user?.userFirstname ?? ''}`,
+    subtitle: "Vue d'ensemble de votre hôpital",
+    centerImage: coeurImage,
+    centerImageAlt: 'Cœur Dashboard',
     position: [48.8566, 2.3522] as [number, number],
     chartTitle: 'Livraisons',
-    userManagementComponent: auth.user?.role?.admin && auth.user?.role?.centerId ? (
-      <DonationCenterUserManagement donationCenterId={auth.user.role.centerId} />
-    ) : undefined,
+    userManagementComponent:
+      canManageUsers && hospitalId ? (
+        <HospitalUserManagement hospitalId={hospitalId} />
+      ) : undefined,
     profileManagementComponent: <ProfileManagement />,
     historyManagementComponent: <HistoryManagement />,
-    contactComponent: <ContactWidhetAuthed />,
+    orderBloodComponent: <OrderBlood />,
+    contactComponent: <ContactWidgetAuthed />,
   };
 
   return <DashboardLayout config={dashboardConfig} />;
 };
 
-export default DonationCenterDashboard;
+export default HospitalDashboard;
