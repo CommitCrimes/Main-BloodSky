@@ -26,7 +26,8 @@ export const getAllAdmins = async (c: Context) => {
       })
       .from(users)
       .innerJoin(userDonationCenter, eq(users.userId, userDonationCenter.userId))
-      .innerJoin(donationCenters, eq(userDonationCenter.centerId, donationCenters.centerId));
+      .innerJoin(donationCenters, eq(userDonationCenter.centerId, donationCenters.centerId))
+      .where(eq(userDonationCenter.admin, true)); // filtre uniquement admin
 
     // recup des admin d'un hopital
     const hospitalAdmins = await db
@@ -46,7 +47,8 @@ export const getAllAdmins = async (c: Context) => {
       })
       .from(users)
       .innerJoin(userHospital, eq(users.userId, userHospital.userId))
-      .innerJoin(hospitals, eq(userHospital.hospitalId, hospitals.hospitalId));
+      .innerJoin(hospitals, eq(userHospital.hospitalId, hospitals.hospitalId))
+      .where(eq(userHospital.admin, true)); // filtre uniquement admin
 
     // Combiner les résultats
     const allAdmins = [...donationAdmins, ...hospitalAdmins];
@@ -60,6 +62,7 @@ export const getAllAdmins = async (c: Context) => {
     throw new HTTPException(500, { message: 'Échec de la récupération des admins' });
   }
 };
+
 
 export const getAdminById = async (c: Context) => {
   try {
