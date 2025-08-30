@@ -275,12 +275,15 @@ export const getAllUsers = async (c: Context) => {
           info: user.centerInfo
         };
       } else if (user.hospitalId || user.centerId) {
-        roleType = user.hospitalId ? 'hospital_user' : 'center_user';
+        roleType = 'user';
         role = {
-          type: roleType,
+          type: 'user',
           hospitalId: user.hospitalId,
+          hospitalName: user.hospitalName,
           centerId: user.centerId,
-          admin: false
+          centerName: user.centerCity,
+          admin: false,
+          info: user.hospitalInfo || user.centerInfo
         };
       }
 

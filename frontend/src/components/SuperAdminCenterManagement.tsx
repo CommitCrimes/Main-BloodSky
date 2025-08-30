@@ -311,18 +311,6 @@ const SuperAdminCenterManagement: React.FC = () => {
               </CardContent>
             </Card>
           </Box>
-          <Box sx={{ flex: '1 1 250px', minWidth: '250px' }}>
-            <Card>
-              <CardContent>
-                <Typography color="text.secondary" gutterBottom>
-                  Total Adresses
-                </Typography>
-                <Typography variant="h4" component="div" sx={{ fontWeight: 'bold' }}>
-                  {centers?.filter(c => c.centerAdress)?.length || 0}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
         </Box>
 
         <Card>
