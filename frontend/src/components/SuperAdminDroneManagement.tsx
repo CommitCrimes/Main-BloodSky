@@ -31,6 +31,7 @@ import {
   Card,
   CardContent,
   TextField,
+  Menu, MenuItem, ListItemIcon, ListItemText
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import {
@@ -44,6 +45,7 @@ import {
   Visibility,
   Add,
   Delete,
+  CheckCircleOutline, BuildCircleOutlined, PowerSettingsNewOutlined
 } from "@mui/icons-material";
 import DroneDetailView from "./DroneDetailView";
 import { dronesApi } from "@/api/drone";
@@ -58,8 +60,10 @@ import type { FlightInfo as DroneFlightInfo } from "@/types/drone";
 import type { DroneHistory } from "@/types/delivery";
 import type { DroneStatus } from "@/types/drone";
 import { useAuth } from "@/hooks/useAuth";
+import { formatDate } from "date-fns";
 
 const AdminDroneManagement: React.FC = () => {
+  type DroneStatusValue = 'available' | 'maintenance' | 'hors service';
   const [dronesHistory, setDronesHistory] = useState<DroneHistory[]>([]);
   const [dronesStatus, setDronesStatus] = useState<DroneStatus[]>([]);
   const [dronesFlightInfo, setDronesFlightInfo] = useState<
@@ -86,12 +90,45 @@ const AdminDroneManagement: React.FC = () => {
   const [selectedCenter, setSelectedCenter] = useState<DonationCenter | null>(
     null
   );
-  // Helper: offline
+  const [statusMenuAnchor, setStatusMenuAnchor] = useState<null | HTMLElement>(null);
+  const [statusMenuDroneId, setStatusMenuDroneId] = useState<number | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
+  const openStatusMenu = Boolean(statusMenuAnchor);
+
+
+
   const isDroneOffline = (droneId: number) => {
     const status = dronesStatus.find((s) => s.droneId === droneId);
     const fi = dronesFlightInfo[droneId];
     return !status?.isOnline || !!fi?.unavailable || fi?.state === "offline";
   };
+
+  const handleOpenStatusMenu = (e: React.MouseEvent<HTMLElement>, droneId: number) => {
+    setStatusMenuAnchor(e.currentTarget);
+    setStatusMenuDroneId(droneId);
+  };
+
+  const handleCloseStatusMenu = () => {
+    setStatusMenuAnchor(null);
+    setStatusMenuDroneId(null);
+  };
+
+  const applyDroneStatus = async (newStatus: DroneStatusValue) => {
+    if (statusMenuDroneId == null) return;
+    try {
+      setUpdatingStatusId(statusMenuDroneId);
+      await dronesApi.update(statusMenuDroneId, { droneStatus: newStatus });
+      await fetchDronesData();
+    } catch (err) {
+      console.error('Error updating drone status:', err);
+      setError(`Erreur lors de la mise à jour du statut du drone ${statusMenuDroneId}`);
+    } finally {
+      setUpdatingStatusId(null);
+      handleCloseStatusMenu();
+    }
+  };
+
+
 
   const fetchDronesData = async () => {
     try {
@@ -267,31 +304,31 @@ const AdminDroneManagement: React.FC = () => {
     return () => clearInterval(id);
   }, [dronesHistory, detailViewDroneId]);
 
-  const getStatusColor = (status: string): string => {
-    switch (status?.toLowerCase()) {
-      case "active":
-      case "flying":
-        return "#4caf50";
-      case "charging":
-      case "standby":
-        return "#ff9800";
+  const tStatus = (status?: string | null) => {
+    const s = (status || "").toLowerCase();
+    switch (s) {
+      case "available":
+        return "Actif";
       case "maintenance":
-      case "error":
-        return "#f44336";
+        return "Maintenance";
+      case "hors service":
+        return "Hors service";
       default:
-        return "#9e9e9e";
+        return "N/A";
     }
   };
 
-  const formatDate = (dateString: string): string => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const getStatusColor = (status?: string | null): string => {
+    switch ((status || "").toLowerCase()) {
+      case "available":
+        return "#10b981"; // vert émeraude
+      case "maintenance":
+        return "#f59e0b"; // orange
+      case "hors service":
+        return "#f44336"; // rouge
+      default:
+        return "#9e9e9e"; // gris
+    }
   };
 
   // Mémos pour éviter de recalculer à chaque render
@@ -455,6 +492,21 @@ const AdminDroneManagement: React.FC = () => {
                 justifyContent: "space-between",
               }}
             >
+              <Menu anchorEl={statusMenuAnchor} open={openStatusMenu} onClose={handleCloseStatusMenu}>
+                <MenuItem onClick={() => applyDroneStatus('available')}>
+                  <ListItemIcon><CheckCircleOutline fontSize="small" /></ListItemIcon>
+                  <ListItemText>Actif</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={() => applyDroneStatus('maintenance')}>
+                  <ListItemIcon><BuildCircleOutlined fontSize="small" /></ListItemIcon>
+                  <ListItemText>Maintenance</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={() => applyDroneStatus('hors service')}>
+                  <ListItemIcon><PowerSettingsNewOutlined fontSize="small" /></ListItemIcon>
+                  <ListItemText>Hors service</ListItemText>
+                </MenuItem>
+              </Menu>
+
               <Box>
                 <Typography
                   variant="h6"
@@ -688,7 +740,9 @@ const AdminDroneManagement: React.FC = () => {
             </TableHead>
             <TableBody>
               {uniqueDrones.map((drone) => {
-                const status = dronesStatus.find((s) => s.droneId === drone.droneId);
+                const status = dronesStatus.find(
+                  (s) => s.droneId === drone.droneId
+                );
                 const fi = dronesFlightInfo[drone.droneId];
                 const offline = isDroneOffline(drone.droneId);
 
@@ -718,13 +772,20 @@ const AdminDroneManagement: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={drone.droneStatus || "UNKNOWN"}
+                        clickable
+                        onClick={(e) => handleOpenStatusMenu(e, drone.droneId)}
+                        label={
+                          updatingStatusId === drone.droneId
+                            ? (
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <CircularProgress size={14} />
+                                <span>{tStatus(drone.droneStatus)}</span>
+                              </Box>
+                            )
+                            : tStatus(drone.droneStatus)
+                        }
                         size="small"
-                        sx={{
-                          backgroundColor: getStatusColor(drone.droneStatus),
-                          color: "white",
-                          fontWeight: "bold",
-                        }}
+                        sx={{ backgroundColor: getStatusColor(drone.droneStatus), color: "#fff", fontWeight: "bold" }}
                       />
                     </TableCell>
                     <TableCell>
@@ -755,7 +816,7 @@ const AdminDroneManagement: React.FC = () => {
                     </TableCell>
                     <TableCell align="center">
                       <Box sx={{ display: "flex", gap: 0.5, justifyContent: 'center' }}>
-                        <Tooltip title="Synchroniser">
+                        <Tooltip title={offline ? "Drone offline" : "Synchroniser"}>
                           <span>
                             <IconButton
                               size="small"
@@ -890,18 +951,17 @@ const AdminDroneManagement: React.FC = () => {
                         Statut
                       </Typography>
                       <Chip
-                        label={drone.droneStatus || "UNKNOWN"}
+                        label={tStatus(drone.droneStatus)}
                         size="small"
                         sx={{
                           backgroundColor: getStatusColor(drone.droneStatus),
-                          color: "white",
+                          color: "#fff",
                           fontWeight: "bold",
                           fontSize: '0.6rem',
                           height: 20
                         }}
                       />
                     </Box>
-
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                       <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>
                         État
@@ -1419,7 +1479,7 @@ const AdminDroneManagement: React.FC = () => {
                               mb: delivery.deliveryUrgent ? 0.5 : 0
                             }}
                           >
-                            Date: {formatDate(delivery.dteDelivery)}
+                            Date: {formatDate(delivery.dteDelivery, "dd/MM/yyyy")}
                           </Typography>
                           {delivery.deliveryUrgent && (
                             <Chip
