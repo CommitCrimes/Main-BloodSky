@@ -82,6 +82,8 @@ export interface DronistRole extends UserRoleBase {
 
 export interface BasicUserRole extends UserRoleBase {
   type: 'user';
+  centerId?: CenterId;
+  hospitalId?: HospitalId;
 }
 
 /** Union pratique pour affiner via des guards si besoin */

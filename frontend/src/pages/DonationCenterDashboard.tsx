@@ -1,44 +1,49 @@
 import { useAuth } from '@/hooks/useAuth';
-import coeurImage from '@/assets/coeur_dashboard.png';
-import HospitalUserManagement from '@/components/HospitalUserManagement';
+import pocheSangImage from '@/assets/poche_sang.png';
+import DonationCenterUserManagement from '@/components/DonationCenterUserManagement';
 import ProfileManagement from '@/components/ProfileManagement';
 import HistoryManagement from '@/components/HistoryManagement';
-import OrderBlood from '@/components/OrderBlood';
 import DashboardLayout from '@/components/DashboardLayout';
 import ContactWidgetAuthed from '@/components/SupportItEmailingAuth';
-import type { UserRole, HospitalAdminRole } from '@/types/users';
+import type { UserRole, DonationCenterAdminRole } from '@/types/users';
 
-function isHospitalAdmin(
+function isDonationCenterAdmin(
   role: UserRole | undefined
-): role is HospitalAdminRole {
-  return role?.type === 'hospital_admin';
+): role is DonationCenterAdminRole {
+  return role?.type === 'donation_center_admin';
 }
 
-const HospitalDashboard = () => {
+const DonationCenterDashboard = () => {
   const auth = useAuth();
   const role = auth.user?.role;
 
-  const hospitalId = isHospitalAdmin(role) ? role.hospitalId : undefined;
-  const canManageUsers = isHospitalAdmin(role) && !!role.admin;
+  let centerId: number | undefined;
+  if (isDonationCenterAdmin(role)) {
+    centerId = role.centerId;
+  } else if (role?.type === 'user' && 'centerId' in role) {
+    centerId = role.centerId;
+  }
+  
+  const canManageUsers = isDonationCenterAdmin(role) && !!role.admin;
 
   const dashboardConfig = {
     title: `Bon retour ${auth.user?.userFirstname ?? ''}`,
-    subtitle: "Vue d'ensemble de votre hôpital",
-    centerImage: coeurImage,
-    centerImageAlt: 'Cœur Dashboard',
+    subtitle: "Vue d'ensemble de votre centre de donation",
+    centerImage: pocheSangImage,
+    centerImageAlt: 'Poche de sang Dashboard',
     position: [48.8566, 2.3522] as [number, number],
     chartTitle: 'Livraisons',
     userManagementComponent:
-      canManageUsers && hospitalId ? (
-        <HospitalUserManagement hospitalId={hospitalId} />
+      canManageUsers && centerId ? (
+        <DonationCenterUserManagement donationCenterId={centerId} />
       ) : undefined,
     profileManagementComponent: <ProfileManagement />,
     historyManagementComponent: <HistoryManagement />,
-    orderBloodComponent: <OrderBlood />,
+    orderBloodComponent: undefined,
     contactComponent: <ContactWidgetAuthed />,
   };
 
   return <DashboardLayout config={dashboardConfig} />;
 };
 
-export default HospitalDashboard;
+export default DonationCenterDashboard;

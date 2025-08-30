@@ -53,11 +53,11 @@ const App = observer(() => {
             <Route path="/admin/drones" element={<AdminDroneManagementPage />} />
           </Route>
           
-          <Route element={<RoleProtectedRoute allowedRoles={['hospital_admin']} />}>
+          <Route element={<RoleProtectedRoute allowedRoles={['hospital_admin', 'user']} />}>
             <Route path="/hospital" element={<HospitalDashboard />} />
           </Route>
           
-          <Route element={<RoleProtectedRoute allowedRoles={['donation_center_admin']} />}>
+          <Route element={<RoleProtectedRoute allowedRoles={['donation_center_admin', 'user']} />}>
             <Route path="/donation-center" element={<DonationCenterDashboard />} />
           </Route>
           

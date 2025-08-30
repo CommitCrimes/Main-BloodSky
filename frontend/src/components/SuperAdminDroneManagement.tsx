@@ -473,7 +473,7 @@ const AdminDroneManagement: React.FC = () => {
           lg: 'repeat(3, 1fr)',
           xl: 'repeat(5, 1fr)'
         },
-        gap: { xs: 2, sm: 2.5, md: 3 },
+        gap: { xs: 1, sm: 1.5, md: 2 },
         mb: { xs: 3, sm: 4 }
       }}>
         <Card sx={{
@@ -484,7 +484,7 @@ const AdminDroneManagement: React.FC = () => {
             transform: 'translateY(-2px)'
           }
         }}>
-          <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+          <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
             <Box
               sx={{
                 display: "flex",
@@ -543,7 +543,7 @@ const AdminDroneManagement: React.FC = () => {
             transform: 'translateY(-2px)'
           }
         }}>
-          <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+          <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
             <Box
               sx={{
                 display: "flex",
@@ -586,7 +586,7 @@ const AdminDroneManagement: React.FC = () => {
             transform: 'translateY(-2px)'
           }
         }}>
-          <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+          <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
             <Box
               sx={{
                 display: "flex",
@@ -633,7 +633,7 @@ const AdminDroneManagement: React.FC = () => {
             transform: 'translateY(-2px)'
           }
         }}>
-          <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+          <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
             <Box
               sx={{
                 display: "flex",
@@ -680,7 +680,7 @@ const AdminDroneManagement: React.FC = () => {
             transform: 'translateY(-2px)'
           }
         }}>
-          <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+          <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
             <Box
               sx={{
                 display: "flex",
@@ -888,7 +888,7 @@ const AdminDroneManagement: React.FC = () => {
       <Box sx={{ display: { xs: 'block', lg: 'none' } }}>
         <Box sx={{
           display: 'grid',
-          gap: { xs: 2, sm: 3 },
+          gap: { xs: 1.5, sm: 2.5 },
           gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }
         }}>
           {uniqueDrones.map((drone) => {
@@ -909,7 +909,7 @@ const AdminDroneManagement: React.FC = () => {
                   }
                 }}
               >
-                <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+                <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
                   <Box sx={{ mb: 2 }}>
                     <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
                       <Box display="flex" alignItems="center" gap={1}>
@@ -1126,7 +1126,7 @@ const AdminDroneManagement: React.FC = () => {
                 pt: 1,
                 display: "flex",
                 flexDirection: "column",
-                gap: { xs: 2, sm: 2.5 }
+                gap: { xs: 1, sm: 1.5 }
               }}
             >
               <TextField
@@ -1298,7 +1298,7 @@ const AdminDroneManagement: React.FC = () => {
               <Box sx={{
                 display: "flex",
                 flexDirection: { xs: 'column', md: 'row' },
-                gap: { xs: 2, sm: 2.5, md: 3 }
+                gap: { xs: 1, sm: 1.5, md: 2 }
               }}>
                 <Box sx={{
                   flex: { xs: 'none', md: "1 1 300px" },

@@ -258,9 +258,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
 
 
 
+  const isFromDonationCenter = (role: any) => {
+    return role && (isDonationCenterAdmin(role) || (role.type === 'user' && role.centerId));
+  };
+
   // Détermine le libellé selon le type d'utilisateur
   const getDeliveryLabel = () => {
-    if (auth.user?.role && isDonationCenterAdmin(auth.user.role)) {
+    if (isFromDonationCenter(auth.user?.role)) {
       return 'Livrer'; // Centre de donation = celui qui livre
     }
     return 'Se faire livrer'; // Hôpital = celui qui reçoit
@@ -273,8 +277,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
     { id: 'profil', label: 'Mon profil', icon: <AccountCircleOutlined /> },
     { id: 'contact', label: 'Contact', icon: <ContactSupportOutlined /> },
     //Onglet météo uniquement pour droniste
-    // Onglet livraison uniquement pour les hôpitaux
-    ...(!(auth.user?.role && isDonationCenterAdmin(auth.user.role)) ? [{ id: 'livraison', label: getDeliveryLabel(), icon: <LocalShippingOutlined /> }] : []),
+    // Onglet livraison uniquement pour les hôpitaux (pas pour les centres de donation)
+    ...(!isFromDonationCenter(auth.user?.role) ? [{ id: 'livraison', label: getDeliveryLabel(), icon: <LocalShippingOutlined /> }] : []),
     ...(auth.user?.role?.admin ? [{ id: 'users', label: 'Gestion des utilisateurs', icon: <GroupOutlined /> }] : []),
   ];
 
