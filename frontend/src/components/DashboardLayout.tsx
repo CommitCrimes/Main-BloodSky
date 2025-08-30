@@ -107,7 +107,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
   });
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notificationStore] = useState(() => new NotificationStore());
-  
+
   const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
 
   const [deliveryStats, setDeliveryStats] = useState<any[]>([]);
@@ -183,78 +183,78 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
   }, [notificationStore]);
 
   useEffect(() => {
-  const loadPosition = async () => {
-  setIsLoadingMap(true);
-  try {
-    // 1) Utilisateur rattaché à un centre de don
-    if (auth.user?.role && isDonationCenterAdmin(auth.user.role)) {
-      const centerId = auth.user.role.centerId;
-      const center = await donationCenterApi.getCenterById(centerId);
+    const loadPosition = async () => {
+      setIsLoadingMap(true);
+      try {
+        // 1) Utilisateur rattaché à un centre de don
+        if (auth.user?.role && isDonationCenterAdmin(auth.user.role)) {
+          const centerId = auth.user.role.centerId;
+          const center = await donationCenterApi.getCenterById(centerId);
 
-      // Essayons plusieurs alias possibles renvoyés par le back
-      const rawLat =
-        (center as any)?.latitude ??
-        (center as any)?.centerLatitude ??
-        (center as any)?.lat ??
-        null;
+          // Essayons plusieurs alias possibles renvoyés par le back
+          const rawLat =
+            (center as any)?.latitude ??
+            (center as any)?.centerLatitude ??
+            (center as any)?.lat ??
+            null;
 
-      const rawLon =
-        (center as any)?.longitude ??
-        (center as any)?.centerLongitude ??
-        (center as any)?.lon ??
-        null;
+          const rawLon =
+            (center as any)?.longitude ??
+            (center as any)?.centerLongitude ??
+            (center as any)?.lon ??
+            null;
 
-      const lat = parseCoord(rawLat);
-      const lon = parseCoord(rawLon);
+          const lat = parseCoord(rawLat);
+          const lon = parseCoord(rawLon);
 
-      if (isValidLatLon(lat, lon)) {
-        setMapPosition([lat as number, lon as number]);
-        setMapLabel('center');
-        return;
-      } else {
-        console.warn('Coordonnées center invalides → fallback', {
-          rawLat,
-          rawLon,
-          parsed: { lat, lon },
-          center,
-        });
+          if (isValidLatLon(lat, lon)) {
+            setMapPosition([lat as number, lon as number]);
+            setMapLabel('center');
+            return;
+          } else {
+            console.warn('Coordonnées center invalides → fallback', {
+              rawLat,
+              rawLon,
+              parsed: { lat, lon },
+              center,
+            });
+          }
+        }
+
+        // 2) Utilisateur rattaché à un hôpital
+        if (auth.user?.role && isHospitalAdmin(auth.user.role)) {
+          const hospitalId = auth.user.role.hospitalId;
+          const hosp = await hospitalApi.getById(hospitalId);
+
+          const lat = parseCoord(hosp?.hospitalLatitude);
+          const lon = parseCoord(hosp?.hospitalLongitude);
+
+          if (isValidLatLon(lat, lon)) {
+            setMapPosition([lat as number, lon as number]);
+            setMapLabel('hospital');
+            return;
+          } else {
+            console.warn('Coordonnées hôpital invalides → fallback', {
+              latRaw: hosp?.hospitalLatitude,
+              lonRaw: hosp?.hospitalLongitude,
+            });
+          }
+        }
+
+        // 3) Fallback → position par défaut
+        setMapPosition(config.position);
+        setMapLabel('unknown');
+      } catch (e) {
+        console.error('Erreur chargement position carte:', e);
+        setMapPosition(config.position);
+        setMapLabel('unknown');
+      } finally {
+        setIsLoadingMap(false);
       }
-    }
+    };
 
-    // 2) Utilisateur rattaché à un hôpital
-    if (auth.user?.role && isHospitalAdmin(auth.user.role)) {
-      const hospitalId = auth.user.role.hospitalId;
-      const hosp = await hospitalApi.getById(hospitalId);
-
-      const lat = parseCoord(hosp?.hospitalLatitude);
-      const lon = parseCoord(hosp?.hospitalLongitude);
-
-      if (isValidLatLon(lat, lon)) {
-        setMapPosition([lat as number, lon as number]);
-        setMapLabel('hospital');
-        return;
-      } else {
-        console.warn('Coordonnées hôpital invalides → fallback', {
-          latRaw: hosp?.hospitalLatitude,
-          lonRaw: hosp?.hospitalLongitude,
-        });
-      }
-    }
-
-    // 3) Fallback → position par défaut
-    setMapPosition(config.position);
-    setMapLabel('unknown');
-  } catch (e) {
-    console.error('Erreur chargement position carte:', e);
-    setMapPosition(config.position);
-    setMapLabel('unknown');
-  } finally {
-    setIsLoadingMap(false);
-  }
-};
-
-  loadPosition();
-}, [auth.user?.role, config.position]);
+    loadPosition();
+  }, [auth.user?.role, config.position]);
 
 
 
@@ -284,7 +284,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) {
       const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
       return diffInMinutes <= 1 ? 'À l\'instant' : `${diffInMinutes}min`;
@@ -347,28 +347,28 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
   };
 
   const renderDashboardContent = () => (
-    <Box sx={{ 
-      backgroundColor: '#e3f8fe', 
-      minHeight: '100vh', 
+    <Box sx={{
+      backgroundColor: '#e3f8fe',
+      minHeight: '100vh',
       p: { xs: 1, sm: 2, md: 3 },
       position: 'relative'
     }}>
-      <Box sx={{ mb: { xs: 2, md: 4 }, textAlign: 'center', zIndex:5, position: 'inherit'}}>
-        <Typography 
-          variant="h1" 
-          sx={{ 
-            fontSize: { xs: '1.8rem', sm: '2.2rem', md: '3rem' }, 
-            color: '#981A0E', 
+      <Box sx={{ mb: { xs: 2, md: 4 }, textAlign: 'center', zIndex: 5, position: 'inherit' }}>
+        <Typography
+          variant="h1"
+          sx={{
+            fontSize: { xs: '1.8rem', sm: '2.2rem', md: '3rem' },
+            color: '#981A0E',
             fontFamily: 'Iceland, cursive',
-            mb: 1 
+            mb: 1
           }}
         >
           {config.title}
         </Typography>
-        <Typography 
-          variant="h6" 
-          sx={{ 
-            color: 'text.primary', 
+        <Typography
+          variant="h6"
+          sx={{
+            color: 'text.primary',
             fontFamily: 'Share Tech, monospace',
             fontSize: { xs: '0.9rem', sm: '1rem', md: '1.25rem' }
           }}
@@ -377,71 +377,59 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
         </Typography>
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1, md: 2 }, px: { xs: 0, md: 2 }, py: 1 , position: 'relative'}}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1, md: 2 }, px: { xs: 0, md: 2 }, py: 1, height: '100%', position: 'relative' }}>
 
         {/* Image (logo) du dashboard */}
-          <Box sx={{ 
-            flex: { lg: '0 0 300px' }, 
-            display: { xs: 'none', md: 'flex', lg: 'flex' }, 
-            justifyContent: 'center', 
-            alignItems: 'center',
-            width: { xs: '100%', lg: '300px' },
-            order: { xs: -1, lg: 0 },
-            position: { xs: 'static', lg: 'absolute' },            
-            top: { lg: '50%' },                         
-            left: { lg: '50%' },                        
-            transform: { lg: 'translate(-50%, -50%)' },
-            zIndex: 0,
+        <Box sx={{
+          flex: { lg: '0 0 300px' },
+          display: { xs: 'none', md: 'flex', lg: 'flex' },
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: { xs: '100%', lg: '300px', xl: '800px' },
+          order: { xs: -1, lg: 0 },
+          position: { xs: 'static', lg: 'absolute' },
+          top: { lg: '50%' },
+          left: { lg: '50%' },
+          transform: { lg: 'translate(-50%, -50%)' },
+          zIndex: 5,
 
-          }}>
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                height: '380px',
-                width: '100%',
-                position: 'relative'
+        }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '380px',
+              width: '100%',
+              position: 'relative'
+            }}
+          >
+
+
+            {/* Cercle blur*/}
+            <Box
+              className="heart-blur"
+              sx={{
+                position: 'absolute',
+                width: { xs: '75px', md: '300px', lg: '350px' },
+                height: { xs: '100px', md: '350px', lg: '400px' },
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                filter: 'blur(60px)',
+                zIndex: 5,
+                transition: 'all 0.3s ease-in-out',
               }}
-            >
-              {/* Ombre */}
-              <Box
-                className="heart-shadow"
-                sx={{
-                  position: 'absolute',
-                  width: '300px',
-                  height: '90px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(94, 141, 156, 0.4)',
-                  filter: 'blur(20px)',
-                  transform: 'translateY(190px) scale(0.6)',
-                  zIndex: 1,
-                  transition: 'all 0.3s ease-in-out',
-                }}
-              />
+            />
 
-              {/* Cercle blur*/}
-              <Box
-                className="heart-blur"
-                sx={{
-                  position: 'absolute',
-                  width: '1000px',
-                  height: '1000px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                  filter: 'blur(120px)',
-                  zIndex: 0,
-                  transition: 'all 0.3s ease-in-out',
-                }}
-              />
-              
+            <Box sx={{ position: 'relative', display: 'inline-flex', justifyContent: 'center' }}>
+              {/* Image */}
               <Box
                 component="img"
                 src={config.centerImage}
                 alt={config.centerImageAlt}
                 sx={{
                   maxWidth: '95%',
-                  maxHeight: {sm:'300px' ,lg :'600px'},
+                  maxHeight: { sm: '300px', lg: '600px', '4xl': '800px' },
                   objectFit: 'contain',
                   opacity: 0.95,
                   zIndex: 5,
@@ -453,29 +441,49 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                   (e.target as HTMLImageElement).style.display = 'none';
                 }}
               />
+
+              {/* Ombre */}
+              <Box
+                className="heart-shadow"
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: '50%',
+                  transform: 'translateX(-50%) scale(0.6)',
+                  width: '70%',
+                  height: '90px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(94, 141, 156, 0.4)',
+                  filter: 'blur(20px)',
+                  zIndex: 1,
+                  transition: 'all 0.3s ease-in-out',
+                }}
+              />
             </Box>
+
           </Box>
-        
-        <Box sx={{ 
-          display: 'flex', 
+        </Box>
+
+        <Box sx={{
+          display: 'flex',
           flexDirection: { xs: 'column', lg: 'row' },
-          gap: { xs: 2, md: 4, lg: 30 }, 
-          width: '100%', 
+          gap: { xs: 2, md: 4, lg: 50 },
+          width: '100%',
           justifyContent: { lg: 'space-between' },
           alignItems: { xs: 'center', lg: 'stretch' },
-          zIndex:2,
+          zIndex: 2,
         }}>
-          
+
           {/* Card Livraisons à venir - Gauche */}
-          <Box sx={{ 
-            flex: { lg: '1 1 400px' }, 
+          <Box sx={{
+            flex: { lg: '1 1 400px' },
             maxWidth: { xs: '100%', sm: '400px', lg: '450px' },
             width: { xs: '100%', lg: 'auto' }
           }}>
-            <Paper 
+            <Paper
               elevation={0}
-              sx={{ 
-                p: { xs: 2, md: 3 }, 
+              sx={{
+                p: { xs: 2, md: 3 },
                 height: { xs: '250px', md: '300px' },
                 width: '100%',
                 cursor: 'pointer',
@@ -499,18 +507,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                     <CircularProgress />
                   </Box>
                 ) : deliveryStats.length === 0 || deliveryStats.every(d => d.livraisons === 0) ? (
-                  <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
+                  <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                     height: '100%',
                     textAlign: 'center'
                   }}>
                     <HistoryOutlined sx={{ fontSize: 48, color: 'rgba(92, 127, 155, 0.5)', mb: 1 }} />
-                    <Typography sx={{ 
-                      fontFamily: 'Share Tech, monospace', 
-                      fontSize: '0.9rem', 
+                    <Typography sx={{
+                      fontFamily: 'Share Tech, monospace',
+                      fontSize: '0.9rem',
                       color: 'rgba(92, 127, 155, 0.7)'
                     }}>
                       Aucune livraison cette semaine
@@ -521,12 +529,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                     <LineChart data={deliveryStats}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
-                      <YAxis />
+                      <YAxis allowDecimals={false} />
                       <Tooltip />
-                      <Line 
-                        type="monotone" 
-                        dataKey="livraisons" 
-                        stroke="#008EFF" 
+                      <Line
+                        type="monotone"
+                        dataKey="livraisons"
+                        stroke="#008EFF"
                         strokeWidth={3}
                         name="Livraisons"
                       />
@@ -537,18 +545,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
             </Paper>
           </Box>
 
-          
+
 
           {/* Card Statuts des livraisons - Droite */}
-          <Box sx={{ 
-            flex: { lg: '1 1 400px' }, 
+          <Box sx={{
+            flex: { lg: '1 1 400px' },
             maxWidth: { xs: '100%', sm: '400px', lg: '450px' },
             width: { xs: '100%', lg: 'auto' }
           }}>
-            <Paper 
+            <Paper
               elevation={0}
-              sx={{ 
-                p: { xs: 2, md: 3 }, 
+              sx={{
+                p: { xs: 2, md: 3 },
                 height: { xs: '250px', md: '300px' },
                 width: '100%',
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
@@ -563,24 +571,24 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                   Statuts des livraisons
                 </Typography>
               </Box>
-              <Box sx={{ height: { xs: '120px', md: '160px' }, width: '100%'}}>
+              <Box sx={{ height: { xs: '120px', md: '160px' }, width: '100%' }}>
                 {isLoadingStats ? (
                   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                     <CircularProgress />
                   </Box>
                 ) : statusStats.length === 0 ? (
-                  <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
+                  <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                     height: '100%',
                     textAlign: 'center'
                   }}>
                     <LocalShippingOutlined sx={{ fontSize: 48, color: 'rgba(92, 127, 155, 0.5)', mb: 1 }} />
-                    <Typography sx={{ 
-                      fontFamily: 'Share Tech, monospace', 
-                      fontSize: '0.9rem', 
+                    <Typography sx={{
+                      fontFamily: 'Share Tech, monospace',
+                      fontSize: '0.9rem',
                       color: 'rgba(92, 127, 155, 0.7)'
                     }}>
                       Aucune livraison enregistrée
@@ -590,18 +598,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                   <ResponsiveContainer width="115%" height="100%" style={{ marginLeft: '-45px' }}>
                     <BarChart data={statusStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(92, 127, 155, 0.2)" />
-                      <XAxis 
-                        dataKey="name" 
+                      <XAxis
+                        dataKey="name"
                         axisLine={false}
                         tickLine={false}
                         tick={{ fill: '#5C7F9B', fontFamily: 'Share Tech, monospace', fontSize: 12 }}
                       />
-                      <YAxis 
+                      <YAxis
                         axisLine={false}
                         tickLine={false}
                         tick={{ fill: '#5C7F9B', fontFamily: 'Share Tech, monospace', fontSize: 12 }}
                       />
-                      <Tooltip 
+                      <Tooltip
                         contentStyle={{
                           backgroundColor: 'rgba(255, 255, 255, 0.95)',
                           border: '1px solid rgba(92, 127, 155, 0.2)',
@@ -618,11 +626,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                   </ResponsiveContainer>
                 )}
               </Box>
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                flexWrap: 'wrap', 
-                gap: { xs: 0.5, md: 1 }, 
+              <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+                gap: { xs: 0.5, md: 1 },
                 mt: { xs: 1, md: 2 },
                 px: { xs: 1, md: 0 }
               }}>
@@ -631,7 +639,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                     key={entry.name}
                     label={`${entry.name}: ${entry.value}`}
                     size="small"
-                    sx={{ 
+                    sx={{
                       backgroundColor: entry.color,
                       color: 'white',
                       fontSize: { xs: '0.6rem', md: '0.7rem' },
@@ -648,25 +656,25 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
           </Box>
         </Box>
 
-        <Box sx={{ 
-          display: 'flex', 
+        <Box sx={{
+          display: 'flex',
           flexDirection: { xs: 'column', lg: 'row' },
-          gap: { xs: 2, md: 4, lg: 30 }, 
-          width: '100%', 
+          gap: { xs: 2, md: 4, lg: 40 },
+          width: '100%',
           justifyContent: { lg: 'space-between' },
           alignItems: { xs: 'center', lg: 'stretch' }
         }}>
-          
+
           {/* Carte Leaflet - Gauche */}
-          <Box sx={{ 
-            flex: { lg: '1 1 500px' }, 
+          <Box sx={{
+            flex: { lg: '1 1 500px' },
             maxWidth: { xs: '100%', sm: '500px', lg: '550px' },
             width: { xs: '100%', lg: 'auto' }
           }}>
-            <Paper 
+            <Paper
               elevation={0}
-              sx={{ 
-                p: { xs: 2, md: 3 }, 
+              sx={{
+                p: { xs: 2, md: 3 },
                 width: '100%',
                 height: { xs: '280px', md: '320px' },
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
@@ -682,51 +690,51 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                 </Typography>
                 <LocationOnOutlined sx={{ color: '#10b981' }} />
               </Box>
-              <Box sx={{ 
-  height: { xs: '185px', md: '225px' }, 
-  width: '100%', 
-  borderRadius: 2, 
-  overflow: 'hidden' 
-}}>
-  {isLoadingMap ? (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-      <CircularProgress />
-    </Box>
-  ) : (
-    <MapContainer
-      center={mapPosition}
-      zoom={13}
-      style={{ height: '100%', width: '100%' }}
-      key={`${mapPosition[0]}-${mapPosition[1]}`} // force refresh si la position change
-    >
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      />
-      <Marker position={mapPosition}>
-        <Popup>
-          {mapLabel === 'center' && <>Votre centre de don<br />Point d’envoi</>}
-          {mapLabel === 'hospital' && <>Votre hôpital<br />Centre de soins principal</>}
-          {mapLabel === 'unknown' && <>Position par défaut</>}
-        </Popup>
-      </Marker>
-    </MapContainer>
-  )}
-</Box>
+              <Box sx={{
+                height: { xs: '185px', md: '225px' },
+                width: '100%',
+                borderRadius: 2,
+                overflow: 'hidden'
+              }}>
+                {isLoadingMap ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+                    <CircularProgress />
+                  </Box>
+                ) : (
+                  <MapContainer
+                    center={mapPosition}
+                    zoom={13}
+                    style={{ height: '100%', width: '100%' }}
+                    key={`${mapPosition[0]}-${mapPosition[1]}`} // force refresh si la position change
+                  >
+                    <TileLayer
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                    />
+                    <Marker position={mapPosition}>
+                      <Popup>
+                        {mapLabel === 'center' && <>Votre centre de don<br />Point d’envoi</>}
+                        {mapLabel === 'hospital' && <>Votre hôpital<br />Centre de soins principal</>}
+                        {mapLabel === 'unknown' && <>Position par défaut</>}
+                      </Popup>
+                    </Marker>
+                  </MapContainer>
+                )}
+              </Box>
 
             </Paper>
           </Box>
 
           {/* Notifications récentes - Droite */}
-          <Box sx={{ 
-            flex: { lg: '1 1 500px' }, 
+          <Box sx={{
+            flex: { lg: '1 1 500px' },
             maxWidth: { xs: '100%', sm: '500px', lg: '550px' },
             width: { xs: '100%', lg: 'auto' }
           }}>
-            <Paper 
+            <Paper
               elevation={0}
-              sx={{ 
-                p: { xs: 2, md: 3 }, 
+              sx={{
+                p: { xs: 2, md: 3 },
                 height: { xs: '280px', md: '320px' },
                 width: '100%',
                 cursor: 'pointer',
@@ -744,8 +752,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                 </Typography>
                 <NotificationsOutlined sx={{ color: '#008EFF' }} />
               </Box>
-              <List dense sx={{ 
-                height: { xs: '200px', md: '240px' }, 
+              <List dense sx={{
+                height: { xs: '200px', md: '240px' },
                 overflow: 'auto',
                 '&::-webkit-scrollbar': {
                   width: '4px',
@@ -763,18 +771,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                     <CircularProgress />
                   </Box>
                 ) : recentNotifications.length === 0 ? (
-                  <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
+                  <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                     height: '100%',
                     textAlign: 'center'
                   }}>
                     <NotificationsNone sx={{ fontSize: 48, color: 'rgba(92, 127, 155, 0.5)', mb: 1 }} />
-                    <Typography sx={{ 
-                      fontFamily: 'Share Tech, monospace', 
-                      fontSize: '0.9rem', 
+                    <Typography sx={{
+                      fontFamily: 'Share Tech, monospace',
+                      fontSize: '0.9rem',
                       color: 'rgba(92, 127, 155, 0.7)'
                     }}>
                       Aucune notification récente
@@ -782,9 +790,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                   </Box>
                 ) : (
                   recentNotifications.map((notif) => (
-                    <ListItem 
+                    <ListItem
                       key={notif.notificationId}
-                      sx={{ 
+                      sx={{
                         borderLeft: `4px solid ${getPriorityColor(notif.priority)}`,
                         backgroundColor: notif.isRead ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.4)',
                         borderRadius: 1,
@@ -794,9 +802,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                     >
                       <ListItemText
                         primary={
-                          <Typography sx={{ 
-                            fontFamily: 'Share Tech, monospace', 
-                            fontSize: { xs: '0.75rem', md: '0.9rem' }, 
+                          <Typography sx={{
+                            fontFamily: 'Share Tech, monospace',
+                            fontSize: { xs: '0.75rem', md: '0.9rem' },
                             color: '#5C7F9B',
                             lineHeight: 1.2,
                             fontWeight: notif.isRead ? 'normal' : 'bold'
@@ -805,22 +813,22 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                           </Typography>
                         }
                         secondary={
-                          <Typography sx={{ 
-                            fontFamily: 'Share Tech, monospace', 
-                            fontSize: { xs: '0.6rem', md: '0.7rem' }, 
-                            color: '#5C7F9B', 
-                            opacity: 0.7 
+                          <Typography sx={{
+                            fontFamily: 'Share Tech, monospace',
+                            fontSize: { xs: '0.6rem', md: '0.7rem' },
+                            color: '#5C7F9B',
+                            opacity: 0.7
                           }}>
                             {formatTimeAgo(notif.createdAt)}
                           </Typography>
                         }
                       />
                       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
-                        <Chip 
+                        <Chip
                           label={getPriorityLabel(notif.priority)}
                           size="small"
-                          sx={{ 
-                            fontFamily: 'Share Tech, monospace', 
+                          sx={{
+                            fontFamily: 'Share Tech, monospace',
                             fontSize: '0.6rem',
                             backgroundColor: getPriorityColor(notif.priority),
                             color: 'white',
@@ -852,15 +860,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
   const drawer = (
     <Box>
       {/* Header avec logo */}
-      <Box sx={{ p: { xs: 2, md: 3 }, textAlign: 'center'}}>
+      <Box sx={{ p: { xs: 2, md: 3 }, textAlign: 'center' }}>
         <Box
           component="img"
           src={logoImage}
           alt="BloodSky Logo"
-          sx={{ 
-            width: { xs: 120, md: 180 }, 
-            height: { xs: 120, md: 180 }, 
-            m: "auto" 
+          sx={{
+            width: { xs: 120, md: 180 },
+            height: { xs: 120, md: 180 },
+            m: "auto"
           }}
           onError={(e) => {
             (e.target as HTMLImageElement).src = '/blood-drop.svg';
@@ -926,13 +934,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
         ))}
       </List>
 
-      <Box sx={{ 
-        position: 'absolute', 
-        bottom: 0, 
-        left: 0, 
-        right: 0, 
-        p: 2, 
-        borderTop: '1px solid #e0e0e0' 
+      <Box sx={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        p: 2,
+        borderTop: '1px solid #e0e0e0'
       }}>
         <Button
           fullWidth
@@ -1030,7 +1038,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
         </Box>
 
         {/* Contenu principal */}
-        <Box sx={{ 
+        <Box sx={{
           flexGrow: 1,
           width: { md: `calc(100% - ${drawerWidth}px)` },
           mt: { xs: 7, md: 0 } // Marge pour l'AppBar mobile
@@ -1068,83 +1076,83 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
               {config.weatherComponent}
             </Box>
           )
-           : activeView === 'drones' ? (
-            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-              {config.dronesComponent || <DroneManagement />}
-            </Box>
-          ) : activeView === 'invite-donation' && config.inviteDonationComponent ? (
-            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-              {config.inviteDonationComponent}
-            </Box>
-          ) : activeView === 'invite-hospital' && config.inviteHospitalComponent ? (
-            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-              {config.inviteHospitalComponent}
-            </Box>
-          ) : activeView === 'add-hospital' && config.addHospitalComponent ? (
-            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-              {config.addHospitalComponent}
-            </Box>
-          ) : activeView === 'add-center' && config.addCenterComponent ? (
-            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-              {config.addCenterComponent}
-            </Box>
-          ) : activeView === 'search' && config.searchComponent ? (
-            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-              {config.searchComponent}
-            </Box>
-          ) : activeView === 'deliveries' && config.deliveriesComponent ? (
-            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-              {config.deliveriesComponent}
-            </Box>
-          ) : activeView === 'statistics' && config.statisticsComponent ? (
-            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-              {config.statisticsComponent}
-            </Box>
-          ) : activeView === 'hospitals' && config.hospitalsComponent ? (
-            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-              {config.hospitalsComponent}
-            </Box>
-          ) : activeView === 'centers' && config.centersComponent ? (
-            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-              {config.centersComponent}
-            </Box>
-          ) : activeView === 'admins' && config.adminsComponent ? (
-            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-              {config.adminsComponent}
-            </Box>
-          ) : activeView === 'dashboard' ? (
-            config.customDashboardComponent ? (
+            : activeView === 'drones' ? (
               <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-                {typeof config.customDashboardComponent === 'function' 
-                  ? config.customDashboardComponent(setActiveView) 
-                  : config.customDashboardComponent}
+                {config.dronesComponent || <DroneManagement />}
               </Box>
+            ) : activeView === 'invite-donation' && config.inviteDonationComponent ? (
+              <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+                {config.inviteDonationComponent}
+              </Box>
+            ) : activeView === 'invite-hospital' && config.inviteHospitalComponent ? (
+              <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+                {config.inviteHospitalComponent}
+              </Box>
+            ) : activeView === 'add-hospital' && config.addHospitalComponent ? (
+              <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+                {config.addHospitalComponent}
+              </Box>
+            ) : activeView === 'add-center' && config.addCenterComponent ? (
+              <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+                {config.addCenterComponent}
+              </Box>
+            ) : activeView === 'search' && config.searchComponent ? (
+              <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+                {config.searchComponent}
+              </Box>
+            ) : activeView === 'deliveries' && config.deliveriesComponent ? (
+              <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+                {config.deliveriesComponent}
+              </Box>
+            ) : activeView === 'statistics' && config.statisticsComponent ? (
+              <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+                {config.statisticsComponent}
+              </Box>
+            ) : activeView === 'hospitals' && config.hospitalsComponent ? (
+              <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+                {config.hospitalsComponent}
+              </Box>
+            ) : activeView === 'centers' && config.centersComponent ? (
+              <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+                {config.centersComponent}
+              </Box>
+            ) : activeView === 'admins' && config.adminsComponent ? (
+              <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+                {config.adminsComponent}
+              </Box>
+            ) : activeView === 'dashboard' ? (
+              config.customDashboardComponent ? (
+                <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+                  {typeof config.customDashboardComponent === 'function'
+                    ? config.customDashboardComponent(setActiveView)
+                    : config.customDashboardComponent}
+                </Box>
+              ) : (
+                renderDashboardContent()
+              )
             ) : (
-              renderDashboardContent()
-            )
-          ) : (
-            <Box sx={{ 
-              backgroundColor: 'background.default', 
-              minHeight: '100vh', 
-              p: 3,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <Paper sx={{ p: 4, backgroundColor: '#FBBDBE' }}>
-                <Typography 
-                  variant="h4" 
-                  sx={{ 
-                    color: 'text.primary',
-                    fontFamily: 'Share Tech, monospace',
-                    textAlign: 'center'
-                  }}
-                >
-                  {activeView.charAt(0).toUpperCase() + activeView.slice(1)} - En construction
-                </Typography>
-              </Paper>
-            </Box>
-          )}
+              <Box sx={{
+                backgroundColor: 'background.default',
+                minHeight: '100vh',
+                p: 3,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Paper sx={{ p: 4, backgroundColor: '#FBBDBE' }}>
+                  <Typography
+                    variant="h4"
+                    sx={{
+                      color: 'text.primary',
+                      fontFamily: 'Share Tech, monospace',
+                      textAlign: 'center'
+                    }}
+                  >
+                    {activeView.charAt(0).toUpperCase() + activeView.slice(1)} - En construction
+                  </Typography>
+                </Paper>
+              </Box>
+            )}
         </Box>
       </Box>
     </ThemeProvider>

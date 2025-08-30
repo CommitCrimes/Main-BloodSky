@@ -349,7 +349,7 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
       p: { xs: 1, sm: 2, md: 3 },
       position: 'relative'
     }}>
-      <Box sx={{ mb: { xs: 2, md: 4 }, textAlign: 'center' }}>
+      <Box sx={{ mb: { xs: 2, md: 4 }, textAlign: 'center' , zIndex: 2 , position: 'inherit'}}>
         <Typography
           variant="h1"
           sx={{
@@ -373,13 +373,83 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
         </Typography>
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 3 }, px: { xs: 1, md: 3 }, py: 1 }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 3 }, px: { xs: 1, md: 3 }, py: 1 , position: 'relative'}}>
+        {/* logo */}
+          <Box sx={{
+            flex: { lg: '0 0 300px' },
+            display: { xs: 'none', md: 'flex', lg: 'flex' },
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: { xs: '100%', lg: '300px' },
+            order: { xs: -1, lg: 0 },
+            position: { xs: 'static', lg: 'absolute' },            
+            top: { lg: '50%' },                         
+            left: { lg: '50%' },                        
+            transform: { lg: 'translate(-50%, -50%)' },
+            zIndex: 2,
+          }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '380px',
+                width: '100%',
+                position: 'relative'
+              }}
+            >
+              {/* Ombre */}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  width: '300px',
+                  height: '90px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(94, 141, 156, 0.4)',
+                  filter: 'blur(20px)',
+                  transform: 'translateY(190px) scale(0.6)',
+                  zIndex: 1,
+                  transition: 'all 0.3s ease-in-out',
+                }}
+              />
+
+              {/* blur*/}
+              <Box
+                sx={{
+                  position: 'absolute',
+                  width: {xs : '200px' , lg : '500px'},
+                  height: {xs : '200px' , lg : '450px'},
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                  filter: 'blur(120px)',
+                  zIndex: -1,
+                  transition: 'all 0.3s ease-in-out',
+                }}
+              />
+
+              <Box
+                component="img"
+                src={droneImage}
+                alt="Drone Dashboard"
+                sx={{
+                  maxWidth: '130%',
+                  maxHeight: '600px',
+                  objectFit: 'contain',
+                  opacity: 0.95,
+                  zIndex: 5,
+                  position: 'relative',
+                  transition: 'all 0.3s ease-in-out',
+                  filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3))',
+                }}
+              />
+            </Box>
+          </Box>
 
         {/* 1ere rangé - Historique des vols et logo */}
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', lg: 'row' },
-          gap: { xs: 2, md: 4, lg: 6 },
+          gap: { xs: 2, md: 4, lg: 40 },
           width: '100%',
           justifyContent: { lg: 'space-between' },
           alignItems: { xs: 'center', lg: 'stretch' }
@@ -429,71 +499,7 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
               </Box>
             </Paper>
           </Box>
-          {/* logo */}
-          <Box sx={{
-            flex: { lg: '0 0 300px' },
-            display: { xs: 'none', md: 'flex', lg: 'flex' },
-            justifyContent: 'center',
-            alignItems: 'center',
-            width: { xs: '100%', lg: '300px' },
-            order: { xs: -1, lg: 0 }
-          }}>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '380px',
-                width: '100%',
-                position: 'relative'
-              }}
-            >
-              {/* Ombre */}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  width: '300px',
-                  height: '90px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(94, 141, 156, 0.4)',
-                  filter: 'blur(20px)',
-                  transform: 'translateY(190px) scale(0.6)',
-                  zIndex: 1,
-                  transition: 'all 0.3s ease-in-out',
-                }}
-              />
-
-              {/* blur*/}
-              <Box
-                sx={{
-                  position: 'absolute',
-                  width: '1000px',
-                  height: '1000px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                  filter: 'blur(120px)',
-                  zIndex: -1,
-                  transition: 'all 0.3s ease-in-out',
-                }}
-              />
-
-              <Box
-                component="img"
-                src={droneImage}
-                alt="Drone Dashboard"
-                sx={{
-                  maxWidth: '130%',
-                  maxHeight: '600px',
-                  objectFit: 'contain',
-                  opacity: 0.95,
-                  zIndex: 2,
-                  position: 'relative',
-                  transition: 'all 0.3s ease-in-out',
-                  filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3))',
-                }}
-              />
-            </Box>
-          </Box>
+          
 
           {/* Card Statut des drones - Droite */}
           <Box sx={{
@@ -572,7 +578,7 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', lg: 'row' },
-          gap: { xs: 2, md: 4, lg: 6 },
+          gap: { xs: 2, md: 4, lg: 40 },
           width: '100%',
           justifyContent: { lg: 'space-between' },
           alignItems: { xs: 'center', lg: 'stretch' }
