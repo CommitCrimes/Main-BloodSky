@@ -627,9 +627,9 @@ size="small"
     size="small"
     value={cruiseAlt}
     onChange={(e) => setCruiseAlt(Number(e.target.value || 0))} 
-    onBlur={() => setCruiseAlt(Math.max(15, cruiseAlt))}       
+    onBlur={() => setCruiseAlt(Math.max(1, cruiseAlt))}       
     sx={{ width: 140 }}
-    inputProps={{ min: 15, step: 1 }}
+    inputProps={{ min: 1, step: 1 }}
   />
           <Button
             variant="outlined"
