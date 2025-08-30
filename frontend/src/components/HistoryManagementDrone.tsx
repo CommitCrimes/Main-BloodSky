@@ -606,7 +606,7 @@ const HistoryManagementDrone: React.FC = observer(() => {
             <FormControl sx={{ minWidth: { xs: '100%', md: 260 } }}>
               <InputLabel sx={{ ...commonStyles.techFont, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
                 Centre de Don
-              </InputLabel>
+              </InputLabel >
               <Select
                 label="Centre de Don"
                 value={filters.centerId ?? 'all'}
