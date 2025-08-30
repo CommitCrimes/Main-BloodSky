@@ -103,7 +103,14 @@ const commonStyles = {
     px: 3,
     py: 1.5,
     textTransform: 'none' as const
-  }
+  },
+  clickableHeaderBlue: {
+    color: '#008EFF',
+    cursor: 'pointer',
+    '&:hover': { color: '#0066cc', textDecoration: 'underline' },
+    '&:focus-visible': { outline: '2px solid #008EFF', outlineOffset: 2 }
+  },
+
 };
 
 const HistoryManagementDrone: React.FC = observer(() => {
@@ -131,12 +138,12 @@ const HistoryManagementDrone: React.FC = observer(() => {
 
 
   // Type guards for role
-function isDonationCenterRole(role: UserRole | undefined): role is DonationCenterAdminRole {
-  return role?.type === 'donation_center_admin';
-}
-function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
-  return role?.type === 'hospital_admin';
-}
+  function isDonationCenterRole(role: UserRole | undefined): role is DonationCenterAdminRole {
+    return role?.type === 'donation_center_admin';
+  }
+  function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
+    return role?.type === 'hospital_admin';
+  }
 
   let userType: 'donation_center' | 'hospital' | undefined;
   let userEntityId: number | undefined;
@@ -157,33 +164,33 @@ function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
 
 
   const openDroneMenu = async (e: React.MouseEvent<HTMLElement>, delivery: DeliveryHistory) => {
-  setDroneMenuAnchor(e.currentTarget);
-  setDroneMenuDeliveryId(delivery.deliveryId);
-  setDroneAssignedOnRow(delivery.droneId ?? null);
-  setDroneMenuLoading(true);
+    setDroneMenuAnchor(e.currentTarget);
+    setDroneMenuDeliveryId(delivery.deliveryId);
+    setDroneAssignedOnRow(delivery.droneId ?? null);
+    setDroneMenuLoading(true);
 
-  try {
-    const centerId =
-      delivery.type === 'delivery'
-        ? delivery.sourceDonationCenter?.centerId
-        : delivery.sourceDonationCenter?.centerId;
+    try {
+      const centerId =
+        delivery.type === 'delivery'
+          ? delivery.sourceDonationCenter?.centerId
+          : delivery.sourceDonationCenter?.centerId;
 
-    if (!centerId) {
+      if (!centerId) {
+        setDroneOptions([]);
+        setError("Impossible de déterminer le centre associé à cette livraison.");
+        return;
+      }
+
+      const id = typeof centerId === 'object' ? centerId.centerId : centerId;
+      const list = await dronesApi.getByCenter(id);
+      setDroneOptions(list);
+    } catch (err) {
+      console.error('load drones error', err);
       setDroneOptions([]);
-      setError("Impossible de déterminer le centre associé à cette livraison.");
-      return;
+    } finally {
+      setDroneMenuLoading(false);
     }
-
-    const id = typeof centerId === 'object' ? centerId.centerId : centerId;
-    const list = await dronesApi.getByCenter(id);
-    setDroneOptions(list);
-  } catch (err) {
-    console.error('load drones error', err);
-    setDroneOptions([]);
-  } finally {
-    setDroneMenuLoading(false);
-  }
-};
+  };
 
 
 
@@ -245,23 +252,27 @@ function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
   const SortableHeader: React.FC<{ label: string; field: DroneHistorySortConfig['field'] }> = ({ label, field }) => {
     const active = sortConfig.field === field;
     const dir = sortConfig.direction;
+    const onActivate = () => handleSort(field);
+
     return (
       <Box
         sx={{
           display: 'inline-flex',
           alignItems: 'center',
           gap: 0.5,
-          cursor: 'pointer',
-          userSelect: 'none'
+          userSelect: 'none',
+          ...commonStyles.clickableHeaderBlue, // 👈 bleu
         }}
-        onClick={() => handleSort(field)}
         role="button"
+        tabIndex={0}
+        onClick={onActivate}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onActivate(); }}
         aria-label={`Trier par ${label}`}
         aria-sort={active ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'}
         title={`Trier par ${label} (${active ? (dir === 'asc' ? 'asc' : 'desc') : 'asc'})`}
       >
-        <Typography sx={commonStyles.techFontBold}>{label}</Typography>
-        {active ? (dir === 'asc' ? <ArrowUpward fontSize="small" /> : <ArrowDownward fontSize="small" />) : null}
+        <Typography sx={{ ...commonStyles.techFontBold, color: 'inherit' }}>{label}</Typography>
+        {active ? (dir === 'asc' ? <ArrowUpward fontSize="small" sx={{ color: 'inherit' }} /> : <ArrowDownward fontSize="small" sx={{ color: 'inherit' }} />) : null}
       </Box>
     );
   };
@@ -361,6 +372,9 @@ function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
     if (filters.isUrgent !== undefined) {
       result = result.filter(item => item.isUrgent === filters.isUrgent);
     }
+    if (filters.centerId !== undefined) {
+      result = result.filter(item => item.sourceDonationCenter?.centerId === filters.centerId);
+    }
 
     if (searchConfig.searchTerm) {
       const searchTerm = searchConfig.searchTerm.toLowerCase();
@@ -436,6 +450,22 @@ function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
 
     return result;
   }, [history, filters, sortConfig, searchConfig]);
+
+  const centerOptions = useMemo(
+    () => {
+      const m = new Map<number, { id: number; label: string }>();
+      history.forEach(h => {
+        const c = h.sourceDonationCenter;
+        if (c?.centerId != null) {
+          // label: ville + adresse (adapte si tu veux)
+          m.set(c.centerId, { id: c.centerId, label: `${c.centerCity} — ${c.centerAddress}` });
+        }
+      });
+      return Array.from(m.values()).sort((a, b) => a.label.localeCompare(b.label, 'fr'));
+    },
+    [history]
+  );
+
 
   const handleCloseDetail = () => {
     setSelectedDelivery(null);
@@ -572,6 +602,28 @@ function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
               }}
             />
 
+            {/* …dans le bloc des filtres (juste après "Urgent") … */}
+            <FormControl sx={{ minWidth: { xs: '100%', md: 260 } }}>
+              <InputLabel sx={{ ...commonStyles.techFont, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                Centre de Don
+              </InputLabel>
+              <Select
+                label="Centre de Don"
+                value={filters.centerId ?? 'all'}
+                onChange={(e) =>
+                  setFilters(prev => ({
+                    ...prev,
+                    centerId: e.target.value === 'all' ? undefined : Number(e.target.value)
+                  }))
+                }
+                sx={{ borderRadius: commonStyles.borderRadius, ...commonStyles.techFont }}
+              >
+                <MenuItem value="all">Tous</MenuItem>
+                {centerOptions.map(c => (
+                  <MenuItem key={c.id} value={c.id}>{c.label}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
             <FormControl sx={{ minWidth: { xs: '100%', md: 150 } }}>
               <InputLabel sx={{ ...commonStyles.techFont, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Statut</InputLabel>
@@ -732,12 +784,12 @@ function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
             {filteredAndSortedData
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((delivery) => (
-                <Card 
+                <Card
                   key={delivery.id}
                   sx={{
                     ...commonStyles.glassmorphism,
                     p: 2,
-                    '&:hover': { 
+                    '&:hover': {
                       transform: 'translateY(-2px)',
                       boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
                       transition: 'all 0.2s ease'
@@ -747,9 +799,9 @@ function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
                   <CardContent sx={{ p: 0 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                       <Box>
-                        <Typography 
-                          variant="h6" 
-                          sx={{ 
+                        <Typography
+                          variant="h6"
+                          sx={{
                             ...commonStyles.techFontBold,
                             fontSize: '1rem',
                             color: '#008EFF'
@@ -779,7 +831,7 @@ function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
                         />
                       )}
                     </Box>
-                    
+
                     <Stack spacing={1.5}>
                       <Box>
                         <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
@@ -789,7 +841,7 @@ function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
                           {delivery.sourceDonationCenter?.centerCity || 'N/A'} → {delivery.destinationHospital?.hospitalName || 'N/A'}
                         </Typography>
                       </Box>
-                      
+
                       <Box sx={{ display: 'flex', gap: 2 }}>
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
@@ -798,8 +850,8 @@ function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
                           <Chip
                             label={delivery.bloodType || 'N/A'}
                             size="small"
-                            sx={{ 
-                              ...commonStyles.techFont, 
+                            sx={{
+                              ...commonStyles.techFont,
                               backgroundColor: '#f0f4f8',
                               fontSize: '0.7rem',
                               height: '22px'
@@ -815,7 +867,7 @@ function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
                           </Typography>
                         </Box>
                       </Box>
-                      
+
                       <Box sx={{ display: 'flex', gap: 2 }}>
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
@@ -835,7 +887,7 @@ function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
                         </Box>
                       </Box>
                     </Stack>
-                    
+
                     <Box sx={{ display: 'flex', gap: 1, mt: 2, pt: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
                       <Button
                         onClick={(e) => openDroneMenu(e, delivery)}
@@ -868,7 +920,7 @@ function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
                 </Card>
               ))}
           </Stack>
-          
+
           {/* Pagination mobile */}
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
             <TablePagination

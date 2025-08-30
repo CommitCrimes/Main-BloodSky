@@ -64,6 +64,7 @@ export type DeliveryHistory = DonationCenterHistory | HospitalHistory;
 export interface HistoryFilters {
   status?: DeliveryHistory['deliveryStatus'];
   isUrgent?: boolean;
+  centerId?: number; 
 }
 
 export interface HistorySortConfig {
