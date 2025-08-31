@@ -60,7 +60,7 @@ import type {
 } from '../types/history';
 import { historyApi } from '../api/history';
 import { orderApi } from '../api/order';
-import type { UserRole, DonationCenterAdminRole, HospitalAdminRole } from '../types/users';
+import type { UserRole, DonationCenterAdminRole, HospitalAdminRole, BasicUserRole } from '../types/users';
 
 const commonStyles = {
   fontFamily: 'Share Tech, monospace',
@@ -122,22 +122,32 @@ const HistoryManagement: React.FC = observer(() => {
   const [error, setError] = useState<string | null>(null);
   const [cancellingDelivery, setCancellingDelivery] = useState<number | null>(null);
 
-function isDonationCenterRole(role: UserRole | undefined): role is DonationCenterAdminRole {
-  return role?.type === 'donation_center_admin';
+function isDonationCenterAffiliated(
+  role: UserRole | undefined
+): role is DonationCenterAdminRole | (BasicUserRole & { centerId: number }) {
+  return !!role && (
+    (role.type === 'donation_center_admin' && typeof (role as DonationCenterAdminRole).centerId === 'number') ||
+    (role.type === 'user' && typeof (role as BasicUserRole).centerId === 'number')
+  );
 }
 
-function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
-  return role?.type === 'hospital_admin';
+function isHospitalAffiliated(
+  role: UserRole | undefined
+): role is HospitalAdminRole | (BasicUserRole & { hospitalId: number }) {
+  return !!role && (
+    (role.type === 'hospital_admin' && typeof (role as HospitalAdminRole).hospitalId === 'number') ||
+    (role.type === 'user' && typeof (role as BasicUserRole).hospitalId === 'number')
+  );
 }
 
   const role = auth.user?.role;
   let userType: 'donation_center' | 'hospital' = 'hospital';
   let userEntityId: number | undefined = undefined;
 
-  if (isDonationCenterRole(role)) {
+  if (isDonationCenterAffiliated(role)) {
     userType = 'donation_center';
     userEntityId = role.centerId;
-  } else if (isHospitalRole(role)) {
+  } else if (isHospitalAffiliated(role)) {
     userType = 'hospital';
     userEntityId = role.hospitalId;
   }
