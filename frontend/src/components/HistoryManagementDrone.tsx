@@ -201,7 +201,7 @@ const HistoryManagementDrone: React.FC = observer(() => {
   };
 
   const assignDrone = async (droneId: number | null) => {
-    if (!droneMenuDeliveryId) return;
+    if (droneMenuDeliveryId == null) return;
     try {
       await deliveryApi.update(droneMenuDeliveryId, { droneId });
       await reloadHistoryData();
@@ -681,6 +681,9 @@ const HistoryManagementDrone: React.FC = observer(() => {
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: 'rgba(0, 142, 255, 0.05)' }}>
+                  <TableCell sx={commonStyles.techFontBold}>
+                      <SortableHeader label="N° Livraison" field="deliveryId" />
+                  </TableCell>                  
                   <TableCell sx={commonStyles.techFontBold}>Nom du Drone</TableCell>
                   <TableCell sx={commonStyles.techFontBold}>Centre de Don</TableCell>
                   <TableCell sx={commonStyles.techFontBold}>Hôpital de Destination</TableCell>
@@ -700,6 +703,10 @@ const HistoryManagementDrone: React.FC = observer(() => {
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((item) => (
                     <TableRow key={item.deliveryId}>
+                      <TableCell sx={commonStyles.techFont}>
+                        #{item.deliveryId}
+                      </TableCell>
+
                       <TableCell sx={commonStyles.techFont}>
                         <Button
                           size="small"
@@ -803,11 +810,20 @@ const HistoryManagementDrone: React.FC = observer(() => {
                           variant="h6"
                           sx={{
                             ...commonStyles.techFontBold,
-                            fontSize: '1rem',
+                            fontSize: '1.1rem',
                             color: '#008EFF'
                           }}
                         >
-                          {delivery.droneName || 'Non assigné'}
+                          #{delivery.deliveryId}
+                          {delivery.droneName && (
+                            <Typography
+                              variant="body2"
+                              sx={{ ...commonStyles.techFont, color: 'text.secondary', mt: 0.25 }}
+                            >
+                              {delivery.droneName}
+                            </Typography>
+                          )}
+
                         </Typography>
                         <Chip
                           icon={getStatusIcon(delivery.deliveryStatus)}

@@ -80,7 +80,8 @@ export interface DroneHistorySortConfig {
     | 'bloodType'
     | 'deliveryDate'
     | 'requestDate'
-    | 'validationDate';
+    | 'validationDate'
+    
   direction: 'asc' | 'desc';
 }
 
