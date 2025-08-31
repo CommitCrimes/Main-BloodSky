@@ -27,7 +27,8 @@ import {
   PriorityHigh,
   Warning,
   Cancel,
-  AccountCircle
+  AccountCircle,
+  Inventory2
 } from '@mui/icons-material';
 import { NotificationStore } from '../stores/NotificationStore';
 
@@ -79,6 +80,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = observer(({ notifi
         return <LocalShipping color={priority === 'urgent' ? 'error' : 'primary'} />;
       case 'in_transit':
         return <LocalShipping color="info" />;
+      case 'charged':
+      return <Inventory2 sx={{ color: '#3b82f6' }} />;
       case 'delivered':
         return <DoneAll color="success" />;
       case 'cancelled':

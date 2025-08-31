@@ -5,7 +5,7 @@ interface BaseHistoryItem {
   deliveryDate: Date | null;
   validationDate: Date | null;
   personIdentity: string;
-  deliveryStatus: 'pending' | 'in_transit' | 'delivered' | 'cancelled';
+  deliveryStatus: 'pending' | 'in_transit' | 'charged' | 'delivered' | 'cancelled';
   isUrgent: boolean;
   bloodType?: string;
   droneId?: number;
@@ -14,7 +14,7 @@ interface BaseHistoryItem {
 export interface CenterRef {
   centerId: number;
   centerCity: string;
-  centerAddress: string; // ⚠ aligne avec le back (pas "centerAdress")
+  centerAddress: string;
   latitude: number;
   longitude: number;
 }

@@ -155,7 +155,7 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
   /** STATS LIVRAISONS (garde ton calcul) */
 /** STATS LIVRAISONS (delivered + cancelled sur 7 jours, robuste) */
 useEffect(() => {
-  type DeliveryStatus = 'pending' | 'in_transit' | 'delivered' | 'cancelled';
+  type DeliveryStatus = 'pending' | 'charged' | 'in_transit' | 'delivered' | 'cancelled';
 
   type DeliveryLike = {
     deliveryId: number;

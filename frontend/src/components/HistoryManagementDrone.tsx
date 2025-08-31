@@ -47,6 +47,7 @@ import {
   Numbers,
   ArrowUpward,
   ArrowDownward,
+  Inventory2,
 } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import type {
@@ -324,6 +325,8 @@ const HistoryManagementDrone: React.FC = observer(() => {
         return '#10b981';
       case 'in_transit':
         return '#f59e0b';
+      case 'charged':
+        return '#3b82f6';
       case 'pending':
         return '#6b7280';
       case 'cancelled':
@@ -339,6 +342,8 @@ const HistoryManagementDrone: React.FC = observer(() => {
         return 'Livré';
       case 'in_transit':
         return 'En transit';
+      case 'charged':
+        return 'Chargée';
       case 'pending':
         return 'En attente';
       case 'cancelled':
@@ -354,6 +359,8 @@ const HistoryManagementDrone: React.FC = observer(() => {
         return <CheckCircle />;
       case 'in_transit':
         return <DirectionsCar />;
+      case 'charged':
+        return <Inventory2 />;
       case 'pending':
         return <Pending />;
       case 'cancelled':
@@ -639,6 +646,7 @@ const HistoryManagementDrone: React.FC = observer(() => {
                 <MenuItem value="">Tous</MenuItem>
                 <MenuItem value="pending">En attente</MenuItem>
                 <MenuItem value="in_transit">En transit</MenuItem>
+                <MenuItem value="charged">En transit</MenuItem>
                 <MenuItem value="delivered">Livré</MenuItem>
                 <MenuItem value="cancelled">Annulé</MenuItem>
               </Select>

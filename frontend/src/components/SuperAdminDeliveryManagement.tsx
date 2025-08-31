@@ -42,7 +42,8 @@ import {
   Assessment,
   LocalHospital,
   ReportProblem,
-  Help
+  Help,
+  Inventory2
 } from '@mui/icons-material';
 import { api } from '../api/api';
 
@@ -180,6 +181,8 @@ const SuperAdminDeliveryManagement: React.FC = () => {
         return 'filled';
       case 'in_transit':
         return 'filled';
+      case 'charged':
+        return 'filled';
       case 'completed':
         return 'filled';
       case 'delivered':
@@ -200,6 +203,8 @@ const SuperAdminDeliveryManagement: React.FC = () => {
         return 'En cours';
       case 'in_transit':
         return 'En transport';
+      case 'charged':
+        return 'Chargée';
       case 'completed':
         return 'Terminée';
       case 'delivered':
@@ -220,6 +225,8 @@ const SuperAdminDeliveryManagement: React.FC = () => {
         return <FlightTakeoff />;
       case 'in_transit':
         return <LocalShipping />;
+      case 'charged':
+        return <Inventory2 />;
       case 'completed':
         return <CheckCircle />;
       case 'delivered':
@@ -245,6 +252,12 @@ const SuperAdminDeliveryManagement: React.FC = () => {
       value: deliveries.filter(d => ['in_progress', 'in_transit'].includes(d.deliveryStatus || '')).length,
       icon: <FlightTakeoff />,
       color: '#2e7d32'
+    },
+    {
+      title: 'Chargée',
+      value: deliveries.filter(d => ['charged'].includes(d.deliveryStatus || '')).length,
+      icon: <Inventory2 />,
+      color: '#3b82f6'
     },
     {
       title: 'Complétées',

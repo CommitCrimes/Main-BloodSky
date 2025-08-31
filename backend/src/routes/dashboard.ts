@@ -67,6 +67,11 @@ dashboardRouter.get("/delivery-stats", async (c) => {
         color: '#3b82f6' 
       },
       { 
+        name: 'Chargée', 
+        value: statusStats.find(s => s.status === 'charged')?.count || 0, 
+        color: '#3b82f6' 
+      },
+      { 
         name: 'Annulées', 
         value: statusStats.find(s => s.status === 'cancelled')?.count || 0, 
         color: '#ef4444' 

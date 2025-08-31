@@ -33,7 +33,8 @@ import {
   Refresh,
   Search,
   Done,
-  AccountCircle
+  AccountCircle,
+  Inventory2
 } from '@mui/icons-material';
 import { NotificationStore } from '../stores/NotificationStore';
 
@@ -91,6 +92,8 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
         return <LocalShipping color={priority === 'urgent' ? 'error' : 'primary'} />;
       case 'in_transit':
         return <LocalShipping color="info" />;
+      case 'charged':
+        return <Inventory2 sx={{ color: '#3b82f6' }} />;
       case 'delivered':
         return <DoneAll color="success" />;
       case 'cancelled':
@@ -148,6 +151,8 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
         return 'Demande de livraison';
       case 'in_transit':
         return 'Livraison en cours';
+      case 'charged':
+        return 'Livraison chargée';
       case 'delivered':
         return 'Livraison effectuée';
       case 'cancelled':
@@ -175,7 +180,7 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) {
       const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
       return diffInMinutes <= 1 ? 'À l\'instant' : `Il y a ${diffInMinutes} min`;
@@ -190,10 +195,10 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
   const filteredNotifications = notificationStore.notifications.filter(notification => {
     const matchesPriority = filterPriority === 'all' || notification.priority === filterPriority;
     const matchesType = filterType === 'all' || notification.type === filterType;
-    const matchesRead = filterRead === 'all' || 
+    const matchesRead = filterRead === 'all' ||
       (filterRead === 'read' && notification.isRead) ||
       (filterRead === 'unread' && !notification.isRead);
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch = searchTerm === '' ||
       notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       notification.message.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -214,8 +219,8 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
 
   if (notificationStore.isLoading) {
     return (
-      <Box 
-        sx={{ 
+      <Box
+        sx={{
           minHeight: '100vh',
           background: commonStyles.backgroundGradient,
           display: 'flex',
@@ -335,7 +340,7 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
                 }
               }}
             />
-            
+
             <FormControl sx={{ minWidth: { xs: '100%', md: 120 } }}>
               <InputLabel sx={{ ...commonStyles.techFont, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Priorité</InputLabel>
               <Select
@@ -369,6 +374,7 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
                 <MenuItem value="all">Tous</MenuItem>
                 <MenuItem value="delivery_request">Demande</MenuItem>
                 <MenuItem value="in_transit">En transit</MenuItem>
+                <MenuItem value="charged">Chargée</MenuItem>
                 <MenuItem value="delivered">Livrée</MenuItem>
                 <MenuItem value="cancelled">Annulée</MenuItem>
                 <MenuItem value="accepted_center">Acceptée centre</MenuItem>
@@ -442,8 +448,8 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
             <Box sx={{ p: 6, textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <NotificationsNone sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
               <Typography variant="h6" sx={commonStyles.techFont} color="textSecondary">
-                {searchTerm || filterPriority !== 'all' || filterType !== 'all' || filterRead !== 'all' 
-                  ? 'Aucune notification ne correspond aux filtres' 
+                {searchTerm || filterPriority !== 'all' || filterType !== 'all' || filterRead !== 'all'
+                  ? 'Aucune notification ne correspond aux filtres'
                   : 'Aucune notification'
                 }
               </Typography>
@@ -526,9 +532,9 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
                         {formatTimeAgo(notification.createdAt)}
                       </Typography>
                     </Box>
-                    <Box sx={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
+                    <Box sx={{
+                      display: 'flex',
+                      alignItems: 'center',
                       gap: 1,
                       mt: { xs: 2, sm: 0 },
                       ml: { xs: 0, sm: 'auto' },
@@ -540,11 +546,11 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
                         <Tooltip title="Marquer comme lu">
                           <IconButton
                             onClick={() => handleMarkAsRead(notification.notificationId)}
-                            sx={{ 
+                            sx={{
                               color: '#10b981',
                               p: { xs: 1, sm: 1.5 }
                             }}
-                            size={ notification.isRead ? 'medium' : 'small' }
+                            size={notification.isRead ? 'medium' : 'small'}
                           >
                             <Done fontSize="small" />
                           </IconButton>

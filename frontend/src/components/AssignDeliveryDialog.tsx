@@ -4,7 +4,7 @@ import {
   Button, Paper, Box, Typography, Chip, CircularProgress, Alert,
   Checkbox, FormControlLabel
 } from '@mui/material';
-import { PriorityHigh, CheckCircle, DirectionsCar, Pending, Cancel } from '@mui/icons-material';
+import { PriorityHigh, CheckCircle, DirectionsCar, Pending, Cancel, Inventory2  } from '@mui/icons-material';
 
 import { deliveryApi } from '@/api/delivery';
 import { donationCenterApi } from '@/api/donation_center';
@@ -58,6 +58,7 @@ const getStatusColor = (status: DeliveryStatus) => {
   switch (status) {
     case 'delivered':  return '#10b981';
     case 'in_transit': return '#f59e0b';
+    case 'charged': return '#3b82f6';
     case 'pending':    return '#6b7280';
     case 'cancelled':  return '#ef4444';
     default:           return '#6b7280';
@@ -67,6 +68,7 @@ const getStatusLabel = (status: DeliveryStatus) => {
   switch (status) {
     case 'delivered':  return 'Livré';
     case 'in_transit': return 'En transit';
+    case 'charged': return 'Chargée';
     case 'pending':    return 'En attente';
     case 'cancelled':  return 'Annulé';
     default:           return 'Inconnu';
@@ -76,6 +78,7 @@ const getStatusIcon = (status: DeliveryStatus) => {
   switch (status) {
     case 'delivered':  return <CheckCircle />;
     case 'in_transit': return <DirectionsCar />;
+    case 'charged':    return <Inventory2 />;   
     case 'pending':    return <Pending />;
     case 'cancelled':  return <Cancel />;
     default:           return <Pending />;
