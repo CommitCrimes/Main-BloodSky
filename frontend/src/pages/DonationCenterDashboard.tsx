@@ -5,6 +5,7 @@ import ProfileManagement from '@/components/ProfileManagement';
 import HistoryManagement from '@/components/HistoryManagement';
 import DashboardLayout from '@/components/DashboardLayout';
 import ContactWidgetAuthed from '@/components/SupportItEmailingAuth';
+import BloodStockManagement from '@/components/BloodStockManagement';
 import type { UserRole, DonationCenterAdminRole } from '@/types/users';
 
 function isDonationCenterAdmin(
@@ -41,6 +42,7 @@ const DonationCenterDashboard = () => {
     historyManagementComponent: <HistoryManagement />,
     orderBloodComponent: undefined,
     contactComponent: <ContactWidgetAuthed />,
+    bloodStockComponent: canManageUsers ? <BloodStockManagement /> : undefined,
   };
 
   return <DashboardLayout config={dashboardConfig} />;
