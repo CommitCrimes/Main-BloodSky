@@ -50,7 +50,7 @@ export interface Blood {
   deliveryId?: number;
 }
 
-// ⛔️ drones de test à ignorer
+// drones de test à ignorer
 const IGNORE_DRONE_IDS = new Set<number>([0]);
 
 const filterOutTestDrones = <T extends { droneId?: number | string }>(list: T[]): T[] =>

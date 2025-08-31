@@ -5,6 +5,8 @@ type MissionCurrentPayload = {
   count: number;
   items: DroneWaypoint[];
 };
+type MissionsList = { count: number; files: Array<{ name: string; sizeBytes: number; modifiedAt: string }> };
+
 
 export class DroneControlService {
   private static instance: DroneControlService;
@@ -38,6 +40,27 @@ export class DroneControlService {
   private async getDroneApiUrl(_droneId: number): Promise<string | null> {
     return process.env.DRONE_API_BASE ?? 'http://localhost:5000';
   }
+
+
+  // ── List de missions ──────────────────────────────────────────────
+async listMissions(params?: Record<string, string>): Promise<{ data?: MissionsList; error?: string }> {
+  const apiUrl = await this.getDroneApiUrl(0);
+  if (!apiUrl) return { error: 'Drone API URL not configured' };
+
+  const qs = params ? `?${new URLSearchParams(params).toString()}` : '';
+  try {
+    const res = await fetch(`${apiUrl}/missions${qs}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      signal: AbortSignal.timeout(8000),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) return { error: body?.error || `HTTP ${res.status}` };
+    return { data: body as MissionsList };
+  } catch (e: any) {
+    return { error: e?.message || 'listMissions failed' };
+  }
+}
 
   // ── FLIGHT INFO ──────────────────────────────────────────────
   async getFlightInfo(droneId: number): Promise<DroneApiResponse> {

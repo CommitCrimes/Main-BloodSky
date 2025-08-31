@@ -65,6 +65,12 @@ droneRouter.get('/center/:centerId', async (c) => {
   if (data.length === 0) return c.notFound();
   return c.json(data);
 });
+// GET /drones/missions — passe-plat vers l’API Python via le service
+droneRouter.get('/missions', async (c) => {
+  const result = await droneControlService.listMissions(c.req.query());
+  if (result.error) return c.json({ error: result.error }, 502);
+  return c.json(result.data, 200);
+});
 
 // GET /drones/:id/flight_info - Get real-time flight info
 droneRouter.get('/:id/flight_info', async (c) => {
