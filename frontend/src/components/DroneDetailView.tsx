@@ -570,27 +570,27 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     }
   }, [ALT_STORAGE_KEY, cruiseAlt]);
 
-useEffect(() => {
-  if (!modifyDialogOpen && !sendDialogOpen) return;
-  (async () => {
-    setMissionFilesLoading(true);
-    try {
-      const res = await dronesApi.listMissions({ sort: 'mtime', order: 'desc' });
-      const names = (res.files ?? []).map(f => f.name);
-      setMissionFiles(names);
-      // reset s'il faut pour les 2 dialogs
-      setModifyData(md => (names.includes(md.filename) ? md : { ...md, filename: '' }));
-      setSendFilename(prev => (names.includes(prev) ? prev : ''));
-    } catch (e) {
-      console.warn('listMissions failed:', e);
-      setMissionFiles([]);
-      setModifyData(md => ({ ...md, filename: '' }));
-      setSendFilename('');
-    } finally {
-      setMissionFilesLoading(false);
-    }
-  })();
-}, [modifyDialogOpen, sendDialogOpen]);
+  useEffect(() => {
+    if (!modifyDialogOpen && !sendDialogOpen) return;
+    (async () => {
+      setMissionFilesLoading(true);
+      try {
+        const res = await dronesApi.listMissions({ sort: 'mtime', order: 'desc' });
+        const names = (res.files ?? []).map(f => f.name);
+        setMissionFiles(names);
+        // reset s'il faut pour les 2 dialogs
+        setModifyData(md => (names.includes(md.filename) ? md : { ...md, filename: '' }));
+        setSendFilename(prev => (names.includes(prev) ? prev : ''));
+      } catch (e) {
+        console.warn('listMissions failed:', e);
+        setMissionFiles([]);
+        setModifyData(md => ({ ...md, filename: '' }));
+        setSendFilename('');
+      } finally {
+        setMissionFilesLoading(false);
+      }
+    })();
+  }, [modifyDialogOpen, sendDialogOpen]);
 
 
 
@@ -1017,17 +1017,17 @@ useEffect(() => {
           zIndex: 1000
         }}>
           <Fab
-  color="success"
-  onClick={() => setSendDialogOpen(true)}
-  size="small"
-  sx={{
-    width: { xs: 40, sm: 56 },
-    height: { xs: 40, sm: 56 },
-    boxShadow: 2
-  }}
->
-  <Send sx={{ fontSize: { xs: 20, sm: 24 } }} />
-</Fab>
+            color="success"
+            onClick={() => setSendDialogOpen(true)}
+            size="small"
+            sx={{
+              width: { xs: 40, sm: 56 },
+              height: { xs: 40, sm: 56 },
+              boxShadow: 2
+            }}
+          >
+            <Send sx={{ fontSize: { xs: 20, sm: 24 } }} />
+          </Fab>
 
           <Fab
             color="primary"
@@ -1323,92 +1323,92 @@ useEffect(() => {
           </Button>
         </DialogActions>
       </Dialog>
-      
-    {/* Mission Send Dialog */}
-<Dialog
-  open={sendDialogOpen}
-  onClose={() => setSendDialogOpen(false)}
-  maxWidth={false}
-  PaperProps={{
-    sx: {
-      width: 520,
-      maxWidth: 'calc(100vw - 32px)',
-      m: { xs: 1, sm: 2 },
-      maxHeight: { xs: 'calc(100vh - 16px)', sm: 'calc(100vh - 64px)' },
-    },
-  }}
->
-  <DialogTitle
-    sx={{
-      fontSize: { xs: '1.1rem', sm: '1.25rem' },
-      px: { xs: 2, sm: 3 },
-      py: { xs: 1.5, sm: 2 }
-    }}
-  >
-    Envoyer une mission au drone
-  </DialogTitle>
 
-  <DialogContent sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 1, sm: 2 } }}>
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <FormControl fullWidth size="small">
-        <InputLabel>Fichier de mission</InputLabel>
-        <Select
-          label="Fichier de mission"
-          value={sendFilename}
-          onChange={(e) => setSendFilename(String(e.target.value))}
-          disabled={missionFilesLoading || missionFiles.length === 0}
+      {/* Mission Send Dialog */}
+      <Dialog
+        open={sendDialogOpen}
+        onClose={() => setSendDialogOpen(false)}
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: 520,
+            maxWidth: 'calc(100vw - 32px)',
+            m: { xs: 1, sm: 2 },
+            maxHeight: { xs: 'calc(100vh - 16px)', sm: 'calc(100vh - 64px)' },
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            fontSize: { xs: '1.1rem', sm: '1.25rem' },
+            px: { xs: 2, sm: 3 },
+            py: { xs: 1.5, sm: 2 }
+          }}
         >
-          <MenuItem value="">
-            {missionFilesLoading ? 'Chargement…' : missionFiles.length === 0 ? 'Aucun fichier' : '— Sélectionner —'}
-          </MenuItem>
-          {missionFiles.map((name) => (
-            <MenuItem key={name} value={name}>{name}</MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    </Box>
-  </DialogContent>
+          Envoyer une mission au drone
+        </DialogTitle>
 
-  <DialogActions>
-    <Button onClick={() => setSendDialogOpen(false)}>Annuler</Button>
-    <Button
-      variant="contained"
-      disabled={!sendFilename || sendBusy || missionFilesLoading}
-      onClick={async () => {
-        try {
-          setSendBusy(true);
-          await dronesApi.sendMissionFile(droneId, sendFilename);
-          setSendDialogOpen(false);
-          // (optionnel) rafraîchir l’info de vol et la mission courante
-          await fetchFlightInfo();
-          await fetchCurrentMission();
-        } catch (e) {
-          console.error('sendMissionFile failed:', e);
-        } finally {
-          setSendBusy(false);
-        }
-      }}
-    >
-      {sendBusy ? <CircularProgress size={18} sx={{ mr: 1 }} /> : null}
-      Envoyer
-    </Button>
-  </DialogActions>
-</Dialog>
+        <DialogContent sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 1, sm: 2 } }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Fichier de mission</InputLabel>
+              <Select
+                label="Fichier de mission"
+                value={sendFilename}
+                onChange={(e) => setSendFilename(String(e.target.value))}
+                disabled={missionFilesLoading || missionFiles.length === 0}
+              >
+                <MenuItem value="">
+                  {missionFilesLoading ? 'Chargement…' : missionFiles.length === 0 ? 'Aucun fichier' : '— Sélectionner —'}
+                </MenuItem>
+                {missionFiles.map((name) => (
+                  <MenuItem key={name} value={name}>{name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setSendDialogOpen(false)}>Annuler</Button>
+          <Button
+            variant="contained"
+            disabled={!sendFilename || sendBusy || missionFilesLoading}
+            onClick={async () => {
+              try {
+                setSendBusy(true);
+                await dronesApi.sendMissionFile(droneId, sendFilename);
+                setSendDialogOpen(false);
+                // (optionnel) rafraîchir l’info de vol et la mission courante
+                await fetchFlightInfo();
+                await fetchCurrentMission();
+              } catch (e) {
+                console.error('sendMissionFile failed:', e);
+              } finally {
+                setSendBusy(false);
+              }
+            }}
+          >
+            {sendBusy ? <CircularProgress size={18} sx={{ mr: 1 }} /> : null}
+            Envoyer
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Mission Modification Dialog */}
-<Dialog
-  open={modifyDialogOpen}
-  onClose={() => setModifyDialogOpen(false)}
-  maxWidth={false}
-  PaperProps={{
-    sx: {
-      width: 760,                         // ta largeur
-      maxWidth: 'calc(100vw - 32px)',     // pour ne pas déborder l’écran
-      m: { xs: 1, sm: 2 },
-      maxHeight: { xs: 'calc(100vh - 16px)', sm: 'calc(100vh - 64px)' },
-    },
-  }}
->
+      <Dialog
+        open={modifyDialogOpen}
+        onClose={() => setModifyDialogOpen(false)}
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: 760,                         // ta largeur
+            maxWidth: 'calc(100vw - 32px)',     // pour ne pas déborder l’écran
+            m: { xs: 1, sm: 2 },
+            maxHeight: { xs: 'calc(100vh - 16px)', sm: 'calc(100vh - 64px)' },
+          },
+        }}
+      >
         <DialogTitle sx={{
           fontSize: { xs: '1.1rem', sm: '1.25rem' },
           px: { xs: 2, sm: 3 },
