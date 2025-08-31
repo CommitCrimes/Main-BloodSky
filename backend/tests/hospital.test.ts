@@ -61,12 +61,19 @@ test("CRUD hospital", async () => {
     const resByPostal = await request("GET", "hospitals", `/postal/${updatedHospitalData.hospitalPostal}`);
     expect(resByPostal.status).toBe(200);
     
-    const hospitalsByPostal = await resByPostal.json();
-    expect(hospitalsByPostal.length).toBeGreaterThan(0);
-    
-    const postalMatch = hospitalsByPostal.find((h: any) => h.hospitalId === hospitalId);
-    expect(postalMatch).toBeDefined();
-    console.log("[TEST] Hospital found by postal code");
+  const hospitalsByPostal = await resByPostal.json();
+  expect(hospitalsByPostal.length).toBeGreaterThan(0);
+
+  const postalMatch = hospitalsByPostal.find((h: any) => h.hospitalId === hospitalId);
+  expect(postalMatch).toBeDefined();
+  console.log("[TEST] Hospital found by postal code");
+
+  // 6. GET: Verify search by city
+  console.log("[TEST] GET hospital by city");
+  const resByCity = await request("GET", "hospitals", `/city/${encodeURIComponent(updatedHospitalData.hospitalCity)}`);
+  expect(resByCity.status).toBe(200);
+  const hospitalsByCity = await resByCity.json();
+  expect(Array.isArray(hospitalsByCity)).toBe(true);
 
     // 6. DELETE: Remove the hospital
     console.log("[TEST] DELETE hospital");

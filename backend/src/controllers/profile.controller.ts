@@ -55,7 +55,13 @@ export interface UserProfile {
 }
 
 async function getUserRole(userId: string, userEmail: string): Promise<UserRole | undefined> {
-  if (userEmail === 'admin@bloodsky.fr') {
+  const user = await db
+    .select({ isSuperAdmin: users.isSuperAdmin })
+    .from(users)
+    .where(eq(users.userId, parseInt(userId)))
+    .limit(1);
+
+  if (user.length > 0 && user[0].isSuperAdmin) {
     return { type: 'super_admin' };
   }
 
@@ -75,13 +81,17 @@ async function getUserRole(userId: string, userEmail: string): Promise<UserRole 
 
   if (hospitalRole.length > 0) {
     const role = hospitalRole[0];
+    console.log(`DEBUG getUserRole Hospital - userId: ${userId}, role.admin value:`, role.admin, 'type:', typeof role.admin);
+    
+    const isAdmin = role.admin === true;
+    
     return {
-      type: role.admin ? 'hospital_admin' : 'user',
+      type: isAdmin ? 'hospital_admin' : 'user',
       hospitalId: role.hospitalId ?? undefined,
       hospitalName: role.hospitalName ?? undefined,
       hospitalLatitude: role.hospitalLatitude ?? undefined,
       hospitalLongitude: role.hospitalLongitude ?? undefined,
-      admin: role.admin ?? false,
+      admin: isAdmin,
       info: role.info ?? undefined
     };
   }
@@ -102,13 +112,17 @@ async function getUserRole(userId: string, userEmail: string): Promise<UserRole 
 
   if (donationCenterRole.length > 0) {
     const role = donationCenterRole[0];
+    console.log(`DEBUG getUserRole - userId: ${userId}, role.admin value:`, role.admin, 'type:', typeof role.admin);
+    
+    const isAdmin = role.admin === true;
+    
     return {
-      type: role.admin ? 'donation_center_admin' : 'user',
+      type: isAdmin ? 'donation_center_admin' : 'user',
       centerId: role.centerId ?? undefined,
       centerName: role.centerName ?? undefined,
       centerLatitude: role.centerLatitude ?? undefined,
       centerLongitude: role.centerLongitude ?? undefined,
-      admin: role.admin ?? false,
+      admin: isAdmin,
       info: role.info ?? undefined
     };
   }

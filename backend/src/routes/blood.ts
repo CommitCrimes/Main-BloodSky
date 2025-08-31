@@ -61,6 +61,104 @@ bloodRouter.get("/", async (c) => {
   return c.json(data);
 });
 
+bloodRouter.get("/center/:centerId", async (c) => {
+  try {
+    const centerId = Number(c.req.param("centerId"));
+    if (isNaN(centerId)) return c.text("Invalid center ID", 400);
+    const bloodStock = await db
+      .select()
+      .from(bloods)
+      .where(isNull(bloods.deliveryId));
+    
+    const stockByType = bloodStock.reduce((acc, blood) => {
+      const type = blood.bloodType || 'Unknown';
+      if (!acc[type]) {
+        acc[type] = {
+          bloodType: type,
+          quantity: 0,
+          bloodIds: []
+        };
+      }
+      acc[type].quantity++;
+      acc[type].bloodIds.push(blood.bloodId);
+      return acc;
+    }, {} as Record<string, { bloodType: string; quantity: number; bloodIds: number[] }>);
+    
+    return c.json(Object.values(stockByType));
+  } catch (error) {
+    console.error('Erreur lors de la récupération du stock du centre:', error);
+    return c.text("Erreur serveur", 500);
+  }
+});
+
+bloodRouter.post("/add-stock", async (c) => {
+  try {
+    const { bloodType, quantity, centerId } = await c.req.json();
+    
+    if (!bloodType || !quantity || quantity <= 0) {
+      return c.json({ success: false, message: "Données invalides" }, 400);
+    }
+    
+    const newBloods: typeof bloods.$inferSelect[] = [];
+    for (let i = 0; i < quantity; i++) {
+      const result = await db
+        .insert(bloods)
+        .values({
+          bloodType: bloodType as string,
+          deliveryId: null
+        })
+        .returning();
+      newBloods.push(result[0]);
+    }
+    
+    return c.json({
+      success: true,
+      message: `${quantity} poche(s) de sang ${bloodType} ajoutée(s)`,
+      bloods: newBloods
+    });
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout de stock:', error);
+    return c.json({ success: false, message: "Erreur serveur" }, 500);
+  }
+});
+
+bloodRouter.post("/remove-stock", async (c) => {
+  try {
+    const { bloodType, quantity, centerId, reason } = await c.req.json();
+    
+    if (!bloodType || !quantity || quantity <= 0) {
+      return c.json({ success: false, message: "Données invalides" }, 400);
+    }
+    
+    const availableBlood = await db
+      .select()
+      .from(bloods)
+      .where(sql`${bloods.bloodType} = ${bloodType} AND ${bloods.deliveryId} IS NULL`)
+      .limit(quantity);
+    
+    if (availableBlood.length < quantity) {
+      return c.json({
+        success: false,
+        message: `Stock insuffisant. Disponible: ${availableBlood.length}, Demandé: ${quantity}`
+      }, 400);
+    }
+    
+    const bloodIds = availableBlood.map(b => b.bloodId);
+    await db
+      .delete(bloods)
+      .where(inArray(bloods.bloodId, bloodIds));
+    
+    return c.json({
+      success: true,
+      message: `${quantity} poche(s) de sang ${bloodType} retirée(s)`,
+      reason
+    });
+  } catch (error) {
+    console.error('Erreur lors du retrait de stock:', error);
+    return c.json({ success: false, message: "Erreur serveur" }, 500);
+  }
+});
+
 // GET by blood ID
 bloodRouter.get("/:id", async (c) => {
   const id = Number(c.req.param("id"));

@@ -1,4 +1,4 @@
-import { pgTable, varchar, timestamp, text, boolean, integer, serial } from 'drizzle-orm/pg-core';
+import { pgTable, timestamp, text, boolean, integer, serial } from 'drizzle-orm/pg-core';
 import { drones } from './drone';
 import { hospitals } from './hospital';
 import { donationCenters } from './donation_center';

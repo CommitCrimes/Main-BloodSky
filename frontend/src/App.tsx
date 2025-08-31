@@ -3,7 +3,8 @@ import { observer } from 'mobx-react-lite';
 import AuthProvider from './components/AuthProvider';
 import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
+import AdminDashboardPage from './pages/SuperAdminDashboardPage.tsx';
+import AdminDroneManagementPage from './pages/AdminDroneManagementPage';
 import HospitalDashboard from './pages/HospitalDashboard';
 import DonationCenterDashboard from './pages/DonationCenterDashboard';
 import DronistDashboard from './pages/DronistDashboard';
@@ -49,13 +50,14 @@ const App = observer(() => {
           {/* Routes protégées par rôle */}
           <Route element={<RoleProtectedRoute allowedRoles={['super_admin']} />}>
             <Route path="/admin" element={<AdminDashboardPage />} />
+            <Route path="/admin/drones" element={<AdminDroneManagementPage />} />
           </Route>
           
-          <Route element={<RoleProtectedRoute allowedRoles={['hospital_admin']} />}>
+          <Route element={<RoleProtectedRoute allowedRoles={['hospital_admin', 'user']} />}>
             <Route path="/hospital" element={<HospitalDashboard />} />
           </Route>
           
-          <Route element={<RoleProtectedRoute allowedRoles={['donation_center_admin']} />}>
+          <Route element={<RoleProtectedRoute allowedRoles={['donation_center_admin', 'user']} />}>
             <Route path="/donation-center" element={<DonationCenterDashboard />} />
           </Route>
           

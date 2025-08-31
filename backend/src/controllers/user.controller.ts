@@ -1,33 +1,42 @@
 import { Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
 import { db } from '../utils/db';
-import { users, userDonationCenter, userHospital } from '../schemas';
+import { users, userDonationCenter, userHospital, userDronists } from '../schemas';
 import { eq } from 'drizzle-orm';
 
 export const getUserRole = async (c: Context) => {
   try {
-    const userId = Number(c.req.query('userId'));
+    const userIdParam = c.req.query('userId');
     const email = c.req.query('email');
-    
-    if (!userId && !email) {
+
+    if (!userIdParam && !email) {
       throw new HTTPException(400, { message: 'userId ou email requis' });
     }
     
-    if (email === 'admin@bloodsky.fr') {
-      return c.json({
-        type: 'super_admin'
-      });
-    }
-    
-    let userIdToCheck = userId;
-    
-    if (!userId && email) {
-      const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
-      if (user.length === 0) {
+    // Récupération de l'utilisateur pour vérifier un éventuel rôle super admin
+    let userRecord;
+    if (userIdParam) {
+      const result = await db.select().from(users).where(eq(users.userId, Number(userIdParam))).limit(1);
+      if (result.length === 0) {
         throw new HTTPException(404, { message: 'Utilisateur non trouvé' });
       }
-      userIdToCheck = user[0].userId;
+      userRecord = result[0];
+    } else if (email) {
+      const result = await db.select().from(users).where(eq(users.email, email)).limit(1);
+      if (result.length === 0) {
+        throw new HTTPException(404, { message: 'Utilisateur non trouvé' });
+      }
+      userRecord = result[0];
     }
+
+    if (!userRecord) {
+      // Ca devrait jamais arriver, mais Typescript est Typescript
+      throw new HTTPException(500, { message: 'Erreur interne: utilisateur introuvable' });
+    }
+
+    const userIdToCheck = userRecord.userId;
+    
+    console.log(`DEBUG getUserRole - Checking roles for userId: ${userIdToCheck}, email: ${userRecord.email}`);
     
     // Verif dans user_hospital
     const hospitalRole = await db
@@ -35,14 +44,18 @@ export const getUserRole = async (c: Context) => {
       .from(userHospital)
       .where(eq(userHospital.userId, userIdToCheck))
       .limit(1);
+    
+    console.log(`DEBUG getUserRole - Hospital role found:`, hospitalRole.length > 0 ? hospitalRole[0] : 'none');
       
     if (hospitalRole.length > 0) {
-      return c.json({
-        type: 'hospital_admin',
+      const response = {
+        type: hospitalRole[0].admin === true ? 'hospital_admin' : 'user',
         hospitalId: hospitalRole[0].hospitalId,
         admin: hospitalRole[0].admin,
         info: hospitalRole[0].info
-      });
+      };
+      console.log(`DEBUG getUserRole - Returning hospital role:`, response);
+      return c.json(response);
     }
     
     // Verif dans user_donation_center
@@ -51,14 +64,37 @@ export const getUserRole = async (c: Context) => {
       .from(userDonationCenter)
       .where(eq(userDonationCenter.userId, userIdToCheck))
       .limit(1);
+    
+    console.log(`DEBUG getUserRole - Donation center role found:`, donationCenterRole.length > 0 ? donationCenterRole[0] : 'none');
       
     if (donationCenterRole.length > 0) {
-      return c.json({
-        type: 'donation_center_admin',
+      const response = {
+        type: donationCenterRole[0].admin === true ? 'donation_center_admin' : 'user',
         centerId: donationCenterRole[0].centerId,
         admin: donationCenterRole[0].admin,
         info: donationCenterRole[0].info
+      };
+      console.log(`DEBUG getUserRole - Returning donation center role:`, response);
+      return c.json(response);
+    }
+    
+    // Verif dans user_dronist
+    const dronistRole = await db
+      .select()
+      .from(userDronists)
+      .where(eq(userDronists.userId, userIdToCheck))
+      .limit(1);
+      
+    if (dronistRole.length > 0) {
+      return c.json({
+        type: 'dronist',
+        info: dronistRole[0].info
       });
+    }
+    
+    // Si aucun role trouvé, verif du super_admin
+    if (userRecord?.isSuperAdmin) {
+      return c.json({ type: 'super_admin' });
     }
     
     // Si aucun rôle spécifique trouvé, utilisateur lambda

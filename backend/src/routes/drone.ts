@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { drones } from '../schemas/drone';
 import { db } from '../utils/db';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { DroneUpdate, DroneMission, DroneWaypoint } from '../types/drone.types';
 import { droneControlService } from '../services/drone-control.service';
 import { droneSyncService } from '../services/drone-sync.service';
@@ -104,8 +104,15 @@ droneRouter.get('/:id', async (c) => {
 // POST create drone
 droneRouter.post('/', async (c) => {
   const body = await c.req.json();
-  await db.insert(drones).values(body);
-  return c.text('Created', 201);
+  
+  // compute next id manually (max + 1)
+  const [{ max }] = await db
+    .select({ max: sql<number>`max(${drones.droneId})` })
+    .from(drones);
+  const nextId = (max ?? 0) + 1;
+
+  await db.insert(drones).values({ ...body, droneId: nextId });
+  return c.json({ message: 'Created', droneId: nextId }, 201);
 });
 
 // PUT update drone
@@ -128,7 +135,7 @@ droneRouter.delete('/:id', async (c) => {
   const id = Number(c.req.param('id'));
   if (isNaN(id)) return c.text('Invalid ID', 400);
   await db.delete(drones).where(eq(drones.droneId, id));
-  return c.text('Deleted');
+  return c.json({ message: 'Deleted' });
 });
 
 // === DRONE CONTROL ENDPOINTS ===
@@ -263,6 +270,8 @@ droneRouter.get('/:id/mission/current', async (c) => {
   if (isNaN(id)) return c.text('Invalid ID', 400);
 
   const result = await droneControlService.getMissionCurrent(id);
-  if (result.error) return c.json({ error: result.error }, 400);
+  if (result.error) {
+    return c.json({ count: 0, items: [] });
+  }
   return c.json(result.data);
 });

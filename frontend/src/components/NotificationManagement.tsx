@@ -6,7 +6,6 @@ import {
   Typography,
   List,
   ListItem,
-  ListItemText,
   ListItemIcon,
   Chip,
   Button,
@@ -34,7 +33,8 @@ import {
   Refresh,
   Search,
   Done,
-  AccountCircle
+  AccountCircle,
+  Inventory2
 } from '@mui/icons-material';
 import { NotificationStore } from '../stores/NotificationStore';
 
@@ -92,6 +92,8 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
         return <LocalShipping color={priority === 'urgent' ? 'error' : 'primary'} />;
       case 'in_transit':
         return <LocalShipping color="info" />;
+      case 'charged':
+        return <Inventory2 sx={{ color: '#3b82f6' }} />;
       case 'delivered':
         return <DoneAll color="success" />;
       case 'cancelled':
@@ -149,6 +151,8 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
         return 'Demande de livraison';
       case 'in_transit':
         return 'Livraison en cours';
+      case 'charged':
+        return 'Livraison chargée';
       case 'delivered':
         return 'Livraison effectuée';
       case 'cancelled':
@@ -176,7 +180,7 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
-    
+
     if (diffInHours < 1) {
       const diffInMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
       return diffInMinutes <= 1 ? 'À l\'instant' : `Il y a ${diffInMinutes} min`;
@@ -191,10 +195,10 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
   const filteredNotifications = notificationStore.notifications.filter(notification => {
     const matchesPriority = filterPriority === 'all' || notification.priority === filterPriority;
     const matchesType = filterType === 'all' || notification.type === filterType;
-    const matchesRead = filterRead === 'all' || 
+    const matchesRead = filterRead === 'all' ||
       (filterRead === 'read' && notification.isRead) ||
       (filterRead === 'unread' && !notification.isRead);
-    const matchesSearch = searchTerm === '' || 
+    const matchesSearch = searchTerm === '' ||
       notification.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       notification.message.toLowerCase().includes(searchTerm.toLowerCase());
 
@@ -215,8 +219,8 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
 
   if (notificationStore.isLoading) {
     return (
-      <Box 
-        sx={{ 
+      <Box
+        sx={{
           minHeight: '100vh',
           background: commonStyles.backgroundGradient,
           display: 'flex',
@@ -237,10 +241,9 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
   return (
     <Box
       sx={{
-        height: '100vh',
+        minHeight: '100vh',
         background: commonStyles.backgroundGradient,
-        p: { xs: 2, md: 4 },
-        overflow: 'hidden'
+        p: { xs: 2, md: 4 }
       }}
     >
       <Fade in timeout={800}>
@@ -313,18 +316,23 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
             mb: 3
           }}
         >
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="center">
+          <Stack direction={{ xs: 'column', sm: 'column', md: 'row' }} spacing={{ xs: 2, md: 3 }} alignItems={{ xs: 'stretch', md: 'center' }}>
             <TextField
               placeholder="Rechercher dans les notifications..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              fullWidth
               sx={{
-                flex: 1,
+                flex: { md: 1 },
                 '& .MuiInputBase-root': {
                   borderRadius: commonStyles.borderRadius,
-                  ...commonStyles.techFont
+                  ...commonStyles.techFont,
+                  fontSize: { xs: '0.9rem', sm: '1rem' }
                 },
-                '& .MuiInputBase-input': commonStyles.techFont
+                '& .MuiInputBase-input': {
+                  ...commonStyles.techFont,
+                  fontSize: { xs: '0.9rem', sm: '1rem' }
+                }
               }}
               slotProps={{
                 input: {
@@ -332,9 +340,9 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
                 }
               }}
             />
-            
-            <FormControl sx={{ minWidth: 120 }}>
-              <InputLabel sx={commonStyles.techFont}>Priorité</InputLabel>
+
+            <FormControl sx={{ minWidth: { xs: '100%', md: 120 } }}>
+              <InputLabel sx={{ ...commonStyles.techFont, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Priorité</InputLabel>
               <Select
                 value={filterPriority}
                 onChange={(e) => setFilterPriority(e.target.value)}
@@ -352,7 +360,7 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
               </Select>
             </FormControl>
 
-            <FormControl sx={{ minWidth: 120 }}>
+            <FormControl sx={{ minWidth: { xs: '100%', md: 120 } }}>
               <InputLabel sx={commonStyles.techFont}>Type</InputLabel>
               <Select
                 value={filterType}
@@ -366,6 +374,7 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
                 <MenuItem value="all">Tous</MenuItem>
                 <MenuItem value="delivery_request">Demande</MenuItem>
                 <MenuItem value="in_transit">En transit</MenuItem>
+                <MenuItem value="charged">Chargée</MenuItem>
                 <MenuItem value="delivered">Livrée</MenuItem>
                 <MenuItem value="cancelled">Annulée</MenuItem>
                 <MenuItem value="accepted_center">Acceptée centre</MenuItem>
@@ -378,7 +387,7 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
               </Select>
             </FormControl>
 
-            <FormControl sx={{ minWidth: 120 }}>
+            <FormControl sx={{ minWidth: { xs: '100%', md: 120 } }}>
               <InputLabel sx={commonStyles.techFont}>Statut</InputLabel>
               <Select
                 value={filterRead}
@@ -406,13 +415,17 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
                   variant="contained"
                   startIcon={<DoneAll />}
                   onClick={handleMarkAllAsRead}
+                  size="small"
                   sx={{
                     ...commonStyles.buttonBase,
                     backgroundColor: '#10b981',
-                    '&:hover': { backgroundColor: '#059669' }
+                    '&:hover': { backgroundColor: '#059669' },
+                    fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                    px: { xs: 2, sm: 3 },
+                    py: { xs: 1, sm: 1.5 }
                   }}
                 >
-                  Tout marquer comme lu
+                  {notificationStore.unreadCount > 5 ? 'Tout lire' : 'Tout marquer comme lu'}
                 </Button>
               )}
             </Stack>
@@ -427,7 +440,6 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
           sx={{
             ...commonStyles.glassmorphism,
             overflow: 'hidden',
-            maxHeight: 'calc(100vh - 450px)',
             display: 'flex',
             flexDirection: 'column'
           }}
@@ -436,31 +448,15 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
             <Box sx={{ p: 6, textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <NotificationsNone sx={{ fontSize: 64, color: 'text.secondary', mb: 2 }} />
               <Typography variant="h6" sx={commonStyles.techFont} color="textSecondary">
-                {searchTerm || filterPriority !== 'all' || filterType !== 'all' || filterRead !== 'all' 
-                  ? 'Aucune notification ne correspond aux filtres' 
+                {searchTerm || filterPriority !== 'all' || filterType !== 'all' || filterRead !== 'all'
+                  ? 'Aucune notification ne correspond aux filtres'
                   : 'Aucune notification'
                 }
               </Typography>
             </Box>
           ) : (
             <List sx={{
-              py: 0,
-              flex: 1,
-              overflow: 'auto',
-              '&::-webkit-scrollbar': {
-                width: '8px',
-              },
-              '&::-webkit-scrollbar-track': {
-                background: 'rgba(255, 255, 255, 0.1)',
-                borderRadius: '4px',
-              },
-              '&::-webkit-scrollbar-thumb': {
-                background: 'rgba(92, 127, 155, 0.3)',
-                borderRadius: '4px',
-                '&:hover': {
-                  background: 'rgba(92, 127, 155, 0.5)',
-                }
-              },
+              py: 0
             }}>
               {filteredNotifications.map((notification, index) => (
                 <Fade in key={notification.notificationId} timeout={300} style={{ transitionDelay: `${index * 50}ms` }}>
@@ -471,86 +467,100 @@ const NotificationManagement: React.FC<NotificationManagementProps> = observer((
                       '&:hover': {
                         backgroundColor: 'rgba(0, 0, 0, 0.04)',
                       },
-                      py: 2,
-                      px: 3,
-                      borderBottom: index < filteredNotifications.length - 1 ? '1px solid rgba(0, 0, 0, 0.08)' : 'none'
+                      py: { xs: 1.5, md: 2 },
+                      px: { xs: 2, md: 3 },
+                      borderBottom: index < filteredNotifications.length - 1 ? '1px solid rgba(0, 0, 0, 0.08)' : 'none',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      alignItems: { xs: 'flex-start', sm: 'center' }
                     }}
                   >
-                    <ListItemIcon sx={{ minWidth: 60 }}>
+                    <ListItemIcon sx={{ minWidth: { xs: 40, sm: 60 }, alignSelf: { xs: 'flex-start', sm: 'center' } }}>
                       {getNotificationIcon(notification.type, notification.priority)}
                     </ListItemIcon>
-                    <ListItemText
-                      primary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                          <Typography
-                            variant="h6"
-                            sx={{
-                              ...commonStyles.techFontBold,
-                              fontWeight: notification.isRead ? 'normal' : 'bold',
-                              fontSize: '1.1rem'
-                            }}
-                          >
-                            {notification.title}
-                          </Typography>
-                          <Chip
-                            size="small"
-                            label={getPriorityLabel(notification.priority)}
-                            sx={{
-                              backgroundColor: getPriorityColor(notification.priority),
-                              color: 'white',
-                              fontSize: '0.7rem',
-                              height: 20
-                            }}
-                          />
-                          <Chip
-                            size="small"
-                            label={getTypeLabel(notification.type)}
-                            variant="outlined"
-                            sx={{
-                              fontSize: '0.7rem',
-                              height: 20
-                            }}
-                          />
-                        </Box>
-                      }
-                      secondary={
-                        <Box>
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              ...commonStyles.techFont,
-                              mb: 1,
-                              color: 'text.primary'
-                            }}
-                          >
-                            {notification.message}
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            color="textSecondary"
-                            sx={commonStyles.techFont}
-                          >
-                            {formatTimeAgo(notification.createdAt)}
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ flex: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1, flexWrap: { xs: 'wrap', sm: 'nowrap' } }}>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            ...commonStyles.techFontBold,
+                            fontWeight: notification.isRead ? 'normal' : 'bold',
+                            fontSize: { xs: '0.95rem', sm: '1.1rem' }
+                          }}
+                        >
+                          {notification.title}
+                        </Typography>
+                        <Chip
+                          size="small"
+                          label={getPriorityLabel(notification.priority)}
+                          sx={{
+                            backgroundColor: getPriorityColor(notification.priority),
+                            color: 'white',
+                            fontSize: { xs: '0.6rem', sm: '0.7rem' },
+                            height: { xs: 18, sm: 20 }
+                          }}
+                        />
+                        <Chip
+                          size="small"
+                          label={getTypeLabel(notification.type)}
+                          variant="outlined"
+                          sx={{
+                            fontSize: { xs: '0.6rem', sm: '0.7rem' },
+                            height: { xs: 18, sm: 20 }
+                          }}
+                        />
+                      </Box>
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          ...commonStyles.techFont,
+                          mb: 1,
+                          color: 'text.primary',
+                          fontSize: { xs: '0.85rem', sm: '1rem' },
+                          lineHeight: { xs: 1.3, sm: 1.5 }
+                        }}
+                      >
+                        {notification.message}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="textSecondary"
+                        sx={{
+                          ...commonStyles.techFont,
+                          fontSize: { xs: '0.75rem', sm: '0.8rem' }
+                        }}
+                      >
+                        {formatTimeAgo(notification.createdAt)}
+                      </Typography>
+                    </Box>
+                    <Box sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      mt: { xs: 2, sm: 0 },
+                      ml: { xs: 0, sm: 'auto' },
+                      alignSelf: { xs: 'flex-end', sm: 'center' },
+                      width: { xs: '100%', sm: 'auto' },
+                      justifyContent: { xs: 'flex-end', sm: 'center' }
+                    }}>
                       {!notification.isRead && (
                         <Tooltip title="Marquer comme lu">
                           <IconButton
                             onClick={() => handleMarkAsRead(notification.notificationId)}
-                            sx={{ color: '#10b981' }}
+                            sx={{
+                              color: '#10b981',
+                              p: { xs: 1, sm: 1.5 }
+                            }}
+                            size={notification.isRead ? 'medium' : 'small'}
                           >
-                            <Done />
+                            <Done fontSize="small" />
                           </IconButton>
                         </Tooltip>
                       )}
                       {!notification.isRead && (
                         <Box
                           sx={{
-                            width: 8,
-                            height: 8,
+                            width: { xs: 6, sm: 8 },
+                            height: { xs: 6, sm: 8 },
                             borderRadius: '50%',
                             backgroundColor: 'primary.main',
                             ml: 1,

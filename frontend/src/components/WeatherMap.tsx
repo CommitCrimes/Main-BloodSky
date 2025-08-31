@@ -38,8 +38,6 @@ interface DonationCenterFromDB {
 }
 
 
-const NANTES_COORDS = { lat: 47.2184, lon: -1.5536 };
-
 type WeatherPoint = {
   id: string;
   name: string;
@@ -51,6 +49,12 @@ type WeatherPoint = {
   city?: string;
   showInFocus?: boolean;
   showInRegion?: boolean;
+};
+
+type CityFocus = {
+  city: string;
+  coords: { lat: number; lon: number };
+  pointCount: number;
 };
 
 const CITY_REFERENCE_POINTS: WeatherPoint[] = [
@@ -111,6 +115,7 @@ const CITY_REFERENCE_POINTS: WeatherPoint[] = [
   },
 ];
 
+
 const getDistanceKm = (lat1: number, lon1: number, lat2: number, lon2: number): number => {
   const R = 6371; // Rayon de la Terre en km
   const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -129,10 +134,70 @@ const getPriorityByDistance = (distanceKm: number): 'high' | 'medium' | 'low' =>
   return 'low';
 };
 
-// recup des points meteo depuis la bdd
-const fetchWeatherPoints = async (): Promise<WeatherPoint[]> => {
+const extractCityFocus = async (): Promise<CityFocus[]> => {
+  const cityMap = new Map<string, { coords: { lat: number; lon: number }; count: number }>();
+  
+  try {
+    const hospitals = await hospitalApi.getAll();    
+    const hospitalPoints = hospitals
+      .filter(h => h.hospitalLatitude && h.hospitalLongitude && h.hospitalCity)
+      .map(h => ({
+        city: h.hospitalCity!.toUpperCase().trim(),
+        lat: parseFloat(h.hospitalLatitude!),
+        lon: parseFloat(h.hospitalLongitude!)
+      }));
+
+    const donationCenters = await donationCenterApi.getAllCenters() as unknown as DonationCenterFromDB[];    
+    const donationCenterPoints = donationCenters
+      .filter(dc => dc.centerLatitude !== null && dc.centerLatitude !== undefined && 
+                    dc.centerLongitude !== null && dc.centerLongitude !== undefined &&
+                    dc.centerCity)
+      .map(dc => ({
+        city: dc.centerCity.toUpperCase().trim(),
+        lat: parseFloat(dc.centerLatitude!),
+        lon: parseFloat(dc.centerLongitude!)
+      }));
+
+    const allPoints = [...hospitalPoints, ...donationCenterPoints];
+    
+    for (const point of allPoints) {
+      if (cityMap.has(point.city)) {
+        const existing = cityMap.get(point.city)!;
+        existing.coords.lat = (existing.coords.lat * existing.count + point.lat) / (existing.count + 1);
+        existing.coords.lon = (existing.coords.lon * existing.count + point.lon) / (existing.count + 1);
+        existing.count += 1;
+      } else {
+        cityMap.set(point.city, {
+          coords: { lat: point.lat, lon: point.lon },
+          count: 1
+        });
+      }
+    }
+
+    return Array.from(cityMap.entries())
+      .map(([city, data]) => ({
+        city: city,
+        coords: data.coords,
+        pointCount: data.count
+      }))
+      .sort((a, b) => b.pointCount - a.pointCount);
+
+  } catch (error) {
+    console.error('Erreur lors de l\'extraction des villes:', error);
+    return [];
+  }
+};
+
+// recup des points meteo depuis la bdd avec système multi-villes
+const fetchWeatherPoints = async (selectedCityFocus?: CityFocus): Promise<WeatherPoint[]> => {
   const focusPoints: WeatherPoint[] = []; // Points BDD pour vue Focus
   const regionPoints: WeatherPoint[] = [...CITY_REFERENCE_POINTS]; // Points région (grandes villes)
+  
+  let cityFocus = selectedCityFocus;
+  if (!cityFocus) {
+    const cities = await extractCityFocus();
+    cityFocus = cities[0] || { city: 'NANTES', coords: { lat: 47.2184, lon: -1.5536 }, pointCount: 0 };
+  }
 
   try {
     const hospitals = await hospitalApi.getAll();    
@@ -141,7 +206,7 @@ const fetchWeatherPoints = async (): Promise<WeatherPoint[]> => {
       .map(h => {
         const lat = parseFloat(h.hospitalLatitude!);
         const lon = parseFloat(h.hospitalLongitude!);
-        const distance = getDistanceKm(lat, lon, NANTES_COORDS.lat, NANTES_COORDS.lon);
+        const distance = getDistanceKm(lat, lon, cityFocus!.coords.lat, cityFocus!.coords.lon);
                 
         return {
           id: `hospital-${h.hospitalId}`,
@@ -164,7 +229,7 @@ const fetchWeatherPoints = async (): Promise<WeatherPoint[]> => {
       .map(dc => {
         const lat = parseFloat(dc.centerLatitude!);
         const lon = parseFloat(dc.centerLongitude!);
-        const distance = getDistanceKm(lat, lon, NANTES_COORDS.lat, NANTES_COORDS.lon);
+        const distance = getDistanceKm(lat, lon, cityFocus!.coords.lat, cityFocus!.coords.lon);
                 
         return {
           id: `donation-center-${dc.centerId}`,
@@ -443,21 +508,47 @@ const Weather: React.FC = () => {
   const [mainCenterWeather, setMainCenterWeather] = useState<CurrentWeather | null>(null);
   const [mainCenterName, setMainCenterName] = useState<string>('Centre de Don Principal');
   const [weatherPoints, setWeatherPoints] = useState<WeatherPoint[]>([]);
+  const [availableCities, setAvailableCities] = useState<CityFocus[]>([]);
+  const [selectedCityFocus, setSelectedCityFocus] = useState<CityFocus | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'nantes' | 'region'>('nantes');
+  const [viewMode, setViewMode] = useState<'focus' | 'region'>('focus');
 
   const [selected, setSelected] = useState<SelectedPointState | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
-  // Charger les points météo depuis la BDD et leurs données météo
+  // Charger les villes disponibles et initialiser
   useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const cities = await extractCityFocus();
+        if (!mounted) return;
+        
+        setAvailableCities(cities);
+        
+        if (cities.length > 0) {
+          setSelectedCityFocus(cities[0]);
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des villes:', error);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCityFocus) return;
+    
     let mounted = true;
     (async () => {
       try {
         setLoading(true);
         
-        const points = await fetchWeatherPoints();
+        const points = await fetchWeatherPoints(selectedCityFocus);
         if (!mounted) return;
         setWeatherPoints(points);
         
@@ -504,7 +595,7 @@ const Weather: React.FC = () => {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [selectedCityFocus]);
 
   // Remettre le scroll au début quand on change de point/date
   useEffect(() => {
@@ -512,14 +603,14 @@ const Weather: React.FC = () => {
   }, [selected?.point.id, selected?.targetDate]);
 
   const mapCenter = useMemo<[number, number]>(() => {
-    if (viewMode === 'nantes') {
-      return [NANTES_COORDS.lat, NANTES_COORDS.lon];
+    if (viewMode === 'focus' && selectedCityFocus) {
+      return [selectedCityFocus.coords.lat, selectedCityFocus.coords.lon];
     }
     return [47.0, -1.5];
-  }, [viewMode]);
+  }, [viewMode, selectedCityFocus]);
 
   const mapZoom = useMemo(() => {
-    return viewMode === 'nantes' ? 10 : 8;
+    return viewMode === 'focus' ? 10 : 8;
   }, [viewMode]);
 
   // Générer des DivIcons par point météo
@@ -614,20 +705,21 @@ const Weather: React.FC = () => {
         elevation={3}
         sx={{
           position: 'absolute',
-          top: { xs: 10, sm: 20 },
-          left: { xs: 10, sm: '50%' },
-          right: { xs: 10, sm: 'auto' },
-          transform: { xs: 'none', sm: 'translateX(-50%)' },
+          top: { xs: 8, sm: 15, md: 20 },
+          left: { xs: 8, sm: 10, md: '50%' },
+          right: { xs: 8, sm: 10, md: 'auto' },
+          transform: { xs: 'none', sm: 'none', md: 'translateX(-50%)' },
           zIndex: 1000,
-          px: { xs: 1.5, sm: 2.5 },
-          py: { xs: 1, sm: 1.5 },
-          borderRadius: { xs: 2, sm: 3 },
+          px: { xs: 1, sm: 1.5, md: 2.5 },
+          py: { xs: 0.8, sm: 1, md: 1.5 },
+          borderRadius: { xs: 2, sm: 2.5, md: 3 },
           background: 'rgba(255,255,255,0.95)',
           backdropFilter: 'blur(10px)',
           display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          alignItems: 'center',
-          gap: { xs: 1.5, sm: 2 },
+          flexDirection: 'column',
+          alignItems: 'stretch',
+          gap: { xs: 1, sm: 1.2, md: 2 },
+          maxWidth: { xs: 'calc(100vw - 16px)', sm: 'calc(100vw - 20px)', md: '800px' },
         }}
       >
         <Typography 
@@ -638,58 +730,191 @@ const Weather: React.FC = () => {
             fontWeight: 700,
             display: 'flex',
             alignItems: 'center',
-            gap: 1,
-            textAlign: { xs: 'center', sm: 'left' },
-            fontSize: { xs: '0.9rem', sm: '1.1rem' }
+            justifyContent: 'center',
+            gap: { xs: 0.5, sm: 0.8, md: 1 },
+            textAlign: 'center',
+            fontSize: { xs: '0.8rem', sm: '0.95rem', md: '1.1rem' }
           }}
         >
-          <CloudIcon sx={{ color: '#3b82f6', fontSize: { xs: 18, sm: 20 } }} />
-          <Box component="span" sx={{ display: { xs: 'none', md: 'inline' } }}>
-            Météo Droniste - Région Nantaise
+          <CloudIcon sx={{ color: '#3b82f6', fontSize: { xs: 16, sm: 18, md: 20 } }} />
+          <Box component="span" sx={{ display: { xs: 'none', sm: 'none', md: 'inline' } }}>
+            Météo Droniste - {selectedCityFocus?.city || 'Multi-Villes'}
           </Box>
-          <Box component="span" sx={{ display: { xs: 'inline', md: 'none' } }}>
-            Météo Droniste
+          <Box component="span" sx={{ display: { xs: 'inline', sm: 'inline', md: 'none' } }}>
+            Météo - {selectedCityFocus?.city || 'Multi-Villes'}
           </Box>
         </Typography>
         
-        <ToggleButtonGroup
-          value={viewMode}
-          exclusive
-          onChange={(_, newValue) => newValue && setViewMode(newValue)}
-          size="small"
-          sx={{
-            width: { xs: '100%', sm: 'auto' },
-            '& .MuiToggleButton-root': {
-              fontFamily: 'Share Tech, monospace',
-              textTransform: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: { xs: 0.5, sm: 1 },
-              fontSize: { xs: '0.75rem', sm: '0.8rem' },
-              px: { xs: 1, sm: 1.5 },
-              flex: { xs: 1, sm: 'none' }
-            }
-          }}
-        >
-          <ToggleButton value="nantes">
-            <MyLocationIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />
-            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-              Focus Nantes
+        <Box sx={{ 
+          display: 'flex', 
+          flexDirection: { xs: 'column', sm: 'row' }, 
+          gap: { xs: 1, sm: 1.5 }, 
+          alignItems: { xs: 'stretch', sm: 'center' },
+          justifyContent: 'center'
+        }}>
+          {availableCities.length > 1 && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, width: { xs: '100%', sm: 'auto' } }}>
+              {availableCities.length <= 3 ? (
+                // Affichage simple pour 2-3 villes
+                <ToggleButtonGroup
+                  value={selectedCityFocus?.city || ''}
+                  exclusive
+                  onChange={(_, newValue: string | null) => {
+                    if (newValue) {
+                      const city = availableCities.find(c => c.city === newValue);
+                      if (city) setSelectedCityFocus(city);
+                    }
+                  }}
+                  size="small"
+                  sx={{
+                    width: { xs: '100%', sm: 'auto' },
+                    '& .MuiToggleButton-root': {
+                      fontFamily: 'Share Tech, monospace',
+                      textTransform: 'none',
+                      fontSize: { xs: '0.65rem', sm: '0.7rem', md: '0.75rem' },
+                      px: { xs: 0.8, sm: 1, md: 1.2 },
+                      py: { xs: 0.4, sm: 0.5, md: 0.5 },
+                      minWidth: { xs: '50px', sm: '70px', md: 'auto' },
+                      flex: { xs: 1, sm: 'none' },
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis'
+                    }
+                  }}
+                >
+                  {availableCities.map((city) => (
+                    <ToggleButton key={city.city} value={city.city}>
+                      <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                        {city.city} ({city.pointCount})
+                      </Box>
+                      <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                        {city.city.length > 5 ? city.city.substring(0, 5) : city.city}
+                      </Box>
+                    </ToggleButton>
+                  ))}
+                </ToggleButtonGroup>
+              ) : (
+                // Système de cycle compact pour 4+ villes
+                <Box sx={{ 
+                  position: 'relative',
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center'
+                }}>
+                  <ToggleButtonGroup
+                    value={selectedCityFocus?.city || ''}
+                    exclusive
+                    onChange={(_, newValue: string | null) => {
+                      if (newValue) {
+                        const currentIndex = availableCities.findIndex(c => c.city === selectedCityFocus?.city);
+                        const nextIndex = (currentIndex + 1) % availableCities.length;
+                        setSelectedCityFocus(availableCities[nextIndex]);
+                      }
+                    }}
+                    size="small"
+                    sx={{
+                      width: '100%',
+                      maxWidth: { xs: '200px', sm: '250px' },
+                      '& .MuiToggleButton-root': {
+                        fontFamily: 'Share Tech, monospace',
+                        textTransform: 'none',
+                        fontSize: { xs: '0.65rem', sm: '0.7rem', md: '0.75rem' },
+                        px: { xs: 0.8, sm: 1.2, md: 1.5 },
+                        py: { xs: 0.4, sm: 0.5, md: 0.5 },
+                        width: '100%',
+                        justifyContent: 'space-between',
+                        cursor: 'pointer',
+                        position: 'relative'
+                      }
+                    }}
+                  >
+                    <ToggleButton value={selectedCityFocus?.city || ''}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                        <Box component="span" sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                            🏙️ {selectedCityFocus?.city || 'Ville'} ({selectedCityFocus?.pointCount || 0})
+                          </Box>
+                          <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                            🏙️ {selectedCityFocus?.city || 'Ville'}
+                          </Box>
+                        </Box>
+                        <Box component="span" sx={{ 
+                          fontSize: '0.7em', 
+                          opacity: 0.7, 
+                          ml: 0.5,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.2
+                        }}>
+                          <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                            {availableCities.findIndex(c => c.city === selectedCityFocus?.city) + 1}/{availableCities.length}
+                          </Box>
+                          ⟲
+                        </Box>
+                      </Box>
+                    </ToggleButton>
+                  </ToggleButtonGroup>
+                  
+                  {/* Indicateur discret pour mobile */}
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      display: { xs: 'block', sm: 'none' },
+                      fontSize: '0.55rem',
+                      color: '#999',
+                      fontFamily: 'Share Tech, monospace',
+                      mt: 0.3,
+                      textAlign: 'center',
+                      opacity: 0.8
+                    }}
+                  >
+                    {availableCities.findIndex(c => c.city === selectedCityFocus?.city) + 1}/{availableCities.length} • Tap pour suivant
+                  </Typography>
+                </Box>
+              )}
             </Box>
-            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
-              Focus
-            </Box>
-          </ToggleButton>
-          <ToggleButton value="region">
-            <NavigationIcon sx={{ fontSize: { xs: 14, sm: 16 } }} />
-            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
-              Vue Région
-            </Box>
-            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
-              Région
-            </Box>
-          </ToggleButton>
-        </ToggleButtonGroup>
+          )}
+          
+          <ToggleButtonGroup
+            value={viewMode}
+            exclusive
+            onChange={(_, newValue) => newValue && setViewMode(newValue)}
+            size="small"
+            sx={{
+              width: { xs: '100%', sm: 'auto' },
+              '& .MuiToggleButton-root': {
+                fontFamily: 'Share Tech, monospace',
+                textTransform: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: { xs: 0.4, sm: 0.6, md: 1 },
+                fontSize: { xs: '0.7rem', sm: '0.75rem', md: '0.8rem' },
+                px: { xs: 1, sm: 1.2, md: 1.5 },
+                flex: { xs: 1, sm: 'none' }
+              }
+            }}
+          >
+            <ToggleButton value="focus">
+              <MyLocationIcon sx={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                Focus
+              </Box>
+              <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                F
+              </Box>
+            </ToggleButton>
+            <ToggleButton value="region">
+              <NavigationIcon sx={{ fontSize: { xs: 12, sm: 14, md: 16 } }} />
+              <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                Région
+              </Box>
+              <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                R
+              </Box>
+            </ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
       </Paper>
 
       {mainCenterWeather && (
@@ -795,20 +1020,22 @@ const Weather: React.FC = () => {
             attribution='&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/">Humanitarian OpenStreetMap Team</a>'
           />
           
-          <Circle
-            center={[NANTES_COORDS.lat, NANTES_COORDS.lon]}
-            radius={50000} // 50km de rayon
-            pathOptions={{
-              color: '#3b82f6',
-              weight: 2,
-              opacity: 0.6,
-              fillColor: '#3b82f6',
-              fillOpacity: 0.1,
-            }}
-          />
+          {viewMode === 'focus' && selectedCityFocus && (
+            <Circle
+              center={[selectedCityFocus.coords.lat, selectedCityFocus.coords.lon]}
+              radius={50000} // 50km de rayon
+              pathOptions={{
+                color: '#3b82f6',
+                weight: 2,
+                opacity: 0.6,
+                fillColor: '#3b82f6',
+                fillOpacity: 0.1,
+              }}
+            />
+          )}
           
           {weatherPoints.filter((point) => {
-            if (viewMode === 'nantes') {
+            if (viewMode === 'focus') {
               return point.showInFocus;
             } else {
               return point.showInRegion;

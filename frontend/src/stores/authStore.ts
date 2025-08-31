@@ -1,5 +1,6 @@
 import { authApi, type LoginRequest, type RegisterRequest } from '@/api/auth';
-import { userProfileApi, type UserRole } from '@/api/userProfile';
+import { userProfileApi } from '@/api/userProfile';
+import { type UserRole } from '@/types/users';
 import { makeAutoObservable } from 'mobx';
 import { AxiosError } from 'axios';
 
@@ -14,7 +15,7 @@ interface UserWithRole extends User {
   role?: UserRole;
 }
 
-class AuthStore {
+export class AuthStore {
   user: UserWithRole | null = null;
   token: string | null = null;
   isAuthenticated = false;
@@ -38,16 +39,8 @@ class AuthStore {
         
         if (this.user && !this.user.role) {
           try {
-            if (this.user.email === 'admin@bloodsky.fr') {
-              this.user.role = { type: 'super_admin' };
-              console.log('Super admin détecté par email lors de l\'initialisation:', this.user.email);
-            } else {
-              const role = await userProfileApi.getUserRole({
-                userId: this.user.userId,
-                email: this.user.email
-              });
-              this.user.role = role;
-            }
+            const role = await userProfileApi.getUserRole(this.user.userId);
+            this.user.role = role;
             localStorage.setItem('user', JSON.stringify(this.user));
           } catch (error) {
             console.error('Impossible de récupérer le rôle utilisateur:', error);
@@ -75,31 +68,24 @@ class AuthStore {
       localStorage.setItem('token', response.token);
       console.log('AuthStore - Token stocké');
       
-      if (user.email === 'admin@bloodsky.fr') {
-        user.role = { type: 'super_admin' };
-        console.log('AuthStore - Super admin détecté par email:', user.email);
-      } else {
-        try {
-          console.log('AuthStore - Détermination du rôle pour userId:', user.userId);
-          const role = await userProfileApi.getUserRole({
-            userId: user.userId,
-            email: user.email
-          });
-          user.role = role;
-          console.log('AuthStore - Rôle utilisateur déterminé:', role);
-        } catch (roleError) {
-          console.error('AuthStore - Impossible de déterminer le rôle utilisateur:', roleError);
-          throw new Error('Impossible de déterminer vos permissions. Veuillez contacter l\'administrateur.');
-        }
+      try {
+        console.log('AuthStore - Détermination du rôle pour userId:', user.userId);
+        const role = await userProfileApi.getUserRole(user.userId);
+        user.role = role;
+        console.log('AuthStore - Rôle utilisateur déterminé:', role);
+      } catch (roleError) {
+        console.error('AuthStore - Impossible de déterminer le rôle utilisateur:', roleError);
       }
       
       console.log('AuthStore - User final avec rôle:', user);
       this.user = user;
       this.isAuthenticated = true;
       console.log('AuthStore - isAuthenticated défini à true');
-      alert('LOGIN RÉUSSI - Rôle: ' + JSON.stringify(user.role));
+      //alert('LOGIN RÉUSSI - Rôle: ' + JSON.stringify(user.role));
       
       localStorage.setItem('user', JSON.stringify(user));
+      // Reset de la vue active pour forcer le retour au dashboard principal
+      localStorage.setItem('bloodsky-active-view', 'dashboard');
       console.log('AuthStore - User stocké dans localStorage');
     } catch (error) {
       const axiosError = error as AxiosError<{ message: string }>;
@@ -152,9 +138,14 @@ class AuthStore {
     
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    localStorage.removeItem('bloodsky-active-view');
     
     console.log('AuthStore - Redirection vers /login');
     window.location.href = '/login';
+  }
+
+  get isSuperAdmin() {
+    return this.user?.role?.type === 'super_admin';
   }
 }
 

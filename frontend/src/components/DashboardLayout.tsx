@@ -33,6 +33,7 @@ import {
   GroupOutlined,
   MenuOutlined,
   NotificationsNone,
+  Bloodtype,
 } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -43,6 +44,7 @@ import theme from '@/theme/theme';
 import { useAuth } from '@/hooks/useAuth';
 import authStore from '@/stores/authStore';
 import { NotificationStore } from '@/stores/NotificationStore';
+import { isDonationCenterAdmin, isHospitalAdmin } from '@/types/users';
 import NotificationManagement from './NotificationManagement';
 import DroneManagement from './DroneManagement';
 import { dashboardApi } from '@/api/dashboard';
@@ -73,6 +75,20 @@ interface DashboardConfig {
   customDashboardComponent?: ReactNode | ((setActiveView: (view: string) => void) => ReactNode);
   contactComponent?: React.ReactNode;
   weatherComponent?: React.ReactNode;
+  bloodStockComponent?: ReactNode;
+  // Super Admin components
+  inviteDonationComponent?: ReactNode;
+  inviteHospitalComponent?: ReactNode;
+  addHospitalComponent?: ReactNode;
+  addCenterComponent?: ReactNode;
+  searchComponent?: ReactNode;
+  dronesComponent?: ReactNode;
+  hospitalsComponent?: ReactNode;
+  centersComponent?: ReactNode;
+  adminsComponent?: ReactNode;
+  usersComponent?: ReactNode;
+  deliveriesComponent?: ReactNode;
+  statisticsComponent?: ReactNode;
   menuItems?: Array<{
     id: string;
     label: string;
@@ -173,7 +189,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
   setIsLoadingMap(true);
   try {
     // 1) Utilisateur rattaché à un centre de don
-    if (auth.user?.role?.centerId) {
+    if (auth.user?.role && isDonationCenterAdmin(auth.user.role)) {
       const centerId = auth.user.role.centerId;
       const center = await donationCenterApi.getCenterById(centerId);
 
@@ -208,7 +224,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
     }
 
     // 2) Utilisateur rattaché à un hôpital
-    if (auth.user?.role?.hospitalId) {
+    if (auth.user?.role && isHospitalAdmin(auth.user.role)) {
       const hospitalId = auth.user.role.hospitalId;
       const hosp = await hospitalApi.getById(hospitalId);
 
@@ -240,13 +256,17 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
 };
 
   loadPosition();
-}, [auth.user?.role?.centerId, auth.user?.role?.hospitalId, config.position]);
+}, [auth.user?.role, config.position]);
 
 
+
+  const isFromDonationCenter = (role: any) => {
+    return role && (isDonationCenterAdmin(role) || (role.type === 'user' && role.centerId));
+  };
 
   // Détermine le libellé selon le type d'utilisateur
   const getDeliveryLabel = () => {
-    if (auth.user?.role?.centerId) {
+    if (isFromDonationCenter(auth.user?.role)) {
       return 'Livrer'; // Centre de donation = celui qui livre
     }
     return 'Se faire livrer'; // Hôpital = celui qui reçoit
@@ -259,8 +279,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
     { id: 'profil', label: 'Mon profil', icon: <AccountCircleOutlined /> },
     { id: 'contact', label: 'Contact', icon: <ContactSupportOutlined /> },
     //Onglet météo uniquement pour droniste
-    // Onglet livraison uniquement pour les hôpitaux
-    ...(!auth.user?.role?.centerId ? [{ id: 'livraison', label: getDeliveryLabel(), icon: <LocalShippingOutlined /> }] : []),
+    // Onglet livraison uniquement pour les hôpitaux (pas pour les centres de donation)
+    ...(!isFromDonationCenter(auth.user?.role) ? [{ id: 'livraison', label: getDeliveryLabel(), icon: <LocalShippingOutlined /> }] : []),
+    ...(auth.user?.role?.admin && isFromDonationCenter(auth.user?.role) ? [{ id: 'bloodstock', label: 'Gestion du sang', icon: <Bloodtype /> }] : []),
     ...(auth.user?.role?.admin ? [{ id: 'users', label: 'Gestion des utilisateurs', icon: <GroupOutlined /> }] : []),
   ];
 
@@ -1011,7 +1032,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
           width: { md: `calc(100% - ${drawerWidth}px)` },
           mt: { xs: 7, md: 0 } // Marge pour l'AppBar mobile
         }}>
-          {activeView === 'users' && auth.user?.role?.admin && config.userManagementComponent ? (
+          {activeView === 'users' && config.usersComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.usersComponent}
+            </Box>
+          ) : activeView === 'users' && auth.user?.role?.admin && config.userManagementComponent ? (
             <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
               {config.userManagementComponent}
             </Box>
@@ -1039,10 +1064,54 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
             <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
               {config.weatherComponent}
             </Box>
+          ) : activeView === 'bloodstock' && config.bloodStockComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.bloodStockComponent}
+            </Box>
           )
            : activeView === 'drones' ? (
             <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
-              <DroneManagement />
+              {config.dronesComponent || <DroneManagement />}
+            </Box>
+          ) : activeView === 'invite-donation' && config.inviteDonationComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.inviteDonationComponent}
+            </Box>
+          ) : activeView === 'invite-hospital' && config.inviteHospitalComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.inviteHospitalComponent}
+            </Box>
+          ) : activeView === 'add-hospital' && config.addHospitalComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.addHospitalComponent}
+            </Box>
+          ) : activeView === 'add-center' && config.addCenterComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.addCenterComponent}
+            </Box>
+          ) : activeView === 'search' && config.searchComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.searchComponent}
+            </Box>
+          ) : activeView === 'deliveries' && config.deliveriesComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.deliveriesComponent}
+            </Box>
+          ) : activeView === 'statistics' && config.statisticsComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.statisticsComponent}
+            </Box>
+          ) : activeView === 'hospitals' && config.hospitalsComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.hospitalsComponent}
+            </Box>
+          ) : activeView === 'centers' && config.centersComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.centersComponent}
+            </Box>
+          ) : activeView === 'admins' && config.adminsComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.adminsComponent}
             </Box>
           ) : activeView === 'dashboard' ? (
             config.customDashboardComponent ? (

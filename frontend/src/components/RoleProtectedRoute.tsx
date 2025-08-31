@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { observer } from 'mobx-react-lite';
 import { useAuth } from '../hooks/useAuth';
-import type { UserRole } from '@/api/userProfile';
+import type { UserRole } from '@/types/users';
 
 interface RoleProtectedRouteProps {
   allowedRoles: UserRole['type'][];
@@ -10,9 +10,10 @@ interface RoleProtectedRouteProps {
 
 const RoleProtectedRoute = observer(({ 
   allowedRoles, 
-  redirectPath = '/dashboard' 
+  redirectPath = '/home' 
 }: RoleProtectedRouteProps) => {
   const auth = useAuth();
+  const location = window.location.pathname;
   
   if (!auth.isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -22,7 +23,18 @@ const RoleProtectedRoute = observer(({
     return <div>Chargement...</div>;
   }
   
-  if (!allowedRoles.includes(auth.user.role.type)) {
+  const userRole = auth.user.role;
+  
+  if (userRole.type === 'user') {
+    if (location === '/hospital' && !userRole.hospitalId) {
+      return <Navigate to="/home" replace />;
+    }
+    if (location === '/donation-center' && !userRole.centerId) {
+      return <Navigate to="/home" replace />;
+    }
+  }
+  
+  if (!allowedRoles.includes(userRole.type)) {
     return <Navigate to={redirectPath} replace />;
   }
   

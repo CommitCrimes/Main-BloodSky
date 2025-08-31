@@ -21,17 +21,10 @@ const Section1 = () => {
   const navigate = useNavigate();
 
   return (
-    <section
-      className="section1 section1-custom"
-      style={{
-        maxHeight: '100vh',
-        padding: '2rem',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
-    >
+    <section className="section1 section1-custom">
       {/* Bouton Se connecter */}
       <button
+        className="login-btn"
         onClick={() => navigate('/login')}
         onMouseOver={e => {
           (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.12)';
@@ -55,12 +48,12 @@ const Section1 = () => {
 };
 const Section2 = () => (
   <section className="section2 section2-custom">
-      <h1 className="section2-title">L’avenir de la logistique médicale,<br/>
-          c’est maintenant. </h1>
+      <h1 className="section2-title">L'avenir de la logistique médicale,<br className="desktop-br"/>
+          c'est maintenant. </h1>
       <div className="section2-content">
       {/* Colonne gauche */}
       <div className="section2-left">
-          <div className="section2-text-top">BloodSky révolutionne la livraison médicale <br/>
+          <div className="section2-text-top">BloodSky révolutionne la livraison médicale <br className="desktop-br"/>
               en transportant des poches de sang par drone,
               rapidement et en toute sécurité.
           </div>
@@ -69,9 +62,9 @@ const Section2 = () => (
       {/* Colonne droite */}
         <div className="section2-right">
             <img src={medicalHomeImg} alt="Medical Home" className="section2-img-right"/>
-            <div className="section2-text-bottom">Destinée aux centres de santé et aux <br/>
-                maisons de sang, notre technologie sauve <br/>
-                des vies en réduisant le temps d’attente et <br/> en garantissant la fraîcheur
+            <div className="section2-text-bottom">Destinée aux centres de santé et aux <br className="desktop-br"/>
+                maisons de sang, notre technologie sauve <br className="desktop-br"/>
+                des vies en réduisant le temps d'attente et <br className="desktop-br"/> en garantissant la fraîcheur
                 des transfusions.
             </div>
 
@@ -143,36 +136,14 @@ const Section4 = () => (
   </section>
 );
 const Section5 = () => (
-  <section className="section5-howitworks" style={{ padding: '3rem 0', background: 'linear-gradient(180deg, #fff 60%, #f9f6fa 100%)' }}>
-    <h1
-      style={{
-        textAlign: 'center',
-        fontSize: '65px',
-        fontWeight: 800,
-        background: 'linear-gradient(90deg,rgb(90, 183, 249),rgb(236, 15, 89))',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        backgroundClip: 'text',
-        color: 'transparent',  
-        marginBottom: '1rem',
-        lineHeight: 1.1,
-      }}
-    >
+  <section className="section5-howitworks">
+    <h1 className="section5-title">
       Comment ça fonctionne
     </h1>
-    <div style={{ textAlign: 'center', color: '#7b7b93', fontSize: '1.3rem', marginBottom: '3rem' }}>
+    <div className="section5-subtitle">
       Un processus sécurisé et efficace pour le transport de produits sanguins par drone
     </div>
-    <div
-      style={{
-        display: 'flex',
-        justifyContent: 'center',
-        gap: 20,
-        flexWrap: 'nowrap',
-        overflowX: 'auto',
-        overflow: 'visible',
-      }}
-    >
+    <div className="section5-steps-container">
       {/* Étape 1 */}
       <div className="howitworks-step" style={{ background: '#fff', borderRadius: 20, boxShadow: '0 2px 16px #e6e6f7', padding: 32, width: 220, position: 'relative', minHeight: 300 }}>
         <div style={{

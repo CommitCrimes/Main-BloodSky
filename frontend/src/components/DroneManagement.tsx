@@ -21,6 +21,7 @@ import {
   Tooltip,
   Card,
   CardContent,
+  Menu, MenuItem, ListItemIcon, ListItemText
 } from '@mui/material';
 import {
   FlightTakeoffOutlined,
@@ -31,6 +32,7 @@ import {
   HomeOutlined,
   RefreshOutlined,
   Visibility,
+  CheckCircleOutline, BuildCircleOutlined, PowerSettingsNewOutlined
 } from '@mui/icons-material';
 import DroneDetailView from './DroneDetailView';
 import { dronesApi } from '@/api/drone';
@@ -51,6 +53,11 @@ const DroneManagement: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [syncing, setSyncing] = useState<number | null>(null);
   const [detailViewDroneId, setDetailViewDroneId] = useState<number | null>(null);
+  type DroneStatusValue = 'available' | 'maintenance' | 'hors service';
+  const [statusMenuAnchor, setStatusMenuAnchor] = useState<null | HTMLElement>(null);
+  const [statusMenuDroneId, setStatusMenuDroneId] = useState<number | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
+  const openStatusMenu = Boolean(statusMenuAnchor);
 
   const fetchDronesData = async () => {
     try {
@@ -135,6 +142,32 @@ const DroneManagement: React.FC = () => {
     fetchDronesData();
   }, []);
 
+  const handleOpenStatusMenu = (e: React.MouseEvent<HTMLElement>, droneId: number) => {
+  setStatusMenuAnchor(e.currentTarget);
+  setStatusMenuDroneId(droneId);
+};
+
+const handleCloseStatusMenu = () => {
+  setStatusMenuAnchor(null);
+  setStatusMenuDroneId(null);
+};
+
+const applyDroneStatus = async (newStatus: DroneStatusValue) => {
+  if (statusMenuDroneId == null) return;
+  try {
+    setUpdatingStatusId(statusMenuDroneId);
+    await dronesApi.update(statusMenuDroneId, { droneStatus: newStatus });
+    await fetchDronesData();
+  } catch (err) {
+    console.error('Error updating drone status:', err);
+    setError(`Erreur lors de la mise à jour du statut du drone ${statusMenuDroneId}`);
+  } finally {
+    setUpdatingStatusId(null);
+    handleCloseStatusMenu();
+  }
+};
+
+
   useEffect(() => {
     if (dronesHistory.length === 0) return;
     if (detailViewDroneId) return; // pause
@@ -147,7 +180,7 @@ const DroneManagement: React.FC = () => {
     const s = (status || '').toLowerCase();
     switch (s) {
       case 'available':
-        return 'available';
+        return 'actif ';
       case 'maintenance':
         return 'Maintenance';
       case 'hors service':
@@ -157,8 +190,9 @@ const DroneManagement: React.FC = () => {
   const getStatusColor = (status: string): string => {
     switch ((status || '').toLowerCase()) {
       case 'available':
-        return '#616161';
+        return '#10b981';
       case 'maintenance':
+        return '#f59e0b';
       case 'hors service':
         return '#f44336';
       default:
@@ -228,9 +262,24 @@ const DroneManagement: React.FC = () => {
 
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" sx={{ fontFamily: 'Share Tech, monospace', color: '#5C7F9B' }}>
+    <Box sx={{ p: { xs: 2, sm: 3 } }}>
+      <Menu anchorEl={statusMenuAnchor} open={openStatusMenu} onClose={handleCloseStatusMenu}>
+  <MenuItem onClick={() => applyDroneStatus('available')}>
+    <ListItemIcon><CheckCircleOutline fontSize="small" /></ListItemIcon>
+    <ListItemText>Actif</ListItemText>
+  </MenuItem>
+  <MenuItem onClick={() => applyDroneStatus('maintenance')}>
+    <ListItemIcon><BuildCircleOutlined fontSize="small" /></ListItemIcon>
+    <ListItemText>Maintenance</ListItemText>
+  </MenuItem>
+  <MenuItem onClick={() => applyDroneStatus('hors service')}>
+    <ListItemIcon><PowerSettingsNewOutlined fontSize="small" /></ListItemIcon>
+    <ListItemText>Hors service</ListItemText>
+  </MenuItem>
+</Menu>
+
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, gap: 2, mb: 3 }}>
+        <Typography variant="h4" sx={{ fontFamily: 'Share Tech, monospace', color: '#5C7F9B', fontSize: { xs: '1.5rem', sm: '2rem', md: '2.5rem' } }}>
           Gestion des Drones
         </Typography>
         <Button variant="outlined" startIcon={<RefreshOutlined />} onClick={fetchDronesData} disabled={loading}>
@@ -337,7 +386,8 @@ const DroneManagement: React.FC = () => {
       </Box>
 
       {/* Table */}
-      <TableContainer component={Paper}>
+      {/* Version Desktop */}
+      <TableContainer component={Paper} sx={{ display: { xs: 'none', md: 'block' } }}>
         <Table>
           <TableHead>
             <TableRow>
@@ -379,17 +429,25 @@ const DroneManagement: React.FC = () => {
                       {drone.droneName || 'Sans nom'}
                     </Typography>
                   </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={tStatus(drone.droneStatus)}
-                      size="small"
-                      sx={{
-                        backgroundColor: getStatusColor(drone.droneStatus),
-                        color: 'white',
-                        fontWeight: 'bold',
-                      }}
-                    />
-                  </TableCell>
+<TableCell>
+  <Chip
+  clickable
+  onClick={(e) => handleOpenStatusMenu(e, drone.droneId)}
+  label={
+    updatingStatusId === drone.droneId
+      ? (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <CircularProgress size={14} />
+          <span>{tStatus(drone.droneStatus) || 'N/A'}</span>
+        </Box>
+      )
+      : (tStatus(drone.droneStatus) || 'N/A')
+  }
+  size="small"
+  sx={{ backgroundColor: getStatusColor(drone.droneStatus), color: '#fff', fontSize: '0.7rem' }}
+/>
+
+</TableCell>
 
                   {/* État */}
                   <TableCell>
@@ -457,8 +515,140 @@ const DroneManagement: React.FC = () => {
         </Table>
       </TableContainer>
 
+      {/* Version Mobile avec Cards */}
+      <Box sx={{ display: { xs: 'block', md: 'none' } }}>
+        {uniqueDrones.map((drone) => {
+          const statusItem: DroneStatus | undefined = dronesStatus.find((s) => s.droneId === drone.droneId);
+          const fi = dronesFlightInfo[drone.droneId];
+          const isOnline = statusItem?.isOnline || false;
+          const isArmed = fi?.is_armed === true;
+          const flightMode = fi?.flight_mode || 'N/A';
+
+          return (
+            <Card key={drone.droneId} sx={{ mb: 2, borderRadius: 2, boxShadow: 2 }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontFamily: 'Share Tech, monospace', fontSize: '1.1rem' }}>
+                      {drone.droneName || 'Sans nom'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      ID: {drone.droneId}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Chip
+                      label={tStatus(drone.droneStatus) || 'N/A'}
+                      size="small"
+                      sx={{
+                        backgroundColor: getStatusColor(drone.droneStatus),
+                        color: '#fff',
+                        fontSize: '0.7rem'
+                      }}
+                    />
+                    {isOnline && (
+                      <Chip
+                        label="En ligne"
+                        size="small"
+                        sx={{ backgroundColor: '#4caf50', color: '#fff', fontSize: '0.7rem' }}
+                      />
+                    )}
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.5, mb: 2 }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">État</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: 'Share Tech, monospace' }}>
+                      {isArmed ? 'Armé' : 'Désarmé'}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Mode</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: 'Share Tech, monospace' }}>
+                      {flightMode}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Batterie</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: 'Share Tech, monospace' }}>
+                      {percentOrNA(fi?.battery_remaining_percent)}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Centre</Typography>
+                    <Typography variant="body2" sx={{ fontFamily: 'Share Tech, monospace', fontSize: '0.85rem' }}>
+                      {drone.centerCity || 'N/A'}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Tooltip title="Voir les détails">
+                    <IconButton 
+                      size="small" 
+                      onClick={() => setDetailViewDroneId(drone.droneId)}
+                      sx={{ border: '1px solid #e0e0e0' }}
+                    >
+                      <Visibility fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Synchroniser">
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleSyncDrone(drone.droneId)}
+                      disabled={syncing === drone.droneId || !isOnline}
+                      sx={{ border: '1px solid #e0e0e0' }}
+                    >
+                      {syncing === drone.droneId ? (
+                        <CircularProgress size={18} />
+                      ) : (
+                        <SyncOutlined fontSize="small" />
+                      )}
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Retour base">
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleReturnHome(drone.droneId)}
+                      disabled={!isOnline || !isArmed}
+                      sx={{ border: '1px solid #e0e0e0' }}
+                    >
+                      <HomeOutlined fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Infos">
+                    <IconButton 
+                      size="small" 
+                      onClick={() => {
+                        setSelectedDrone(drone);
+                        setDialogOpen(true);
+                      }}
+                      sx={{ border: '1px solid #e0e0e0' }}
+                    >
+                      <NavigationOutlined fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </Box>
+
       {/* Dialog infos drone */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth="md" fullWidth>
+      <Dialog 
+        open={dialogOpen} 
+        onClose={() => setDialogOpen(false)} 
+        maxWidth="md" 
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            margin: { xs: 2, sm: 4 },
+            width: { xs: '100%', sm: 'auto' }
+          }
+        }}
+      >
         <DialogTitle>Détails du Drone {selectedDrone?.droneId}</DialogTitle>
         <DialogContent>
           {selectedDrone && (

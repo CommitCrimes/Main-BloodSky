@@ -60,10 +60,17 @@ test("CRUD donation center", async () => {
     console.log("[TEST] GET donation center by postal code");
     const resByPostal = await request("GET", "donation-centers", `/postal/${updatedCenterData.centerPostal}`);
     expect(resByPostal.status).toBe(200);
-    const centersByPostal = await resByPostal.json();
-    expect(centersByPostal.length).toBeGreaterThan(0);
-    const centerMatch = centersByPostal.find((c: any) => c.centerId === centerId);
-    expect(centerMatch).toBeDefined();
+  const centersByPostal = await resByPostal.json();
+  expect(centersByPostal.length).toBeGreaterThan(0);
+  const centerMatch = centersByPostal.find((c: any) => c.centerId === centerId);
+  expect(centerMatch).toBeDefined();
+
+  // 6. GET: Verify search by city
+  console.log("[TEST] GET donation center by city");
+  const resByCity = await request("GET", "donation-centers", `/city/${encodeURIComponent(updatedCenterData.centerCity)}`);
+  expect(resByCity.status).toBe(200);
+  const centersByCity = await resByCity.json();
+  expect(Array.isArray(centersByCity)).toBe(true);
 
     // 5. DELETE: Supprimer le centre de don
     console.log("[TEST] DELETE donation center");
