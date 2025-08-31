@@ -33,6 +33,7 @@ import {
   GroupOutlined,
   MenuOutlined,
   NotificationsNone,
+  Bloodtype,
 } from '@mui/icons-material';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -74,6 +75,7 @@ interface DashboardConfig {
   customDashboardComponent?: ReactNode | ((setActiveView: (view: string) => void) => ReactNode);
   contactComponent?: React.ReactNode;
   weatherComponent?: React.ReactNode;
+  bloodStockComponent?: ReactNode;
   // Super Admin components
   inviteDonationComponent?: ReactNode;
   inviteHospitalComponent?: ReactNode;
@@ -279,6 +281,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
     //Onglet météo uniquement pour droniste
     // Onglet livraison uniquement pour les hôpitaux (pas pour les centres de donation)
     ...(!isFromDonationCenter(auth.user?.role) ? [{ id: 'livraison', label: getDeliveryLabel(), icon: <LocalShippingOutlined /> }] : []),
+    ...(auth.user?.role?.admin && isFromDonationCenter(auth.user?.role) ? [{ id: 'bloodstock', label: 'Gestion du sang', icon: <Bloodtype /> }] : []),
     ...(auth.user?.role?.admin ? [{ id: 'users', label: 'Gestion des utilisateurs', icon: <GroupOutlined /> }] : []),
   ];
 
@@ -1060,6 +1063,10 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
           ) : activeView === 'meteo' && config.weatherComponent ? (
             <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
               {config.weatherComponent}
+            </Box>
+          ) : activeView === 'bloodstock' && config.bloodStockComponent ? (
+            <Box sx={{ backgroundColor: 'background.default', minHeight: '100vh' }}>
+              {config.bloodStockComponent}
             </Box>
           )
            : activeView === 'drones' ? (

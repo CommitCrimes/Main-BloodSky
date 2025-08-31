@@ -138,6 +138,7 @@ export class AuthStore {
     
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    localStorage.removeItem('bloodsky-active-view');
     
     console.log('AuthStore - Redirection vers /login');
     window.location.href = '/login';
