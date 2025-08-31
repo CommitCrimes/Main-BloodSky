@@ -8,7 +8,7 @@ on:
 jobs:
   Push:
     runs-on: ubuntu-latest
-    if: github.repository == 'CommitCrimes/BloodSky'
+    if: github.repository == 'CommitCrimes/Main-BloodSky'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
