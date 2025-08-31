@@ -43,11 +43,12 @@ interface EditStatusPopupProps {
 const STATUS_LABEL: Record<DeliveryStatus, string> = {
   pending: 'Programmer',
   in_transit: 'En transit',
+  charged: 'Chargée',
   delivered: 'Livré',
   cancelled: 'Annuler',
 };
 
-const ALL_STATUSES: DeliveryStatus[] = ['pending', 'in_transit', 'delivered', 'cancelled'];
+const ALL_STATUSES: DeliveryStatus[] = ['pending', 'in_transit','charged', 'delivered', 'cancelled'];
 
 const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
   open,

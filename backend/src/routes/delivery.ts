@@ -93,9 +93,9 @@ deliveryRouter.post("/", async (c) => {
 });
 
 // POST create delivery participation
+// routes/delivery.router.ts (extrait POST /deliveries/participation)
 deliveryRouter.post("/participation", async (c) => {
-  const body = await c.req.json();
-  const { deliveryId, userId } = body;
+  const { deliveryId, userId } = await c.req.json();
 
   if (!deliveryId || !userId) {
     return c.text("deliveryId and userId are required", 400);
@@ -103,11 +103,16 @@ deliveryRouter.post("/participation", async (c) => {
 
   try {
     await db.insert(deliveryParticipations).values({ deliveryId, userId });
-    const validated = await DeliveryValidationService.validateIfHospitalParticipant(deliveryId, userId);
-    if (validated) {
-      return c.text("User added to delivery and delivery validated", 201);
+
+    const changed = await DeliveryValidationService.validateOnParticipation(deliveryId, userId);
+
+    if (changed === "delivered") {
+      return c.text("User added to delivery and delivery validated (delivered)", 201);
     }
-    return c.text("User added to delivery (no validation applied)", 201);
+    if (changed === "charged") {
+      return c.text("User added to delivery and delivery marked as charged", 201);
+    }
+    return c.text("User added to delivery (no status change)", 201);
   } catch (err) {
     console.error(err);
     return c.text("Failed to add user to delivery", 500);
