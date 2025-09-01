@@ -1626,7 +1626,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
         onClose={() => setAssignOpen(false)}
         centerId={donationCenter?.centerId ?? null}
         droneId={droneId}
-        statusFilter="pending"
+        statusFilter={['pending', 'charged']}
         defaultAltitude={cruiseAlt}
         onMissionReady={async ({ deliveryId, hospitalId, lat, lon }) => {
           setAssignOpen(false);

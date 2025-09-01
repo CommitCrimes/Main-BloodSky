@@ -21,7 +21,7 @@ type Props = {
   onClose: () => void;
   centerId?: number | null;
   droneId: number;
-  statusFilter?: DeliveryStatus;
+  statusFilter?: DeliveryStatus[];
   onAssigned?: (deliveryId: number) => void;
   onMissionReady?: (payload: { deliveryId: number; filename: string; hospitalId: number; lat: number; lon: number }) => void;
   defaultAltitude?: number;
@@ -66,7 +66,7 @@ const getStatusColor = (status: DeliveryStatus) => {
 };
 const getStatusLabel = (status: DeliveryStatus) => {
   switch (status) {
-    case 'delivered':  return 'Livré';
+    case 'delivered':  return 'Livrée';
     case 'in_transit': return 'En transit';
     case 'charged': return 'Chargée';
     case 'pending':    return 'En attente';
@@ -96,7 +96,7 @@ const toNum = (s?: string | null) => Number(String(s ?? '').trim().replace(',', 
 
 // ----------------- Component -----------------
 const AssignDeliveryDialog: React.FC<Props> = ({
-  open, onClose, centerId, droneId, statusFilter = 'pending', onAssigned, onMissionReady,defaultAltitude = 50
+  open, onClose, centerId, droneId, statusFilter = ['pending', 'charged'], onAssigned, onMissionReady,defaultAltitude = 50
 }) => {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
@@ -172,13 +172,13 @@ const AssignDeliveryDialog: React.FC<Props> = ({
 
   useEffect(() => { if (open) { void load(); } }, [open, centerId]);
 
-  const items = useMemo(() => {
-    return all
-      .filter(d => d.deliveryStatus === statusFilter)
-      .filter(d => includeUnassigned ? (d.droneId === droneId || d.droneId == null) : d.droneId === droneId)
-      .slice()
-      .sort(compareByPlannedDateThenUrgency);
-  }, [all, statusFilter, includeUnassigned, droneId]);
+const items = useMemo(() => {
+  return all
+    .filter(d => statusFilter.includes(d.deliveryStatus))
+    .filter(d => includeUnassigned ? (d.droneId === droneId || d.droneId == null) : d.droneId === droneId)
+    .slice()
+    .sort(compareByPlannedDateThenUrgency);
+}, [all, statusFilter, includeUnassigned, droneId]);
 
 const handleLoadMission = async (d: DeliveryWithParticipants) => {
   try {

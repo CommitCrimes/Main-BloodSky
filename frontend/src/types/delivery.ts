@@ -1,6 +1,6 @@
 // src/types/delivery.ts
 
-export type DeliveryStatus = 'pending' | 'in_progress' | 'completed' | 'cancelled' | string;
+export type DeliveryStatus = 'pending' | 'charged' | 'in_progress' | 'completed' | 'cancelled' | string;
 
 export interface Delivery {
     deliveryId: number;

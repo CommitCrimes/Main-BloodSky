@@ -44,7 +44,7 @@ const STATUS_LABEL: Record<DeliveryStatus, string> = {
   pending: 'Programmer',
   in_transit: 'En transit',
   charged: 'Chargée',
-  delivered: 'Livré',
+  delivered: 'Livrée',
   cancelled: 'Annuler',
 };
 
