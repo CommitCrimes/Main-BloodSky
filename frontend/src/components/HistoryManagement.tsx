@@ -200,7 +200,7 @@ function isHospitalAffiliated(
   const getStatusLabel = (status: DeliveryHistory['deliveryStatus']) => {
     switch (status) {
       case 'delivered':
-        return 'Livré';
+        return 'Livrée';
       case 'in_transit':
         return 'En transit';
       case "charged":
@@ -480,7 +480,7 @@ function isHospitalAffiliated(
                 <MenuItem value="">Tous</MenuItem>
                 <MenuItem value="pending">En attente</MenuItem>
                 <MenuItem value="in_transit">En transit</MenuItem>
-                <MenuItem value="delivered">Livré</MenuItem>
+                <MenuItem value="delivered">Livrée</MenuItem>
                 <MenuItem value="cancelled">Annulé</MenuItem>
               </Select>
             </FormControl>
