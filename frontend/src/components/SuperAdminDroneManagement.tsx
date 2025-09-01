@@ -31,6 +31,7 @@ import {
   Card,
   CardContent,
   TextField,
+  Menu, MenuItem, ListItemIcon, ListItemText
 } from "@mui/material";
 import Autocomplete from "@mui/material/Autocomplete";
 import {
@@ -44,6 +45,7 @@ import {
   Visibility,
   Add,
   Delete,
+  CheckCircleOutline, BuildCircleOutlined, PowerSettingsNewOutlined
 } from "@mui/icons-material";
 import DroneDetailView from "./DroneDetailView";
 import { dronesApi } from "@/api/drone";
@@ -58,8 +60,10 @@ import type { FlightInfo as DroneFlightInfo } from "@/types/drone";
 import type { DroneHistory } from "@/types/delivery";
 import type { DroneStatus } from "@/types/drone";
 import { useAuth } from "@/hooks/useAuth";
+import { formatDate } from "date-fns";
 
 const AdminDroneManagement: React.FC = () => {
+  type DroneStatusValue = 'available' | 'maintenance' | 'hors service';
   const [dronesHistory, setDronesHistory] = useState<DroneHistory[]>([]);
   const [dronesStatus, setDronesStatus] = useState<DroneStatus[]>([]);
   const [dronesFlightInfo, setDronesFlightInfo] = useState<
@@ -86,6 +90,45 @@ const AdminDroneManagement: React.FC = () => {
   const [selectedCenter, setSelectedCenter] = useState<DonationCenter | null>(
     null
   );
+  const [statusMenuAnchor, setStatusMenuAnchor] = useState<null | HTMLElement>(null);
+  const [statusMenuDroneId, setStatusMenuDroneId] = useState<number | null>(null);
+  const [updatingStatusId, setUpdatingStatusId] = useState<number | null>(null);
+  const openStatusMenu = Boolean(statusMenuAnchor);
+
+
+
+  const isDroneOffline = (droneId: number) => {
+    const status = dronesStatus.find((s) => s.droneId === droneId);
+    const fi = dronesFlightInfo[droneId];
+    return !status?.isOnline || !!fi?.unavailable || fi?.state === "offline";
+  };
+
+  const handleOpenStatusMenu = (e: React.MouseEvent<HTMLElement>, droneId: number) => {
+    setStatusMenuAnchor(e.currentTarget);
+    setStatusMenuDroneId(droneId);
+  };
+
+  const handleCloseStatusMenu = () => {
+    setStatusMenuAnchor(null);
+    setStatusMenuDroneId(null);
+  };
+
+  const applyDroneStatus = async (newStatus: DroneStatusValue) => {
+    if (statusMenuDroneId == null) return;
+    try {
+      setUpdatingStatusId(statusMenuDroneId);
+      await dronesApi.update(statusMenuDroneId, { droneStatus: newStatus });
+      await fetchDronesData();
+    } catch (err) {
+      console.error('Error updating drone status:', err);
+      setError(`Erreur lors de la mise à jour du statut du drone ${statusMenuDroneId}`);
+    } finally {
+      setUpdatingStatusId(null);
+      handleCloseStatusMenu();
+    }
+  };
+
+
 
   const fetchDronesData = async () => {
     try {
@@ -261,31 +304,31 @@ const AdminDroneManagement: React.FC = () => {
     return () => clearInterval(id);
   }, [dronesHistory, detailViewDroneId]);
 
-  const getStatusColor = (status: string): string => {
-    switch (status?.toLowerCase()) {
-      case "active":
-      case "flying":
-        return "#4caf50";
-      case "charging":
-      case "standby":
-        return "#ff9800";
+  const tStatus = (status?: string | null) => {
+    const s = (status || "").toLowerCase();
+    switch (s) {
+      case "available":
+        return "Actif";
       case "maintenance":
-      case "error":
-        return "#f44336";
+        return "Maintenance";
+      case "hors service":
+        return "Hors service";
       default:
-        return "#9e9e9e";
+        return "N/A";
     }
   };
 
-  const formatDate = (dateString: string): string => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleString("fr-FR", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const getStatusColor = (status?: string | null): string => {
+    switch ((status || "").toLowerCase()) {
+      case "available":
+        return "#10b981"; // vert émeraude
+      case "maintenance":
+        return "#f59e0b"; // orange
+      case "hors service":
+        return "#f44336"; // rouge
+      default:
+        return "#9e9e9e"; // gris
+    }
   };
 
   // Mémos pour éviter de recalculer à chaque render
@@ -347,11 +390,11 @@ const AdminDroneManagement: React.FC = () => {
         0
       ) /
         Math.max(Object.keys(dronesFlightInfo).length, 1)) *
-        1
+      1
     ) || 0;
 
   return (
-    <Box sx={{ 
+    <Box sx={{
       px: { xs: 2, sm: 3, md: 4, lg: 5 },
       py: { xs: 2, sm: 3 },
       maxWidth: '1400px',
@@ -369,7 +412,7 @@ const AdminDroneManagement: React.FC = () => {
       >
         <Typography
           variant="h4"
-          sx={{ 
+          sx={{
             fontSize: { xs: '1.8rem', sm: '2.2rem' },
             mb: 0.5,
             fontFamily: 'Iceland, cursive',
@@ -379,8 +422,8 @@ const AdminDroneManagement: React.FC = () => {
         >
           Gestion des Drones
         </Typography>
-        <Box sx={{ 
-          display: "flex", 
+        <Box sx={{
+          display: "flex",
           gap: { xs: 1, sm: 2 },
           flexDirection: { xs: 'column', sm: 'row' },
           width: { xs: '100%', sm: 'auto' }
@@ -422,18 +465,18 @@ const AdminDroneManagement: React.FC = () => {
       )}
 
       {/* Overview */}
-      <Box sx={{ 
+      <Box sx={{
         display: 'grid',
-        gridTemplateColumns: { 
-          xs: '1fr', 
-          sm: 'repeat(2, 1fr)', 
+        gridTemplateColumns: {
+          xs: '1fr',
+          sm: 'repeat(2, 1fr)',
           lg: 'repeat(3, 1fr)',
           xl: 'repeat(5, 1fr)'
         },
-        gap: { xs: 2, sm: 2.5, md: 3 },
+        gap: { xs: 1, sm: 1.5, md: 2 },
         mb: { xs: 3, sm: 4 }
       }}>
-        <Card sx={{ 
+        <Card sx={{
           border: '1px solid #e0e0e0',
           transition: 'all 0.2s ease',
           '&:hover': {
@@ -441,7 +484,7 @@ const AdminDroneManagement: React.FC = () => {
             transform: 'translateY(-2px)'
           }
         }}>
-          <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+          <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
             <Box
               sx={{
                 display: "flex",
@@ -449,19 +492,34 @@ const AdminDroneManagement: React.FC = () => {
                 justifyContent: "space-between",
               }}
             >
+              <Menu anchorEl={statusMenuAnchor} open={openStatusMenu} onClose={handleCloseStatusMenu}>
+                <MenuItem onClick={() => applyDroneStatus('available')}>
+                  <ListItemIcon><CheckCircleOutline fontSize="small" /></ListItemIcon>
+                  <ListItemText>Actif</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={() => applyDroneStatus('maintenance')}>
+                  <ListItemIcon><BuildCircleOutlined fontSize="small" /></ListItemIcon>
+                  <ListItemText>Maintenance</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={() => applyDroneStatus('hors service')}>
+                  <ListItemIcon><PowerSettingsNewOutlined fontSize="small" /></ListItemIcon>
+                  <ListItemText>Hors service</ListItemText>
+                </MenuItem>
+              </Menu>
+
               <Box>
-                <Typography 
-                  variant="h6" 
+                <Typography
+                  variant="h6"
                   color="primary"
-                  sx={{ 
+                  sx={{
                     fontSize: { xs: '1.25rem', sm: '1.5rem' },
                     fontWeight: 'bold'
                   }}
                 >
                   {uniqueDrones.length}
                 </Typography>
-                <Typography 
-                  variant="body2" 
+                <Typography
+                  variant="body2"
                   color="text.secondary"
                   sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
                 >
@@ -469,15 +527,15 @@ const AdminDroneManagement: React.FC = () => {
                 </Typography>
               </Box>
               <FlightTakeoffOutlined
-                sx={{ 
-                  fontSize: { xs: 30, sm: 35, md: 40 }, 
-                  color: "#5C7F9B" 
+                sx={{
+                  fontSize: { xs: 30, sm: 35, md: 40 },
+                  color: "#5C7F9B"
                 }}
               />
             </Box>
           </CardContent>
         </Card>
-        <Card sx={{ 
+        <Card sx={{
           border: '1px solid #e0e0e0',
           transition: 'all 0.2s ease',
           '&:hover': {
@@ -485,7 +543,7 @@ const AdminDroneManagement: React.FC = () => {
             transform: 'translateY(-2px)'
           }
         }}>
-          <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+          <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
             <Box
               sx={{
                 display: "flex",
@@ -494,33 +552,33 @@ const AdminDroneManagement: React.FC = () => {
               }}
             >
               <Box>
-                <Typography 
-                  variant="h6" 
+                <Typography
+                  variant="h6"
                   color="success.main"
-                  sx={{ 
+                  sx={{
                     fontSize: { xs: '1.25rem', sm: '1.5rem' },
                     fontWeight: 'bold'
                   }}
                 >
                   {dronesStatus.filter((d) => d.isOnline).length}
                 </Typography>
-                <Typography 
-                  variant="body2" 
+                <Typography
+                  variant="body2"
                   color="text.secondary"
                   sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
                 >
                   En ligne
                 </Typography>
               </Box>
-              <SyncOutlined sx={{ 
-                fontSize: { xs: 30, sm: 35, md: 40 }, 
-                color: "#4caf50" 
+              <SyncOutlined sx={{
+                fontSize: { xs: 30, sm: 35, md: 40 },
+                color: "#4caf50"
               }} />
             </Box>
           </CardContent>
         </Card>
 
-        <Card sx={{ 
+        <Card sx={{
           border: '1px solid #e0e0e0',
           transition: 'all 0.2s ease',
           '&:hover': {
@@ -528,7 +586,7 @@ const AdminDroneManagement: React.FC = () => {
             transform: 'translateY(-2px)'
           }
         }}>
-          <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+          <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
             <Box
               sx={{
                 display: "flex",
@@ -537,10 +595,10 @@ const AdminDroneManagement: React.FC = () => {
               }}
             >
               <Box>
-                <Typography 
-                  variant="h6" 
+                <Typography
+                  variant="h6"
                   color="warning.main"
-                  sx={{ 
+                  sx={{
                     fontSize: { xs: '1.25rem', sm: '1.5rem' },
                     fontWeight: 'bold'
                   }}
@@ -551,23 +609,23 @@ const AdminDroneManagement: React.FC = () => {
                     ).length
                   }
                 </Typography>
-                <Typography 
-                  variant="body2" 
+                <Typography
+                  variant="body2"
                   color="text.secondary"
                   sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
                 >
                   Armés
                 </Typography>
               </Box>
-              <FlightOutlined sx={{ 
-                fontSize: { xs: 30, sm: 35, md: 40 }, 
-                color: "#ff9800" 
+              <FlightOutlined sx={{
+                fontSize: { xs: 30, sm: 35, md: 40 },
+                color: "#ff9800"
               }} />
             </Box>
           </CardContent>
         </Card>
 
-        <Card sx={{ 
+        <Card sx={{
           border: '1px solid #e0e0e0',
           transition: 'all 0.2s ease',
           '&:hover': {
@@ -575,7 +633,7 @@ const AdminDroneManagement: React.FC = () => {
             transform: 'translateY(-2px)'
           }
         }}>
-          <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+          <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
             <Box
               sx={{
                 display: "flex",
@@ -584,10 +642,10 @@ const AdminDroneManagement: React.FC = () => {
               }}
             >
               <Box>
-                <Typography 
-                  variant="h6" 
+                <Typography
+                  variant="h6"
                   color="info.main"
-                  sx={{ 
+                  sx={{
                     fontSize: { xs: '1.25rem', sm: '1.5rem' },
                     fontWeight: 'bold'
                   }}
@@ -598,23 +656,23 @@ const AdminDroneManagement: React.FC = () => {
                     ).length
                   }
                 </Typography>
-                <Typography 
-                  variant="body2" 
+                <Typography
+                  variant="body2"
                   color="text.secondary"
                   sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
                 >
                   En mission
                 </Typography>
               </Box>
-              <NavigationOutlined sx={{ 
-                fontSize: { xs: 30, sm: 35, md: 40 }, 
-                color: "#2196f3" 
+              <NavigationOutlined sx={{
+                fontSize: { xs: 30, sm: 35, md: 40 },
+                color: "#2196f3"
               }} />
             </Box>
           </CardContent>
         </Card>
 
-        <Card sx={{ 
+        <Card sx={{
           border: '1px solid #e0e0e0',
           transition: 'all 0.2s ease',
           '&:hover': {
@@ -622,7 +680,7 @@ const AdminDroneManagement: React.FC = () => {
             transform: 'translateY(-2px)'
           }
         }}>
-          <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+          <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
             <Box
               sx={{
                 display: "flex",
@@ -631,27 +689,27 @@ const AdminDroneManagement: React.FC = () => {
               }}
             >
               <Box>
-                <Typography 
-                  variant="h6" 
+                <Typography
+                  variant="h6"
                   color="success.main"
-                  sx={{ 
+                  sx={{
                     fontSize: { xs: '1.25rem', sm: '1.5rem' },
                     fontWeight: 'bold'
                   }}
                 >
                   {avgBattery}%
                 </Typography>
-                <Typography 
-                  variant="body2" 
+                <Typography
+                  variant="body2"
                   color="text.secondary"
                   sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
                 >
                   Batterie moy.
                 </Typography>
               </Box>
-              <NavigationOutlined sx={{ 
-                fontSize: { xs: 30, sm: 35, md: 40 }, 
-                color: "#4caf50" 
+              <NavigationOutlined sx={{
+                fontSize: { xs: 30, sm: 35, md: 40 },
+                color: "#4caf50"
               }} />
             </Box>
           </CardContent>
@@ -660,9 +718,9 @@ const AdminDroneManagement: React.FC = () => {
 
       {/* Vue desktop - tableau */}
       <Box sx={{ display: { xs: 'none', lg: 'block' } }}>
-        <TableContainer 
+        <TableContainer
           component={Paper}
-          sx={{ 
+          sx={{
             border: '1px solid #e0e0e0',
             borderRadius: 2
           }}
@@ -686,6 +744,7 @@ const AdminDroneManagement: React.FC = () => {
                   (s) => s.droneId === drone.droneId
                 );
                 const fi = dronesFlightInfo[drone.droneId];
+                const offline = isDroneOffline(drone.droneId);
 
                 return (
                   <TableRow key={drone.droneId} hover>
@@ -713,22 +772,30 @@ const AdminDroneManagement: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <Chip
-                        label={drone.droneStatus || "UNKNOWN"}
+                        clickable
+                        onClick={(e) => handleOpenStatusMenu(e, drone.droneId)}
+                        label={
+                          updatingStatusId === drone.droneId
+                            ? (
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <CircularProgress size={14} />
+                                <span>{tStatus(drone.droneStatus)}</span>
+                              </Box>
+                            )
+                            : tStatus(drone.droneStatus)
+                        }
                         size="small"
-                        sx={{
-                          backgroundColor: getStatusColor(drone.droneStatus),
-                          color: "white",
-                          fontWeight: "bold",
-                        }}
+                        sx={{ backgroundColor: getStatusColor(drone.droneStatus), color: "#fff", fontWeight: "bold" }}
                       />
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={fi?.is_armed ? "ARMÉ" : "DÉSARMÉ"}
-                        size="small"
-                        color={fi?.is_armed ? "error" : "default"}
-                        variant="outlined"
-                      />
+                      {offline ? (
+                        <Chip label="OFFLINE" size="small" variant="outlined" />
+                      ) : fi?.is_armed ? (
+                        <Chip label="ARMÉ" size="small" color="error" variant="outlined" />
+                      ) : (
+                        <Chip label="DÉSARMÉ" size="small" variant="outlined" />
+                      )}
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">
@@ -749,36 +816,42 @@ const AdminDroneManagement: React.FC = () => {
                     </TableCell>
                     <TableCell align="center">
                       <Box sx={{ display: "flex", gap: 0.5, justifyContent: 'center' }}>
-                        <Tooltip title="Synchroniser">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleSyncDrone(drone.droneId)}
-                            disabled={syncing === drone.droneId}
-                          >
-                            {syncing === drone.droneId ? (
-                              <CircularProgress size={16} />
-                            ) : (
-                              <SyncOutlined />
-                            )}
-                          </IconButton>
+                        <Tooltip title={offline ? "Drone offline" : "Synchroniser"}>
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleSyncDrone(drone.droneId)}
+                              disabled={syncing === drone.droneId || offline}
+                            >
+                              {syncing === drone.droneId ? <CircularProgress size={16} /> : <SyncOutlined />}
+                            </IconButton>
+                          </span>
                         </Tooltip>
-                        <Tooltip title="Retour à la base">
-                          <IconButton
-                            size="small"
-                            onClick={() => handleReturnHome(drone.droneId)}
-                            disabled={!fi?.is_armed}
-                          >
-                            <HomeOutlined />
-                          </IconButton>
+
+                        <Tooltip title={offline ? "Drone offline" : "Retour à la base"}>
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={() => handleReturnHome(drone.droneId)}
+                              disabled={offline || !fi?.is_armed}
+                            >
+                              <HomeOutlined />
+                            </IconButton>
+                          </span>
                         </Tooltip>
-                        <Tooltip title="Détails">
-                          <IconButton
-                            size="small"
-                            onClick={() => setDetailViewDroneId(drone.droneId)}
-                          >
-                            <Visibility />
-                          </IconButton>
+
+                        <Tooltip title={offline ? "Détails indisponibles (OFFLINE)" : "Détails"}>
+                          <span>
+                            <IconButton
+                              size="small"
+                              onClick={() => setDetailViewDroneId(drone.droneId)}
+                              disabled={offline}
+                            >
+                              <Visibility />
+                            </IconButton>
+                          </span>
                         </Tooltip>
+
                         <Tooltip title="Informations">
                           <IconButton
                             size="small"
@@ -790,6 +863,7 @@ const AdminDroneManagement: React.FC = () => {
                             <EditOutlined />
                           </IconButton>
                         </Tooltip>
+
                         {isSuperAdmin && (
                           <Tooltip title="Supprimer">
                             <IconButton
@@ -812,9 +886,9 @@ const AdminDroneManagement: React.FC = () => {
 
       {/* Vue mobile/tablet - cartes */}
       <Box sx={{ display: { xs: 'block', lg: 'none' } }}>
-        <Box sx={{ 
+        <Box sx={{
           display: 'grid',
-          gap: { xs: 2, sm: 3 },
+          gap: { xs: 1.5, sm: 2.5 },
           gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }
         }}>
           {uniqueDrones.map((drone) => {
@@ -824,9 +898,9 @@ const AdminDroneManagement: React.FC = () => {
             const fi = dronesFlightInfo[drone.droneId];
 
             return (
-              <Card 
+              <Card
                 key={drone.droneId}
-                sx={{ 
+                sx={{
                   border: '1px solid #e0e0e0',
                   transition: 'all 0.2s ease',
                   '&:hover': {
@@ -835,11 +909,11 @@ const AdminDroneManagement: React.FC = () => {
                   }
                 }}
               >
-                <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+                <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
                   <Box sx={{ mb: 2 }}>
                     <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
                       <Box display="flex" alignItems="center" gap={1}>
-                        <Typography variant="h6" sx={{ 
+                        <Typography variant="h6" sx={{
                           fontWeight: 'bold',
                           fontSize: { xs: '1rem', sm: '1.1rem' }
                         }}>
@@ -854,15 +928,15 @@ const AdminDroneManagement: React.FC = () => {
                           }}
                         />
                       </Box>
-                      <Typography variant="body2" sx={{ 
+                      <Typography variant="body2" sx={{
                         color: 'text.secondary',
                         fontSize: { xs: '0.75rem', sm: '0.875rem' }
                       }}>
                         {drone.centerCity || "N/A"}
                       </Typography>
                     </Box>
-                    
-                    <Typography variant="subtitle1" sx={{ 
+
+                    <Typography variant="subtitle1" sx={{
                       fontWeight: 'medium',
                       fontSize: { xs: '0.875rem', sm: '1rem' },
                       mb: 1
@@ -877,18 +951,17 @@ const AdminDroneManagement: React.FC = () => {
                         Statut
                       </Typography>
                       <Chip
-                        label={drone.droneStatus || "UNKNOWN"}
+                        label={tStatus(drone.droneStatus)}
                         size="small"
                         sx={{
                           backgroundColor: getStatusColor(drone.droneStatus),
-                          color: "white",
+                          color: "#fff",
                           fontWeight: "bold",
                           fontSize: '0.6rem',
                           height: 20
                         }}
                       />
                     </Box>
-
                     <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                       <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>
                         État
@@ -915,7 +988,7 @@ const AdminDroneManagement: React.FC = () => {
                       <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'text.secondary' }}>
                         Batterie
                       </Typography>
-                      <Typography variant="body2" sx={{ 
+                      <Typography variant="body2" sx={{
                         fontSize: { xs: '0.7rem', sm: '0.75rem' },
                         fontWeight: 'bold',
                         color: typeof fi?.battery_remaining_percent === "number" && fi.battery_remaining_percent < 20 ? 'error.main' : 'text.primary'
@@ -934,7 +1007,7 @@ const AdminDroneManagement: React.FC = () => {
                       startIcon={syncing === drone.droneId ? <CircularProgress size={12} /> : <SyncOutlined />}
                       onClick={() => handleSyncDrone(drone.droneId)}
                       disabled={syncing === drone.droneId}
-                      sx={{ 
+                      sx={{
                         fontSize: '0.65rem',
                         px: 1,
                         py: 0.5,
@@ -949,7 +1022,7 @@ const AdminDroneManagement: React.FC = () => {
                       startIcon={<HomeOutlined />}
                       onClick={() => handleReturnHome(drone.droneId)}
                       disabled={!fi?.is_armed}
-                      sx={{ 
+                      sx={{
                         fontSize: '0.65rem',
                         px: 1,
                         py: 0.5,
@@ -963,7 +1036,7 @@ const AdminDroneManagement: React.FC = () => {
                       variant="outlined"
                       startIcon={<Visibility />}
                       onClick={() => setDetailViewDroneId(drone.droneId)}
-                      sx={{ 
+                      sx={{
                         fontSize: '0.65rem',
                         px: 1,
                         py: 0.5,
@@ -980,7 +1053,7 @@ const AdminDroneManagement: React.FC = () => {
                         setSelectedDrone(drone);
                         setDialogOpen(true);
                       }}
-                      sx={{ 
+                      sx={{
                         fontSize: '0.65rem',
                         px: 1,
                         py: 0.5,
@@ -996,7 +1069,7 @@ const AdminDroneManagement: React.FC = () => {
                         color="error"
                         startIcon={<Delete />}
                         onClick={() => handleDeleteDrone(drone.droneId)}
-                        sx={{ 
+                        sx={{
                           fontSize: '0.65rem',
                           px: 1,
                           py: 0.5,
@@ -1012,7 +1085,7 @@ const AdminDroneManagement: React.FC = () => {
             );
           })}
         </Box>
-        
+
         {uniqueDrones.length === 0 && (
           <Box sx={{ p: { xs: 2, sm: 3 }, textAlign: 'center' }}>
             <Typography color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
@@ -1037,7 +1110,7 @@ const AdminDroneManagement: React.FC = () => {
             }
           }}
         >
-          <DialogTitle sx={{ 
+          <DialogTitle sx={{
             fontSize: { xs: '1.1rem', sm: '1.25rem' },
             px: { xs: 2, sm: 3 },
             py: { xs: 1.5, sm: 2 }
@@ -1049,11 +1122,11 @@ const AdminDroneManagement: React.FC = () => {
             pb: { xs: 1, sm: 2 }
           }}>
             <Box
-              sx={{ 
-                pt: 1, 
-                display: "flex", 
-                flexDirection: "column", 
-                gap: { xs: 2, sm: 2.5 } 
+              sx={{
+                pt: 1,
+                display: "flex",
+                flexDirection: "column",
+                gap: { xs: 1, sm: 1.5 }
               }}
             >
               <TextField
@@ -1114,10 +1187,10 @@ const AdminDroneManagement: React.FC = () => {
                 }}
                 size="medium"
                 renderInput={(params) => (
-                  <TextField 
-                    {...params} 
-                    label="Ville du centre" 
-                    fullWidth 
+                  <TextField
+                    {...params}
+                    label="Ville du centre"
+                    fullWidth
                     sx={{
                       '& .MuiInputBase-input': {
                         fontSize: { xs: '0.875rem', sm: '1rem' }
@@ -1147,10 +1220,10 @@ const AdminDroneManagement: React.FC = () => {
                   </li>
                 )}
                 renderInput={(params) => (
-                  <TextField 
-                    {...params} 
-                    label="Adresse du centre" 
-                    fullWidth 
+                  <TextField
+                    {...params}
+                    label="Adresse du centre"
+                    fullWidth
                     sx={{
                       '& .MuiInputBase-input': {
                         fontSize: { xs: '0.875rem', sm: '1rem' }
@@ -1175,14 +1248,14 @@ const AdminDroneManagement: React.FC = () => {
               py: { xs: 1, sm: 0.75 }
             }
           }}>
-            <Button 
+            <Button
               onClick={() => setCreateDialogOpen(false)}
               sx={{ order: { xs: 2, sm: 1 } }}
             >
               Annuler
             </Button>
-            <Button 
-              onClick={handleCreateDrone} 
+            <Button
+              onClick={handleCreateDrone}
               disabled={creating}
               variant="contained"
               sx={{ order: { xs: 1, sm: 2 } }}
@@ -1208,7 +1281,7 @@ const AdminDroneManagement: React.FC = () => {
           }
         }}
       >
-        <DialogTitle sx={{ 
+        <DialogTitle sx={{
           fontSize: { xs: '1.1rem', sm: '1.25rem' },
           px: { xs: 2, sm: 3 },
           py: { xs: 1.5, sm: 2 }
@@ -1222,27 +1295,27 @@ const AdminDroneManagement: React.FC = () => {
         }}>
           {selectedDrone && (
             <Box sx={{ pt: { xs: 1, sm: 2 } }}>
-              <Box sx={{ 
-                display: "flex", 
+              <Box sx={{
+                display: "flex",
                 flexDirection: { xs: 'column', md: 'row' },
-                gap: { xs: 2, sm: 2.5, md: 3 }
+                gap: { xs: 1, sm: 1.5, md: 2 }
               }}>
-                <Box sx={{ 
-                  flex: { xs: 'none', md: "1 1 300px" }, 
+                <Box sx={{
+                  flex: { xs: 'none', md: "1 1 300px" },
                   minWidth: { xs: 'auto', md: 300 },
                   mb: { xs: 2, md: 0 }
                 }}>
-                  <Typography 
-                    variant="h6" 
+                  <Typography
+                    variant="h6"
                     gutterBottom
-                    sx={{ 
+                    sx={{
                       fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
                       fontWeight: 'bold'
                     }}
                   >
                     Informations générales
                   </Typography>
-                  <Box sx={{ 
+                  <Box sx={{
                     display: 'grid',
                     gap: { xs: 0.75, sm: 1 },
                     '& > *': {
@@ -1302,8 +1375,8 @@ const AdminDroneManagement: React.FC = () => {
                           {dronesFlightInfo[selectedDrone.droneId]
                             ?.heading_deg !== undefined
                             ? dronesFlightInfo[
-                                selectedDrone.droneId
-                              ]?.heading_deg?.toFixed(0)
+                              selectedDrone.droneId
+                            ]?.heading_deg?.toFixed(0)
                             : "N/A"}
                           °
                         </Typography>
@@ -1312,8 +1385,8 @@ const AdminDroneManagement: React.FC = () => {
                           {dronesFlightInfo[selectedDrone.droneId]
                             ?.movement_track_deg !== undefined
                             ? dronesFlightInfo[
-                                selectedDrone.droneId
-                              ]?.movement_track_deg?.toFixed(0)
+                              selectedDrone.droneId
+                            ]?.movement_track_deg?.toFixed(0)
                             : "N/A"}
                           °
                         </Typography>
@@ -1323,7 +1396,7 @@ const AdminDroneManagement: React.FC = () => {
                             const batteryInfo = dronesFlightInfo[selectedDrone.droneId];
                             const batteryPercent = batteryInfo?.battery_remaining_percent;
                             const isLowBattery = batteryPercent !== undefined && batteryPercent !== null && batteryPercent < 20;
-                            
+
                             return (
                               <span style={{
                                 color: isLowBattery ? '#f44336' : 'inherit',
@@ -1338,14 +1411,14 @@ const AdminDroneManagement: React.FC = () => {
                     )}
                   </Box>
                 </Box>
-                <Box sx={{ 
-                  flex: { xs: 'none', md: "1 1 300px" }, 
-                  minWidth: { xs: 'auto', md: 300 } 
+                <Box sx={{
+                  flex: { xs: 'none', md: "1 1 300px" },
+                  minWidth: { xs: 'auto', md: 300 }
                 }}>
-                  <Typography 
-                    variant="h6" 
+                  <Typography
+                    variant="h6"
                     gutterBottom
-                    sx={{ 
+                    sx={{
                       fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
                       fontWeight: 'bold'
                     }}
@@ -1353,9 +1426,9 @@ const AdminDroneManagement: React.FC = () => {
                     Historique des livraisons
                   </Typography>
                   {selectedDrone.deliveries &&
-                  selectedDrone.deliveries.length > 0 ? (
-                    <Box sx={{ 
-                      maxHeight: { xs: 150, sm: 200, md: 250 }, 
+                    selectedDrone.deliveries.length > 0 ? (
+                    <Box sx={{
+                      maxHeight: { xs: 150, sm: 200, md: 250 },
                       overflow: "auto",
                       pr: { xs: 1, sm: 0 }
                     }}>
@@ -1370,9 +1443,9 @@ const AdminDroneManagement: React.FC = () => {
                             '&:last-child': { mb: 0 }
                           }}
                         >
-                          <Typography 
-                            variant="body2" 
-                            sx={{ 
+                          <Typography
+                            variant="body2"
+                            sx={{
                               fontSize: { xs: '0.8rem', sm: '0.875rem' },
                               fontWeight: 'bold',
                               mb: { xs: 0.5, sm: 0.75 }
@@ -1380,40 +1453,40 @@ const AdminDroneManagement: React.FC = () => {
                           >
                             Livraison #{delivery.deliveryId}
                           </Typography>
-                          <Typography 
-                            variant="body2" 
-                            sx={{ 
+                          <Typography
+                            variant="body2"
+                            sx={{
                               fontSize: { xs: '0.75rem', sm: '0.8rem' },
-                              mb: 0.25 
+                              mb: 0.25
                             }}
                           >
                             Destination: {delivery.hospitalName},{" "}
                             {delivery.hospitalCity}
                           </Typography>
-                          <Typography 
-                            variant="body2" 
-                            sx={{ 
+                          <Typography
+                            variant="body2"
+                            sx={{
                               fontSize: { xs: '0.75rem', sm: '0.8rem' },
-                              mb: 0.25 
+                              mb: 0.25
                             }}
                           >
                             Statut: {delivery.deliveryStatus}
                           </Typography>
-                          <Typography 
-                            variant="body2" 
-                            sx={{ 
+                          <Typography
+                            variant="body2"
+                            sx={{
                               fontSize: { xs: '0.75rem', sm: '0.8rem' },
                               mb: delivery.deliveryUrgent ? 0.5 : 0
                             }}
                           >
-                            Date: {formatDate(delivery.dteDelivery)}
+                            Date: {formatDate(delivery.dteDelivery, "dd/MM/yyyy")}
                           </Typography>
                           {delivery.deliveryUrgent && (
-                            <Chip 
-                              label="URGENT" 
-                              size="small" 
-                              color="error" 
-                              sx={{ 
+                            <Chip
+                              label="URGENT"
+                              size="small"
+                              color="error"
+                              sx={{
                                 fontSize: '0.6rem',
                                 height: 18
                               }}
@@ -1423,9 +1496,9 @@ const AdminDroneManagement: React.FC = () => {
                       ))}
                     </Box>
                   ) : (
-                    <Typography 
+                    <Typography
                       color="text.secondary"
-                      sx={{ 
+                      sx={{
                         fontSize: { xs: '0.875rem', sm: '1rem' },
                         fontStyle: 'italic'
                       }}
@@ -1442,7 +1515,7 @@ const AdminDroneManagement: React.FC = () => {
           px: { xs: 2, sm: 3 },
           py: { xs: 1.5, sm: 2 }
         }}>
-          <Button 
+          <Button
             onClick={() => setDialogOpen(false)}
             sx={{
               fontSize: { xs: '0.875rem', sm: '1rem' },

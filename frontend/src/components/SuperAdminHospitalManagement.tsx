@@ -66,7 +66,7 @@ interface TabPanelProps {
 
 const TabPanel = ({ children, value, index }: TabPanelProps) => (
   <div role="tabpanel" hidden={value !== index}>
-    {value === index && <Box sx={{ p: { xs: 2, sm: 3 } }}>{children}</Box>}
+    {value === index && <Box sx={{ p: { xs: 1.5, sm: 2.5 } }}>{children}</Box>}
   </div>
 );
 
@@ -312,7 +312,7 @@ const SuperAdminHospitalManagement: React.FC = () => {
             md: 'repeat(2, 1fr)',
             lg: 'repeat(4, 1fr)' 
           },
-          gap: { xs: 2, sm: 2.5, md: 3 },
+          gap: { xs: 1, sm: 1.5, md: 2 },
           mb: { xs: 3, sm: 4 }
         }}>
           <Card sx={{ 
@@ -322,7 +322,7 @@ const SuperAdminHospitalManagement: React.FC = () => {
               transform: 'translateY(-2px)'
             }
           }}>
-            <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+            <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
               <Typography 
                 color="text.secondary" 
                 gutterBottom
@@ -351,7 +351,7 @@ const SuperAdminHospitalManagement: React.FC = () => {
               transform: 'translateY(-2px)'
             }
           }}>
-            <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+            <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
               <Typography 
                 color="text.secondary" 
                 gutterBottom
@@ -380,7 +380,7 @@ const SuperAdminHospitalManagement: React.FC = () => {
               transform: 'translateY(-2px)'
             }
           }}>
-            <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+            <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
               <Typography 
                 color="text.secondary" 
                 gutterBottom
@@ -409,7 +409,7 @@ const SuperAdminHospitalManagement: React.FC = () => {
               transform: 'translateY(-2px)'
             }
           }}>
-            <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
+            <CardContent sx={{ p: { xs: 1.5, sm: 2, md: 2.5 } }}>
               <Typography 
                 color="text.secondary" 
                 gutterBottom
@@ -433,7 +433,7 @@ const SuperAdminHospitalManagement: React.FC = () => {
         </Box>
 
         <Card sx={{ overflow: 'hidden' }}>
-          <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+          <CardContent sx={{ p: { xs: 1.5, sm: 2.5 } }}>
             <Box 
               display="flex" 
               flexDirection={{ xs: 'column', sm: 'row' }}
@@ -542,7 +542,7 @@ const SuperAdminHospitalManagement: React.FC = () => {
             <Box sx={{ display: { xs: 'block', md: 'none' } }}>
               <Box sx={{ 
                 display: 'grid',
-                gap: { xs: 2, sm: 3 },
+                gap: { xs: 1, sm: 2 },
                 gridTemplateColumns: { xs: '1fr', sm: 'repeat(1, 1fr)' }
               }}>
                 {(hospitals || []).map((hospital) => (
@@ -557,7 +557,7 @@ const SuperAdminHospitalManagement: React.FC = () => {
                       }
                     }}
                   >
-                    <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+                    <CardContent sx={{ p: { xs: 1.5, sm: 2 } }}>
                       <Box sx={{ mb: 2 }}>
                         <Box display="flex" alignItems="center" mb={1}>
                           <LocalHospital sx={{ mr: 1, color: '#f44336', fontSize: 28 }} />
@@ -667,7 +667,7 @@ const SuperAdminHospitalManagement: React.FC = () => {
               </Box>
               
               {hospitals.length === 0 && (
-                <Box sx={{ p: { xs: 2, sm: 3 }, textAlign: 'center' }}>
+                <Box sx={{ p: { xs: 1.5, sm: 2.5 }, textAlign: 'center' }}>
                   <Typography color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
                     Aucun hôpital trouvé
                   </Typography>
@@ -684,7 +684,7 @@ const SuperAdminHospitalManagement: React.FC = () => {
           mx: 'auto',
           mt: { xs: 1, sm: 0 }
         }}>
-          <CardContent sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
+          <CardContent sx={{ p: { xs: 2, sm: 2.5, md: 3 } }}>
             <Typography 
               variant="h5" 
               component="h2" 
@@ -699,7 +699,7 @@ const SuperAdminHospitalManagement: React.FC = () => {
             </Typography>
             <Divider sx={{ mb: { xs: 2, sm: 3 } }} />
 
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2.5, sm: 3 } }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, sm: 2.5 } }}>
               <TextField
                 fullWidth
                 label="Nom de l'hôpital *"
@@ -885,7 +885,7 @@ const SuperAdminHospitalManagement: React.FC = () => {
             <Box sx={{ 
               display: 'flex', 
               flexDirection: 'column', 
-              gap: { xs: 2, sm: 2.5 },
+              gap: { xs: 1.5, sm: 2 },
               pt: { xs: 1, sm: 2 }
             }}>
               <Box>
@@ -899,7 +899,7 @@ const SuperAdminHospitalManagement: React.FC = () => {
               <Box sx={{ 
                 display: 'flex', 
                 flexDirection: { xs: 'column', sm: 'row' },
-                gap: { xs: 2, sm: 4 }
+                gap: { xs: 1.5, sm: 3 }
               }}>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="subtitle2" color="text.secondary">Ville</Typography>
@@ -913,7 +913,7 @@ const SuperAdminHospitalManagement: React.FC = () => {
               <Box sx={{ 
                 display: 'flex', 
                 flexDirection: { xs: 'column', sm: 'row' },
-                gap: { xs: 2, sm: 4 }
+                gap: { xs: 1.5, sm: 3 }
               }}>
                 <Box sx={{ flex: 1 }}>
                   <Typography variant="subtitle2" color="text.secondary">Latitude</Typography>
@@ -930,7 +930,7 @@ const SuperAdminHospitalManagement: React.FC = () => {
               </Box>
             </Box>
           ) : (
-            <Box mt={2} sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2.5, sm: 3 } }}>
+            <Box mt={2} sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, sm: 2.5 } }}>
               <TextField
                 fullWidth
                 label="Nom de l'hôpital *"

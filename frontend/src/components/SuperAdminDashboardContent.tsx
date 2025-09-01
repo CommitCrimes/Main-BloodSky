@@ -13,14 +13,11 @@ import {
   CardContent,
   Typography,
   Box,
-  Button,
   CircularProgress,
   Alert,
 } from '@mui/material';
 import {
   FlightTakeoff,
-  LocalShipping,
-  People,
   Business,
   LocalHospital,
   Warning,
@@ -93,39 +90,25 @@ const SuperAdminDashboardContent: React.FC<SuperAdminDashboardContentProps> = ({
 
   const overviewCards = [
     {
-      title: 'Utilisateurs Totaux',
-      value: stats.overview.totalUsers,
-      icon: <People />,
-      color: '#1976d2',
-      action: () => onNavigate('users')
-    },
-    {
-      title: 'Drones Actifs',
+      title: 'Drones',
       value: stats.overview.totalDrones,
       icon: <FlightTakeoff />,
       color: '#2e7d32',
       action: () => onNavigate('drones')
     },
     {
-      title: 'Livraisons',
-      value: stats.overview.totalDeliveries,
-      icon: <LocalShipping />,
-      color: '#ed6c02',
-      action: () => onNavigate('deliveries')
-    },
-    {
       title: 'Hôpitaux',
       value: stats.overview.totalHospitals,
       icon: <LocalHospital />,
       color: '#9c27b0',
-      action: () => onNavigate('statistics')
+      action: () => onNavigate('hospitals')
     },
     {
       title: 'Centres de Don',
       value: stats.overview.totalCenters,
       icon: <Business />,
       color: '#d32f2f',
-      action: () => onNavigate('statistics')
+      action: () => onNavigate('centers')
     },
     {
       title: 'Livraisons Urgentes',
@@ -251,119 +234,6 @@ const SuperAdminDashboardContent: React.FC<SuperAdminDashboardContentProps> = ({
               </CardContent>
             </Card>
         ))}
-      </Box>
-
-      {/* Actions rapides - Section dédiée */}
-      <Box sx={{ mb: { xs: 3, sm: 4, md: 5 } }}>
-        <Typography 
-          variant="h5" 
-          gutterBottom 
-          sx={{ 
-            fontWeight: 'bold', 
-            mb: { xs: 2, sm: 2.5, md: 3 },
-            color: '#1976d2',
-            fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.5rem' },
-            textAlign: { xs: 'center', sm: 'left' }
-          }}
-        >
-          🚀 Actions rapides
-        </Typography>
-        
-        <Card sx={{ 
-          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-          border: '1px solid #e0e0e0'
-        }}>
-          <CardContent sx={{ p: { xs: 2.5, sm: 3, md: 4 } }}>
-            <Box sx={{ 
-              display: 'grid',
-              gridTemplateColumns: { 
-                xs: '1fr', 
-                sm: 'repeat(2, 1fr)', 
-                md: 'repeat(4, 1fr)' 
-              },
-              gap: { xs: 2, sm: 2.5, md: 3 }
-            }}>
-              <Button
-                variant="contained"
-                startIcon={<FlightTakeoff />}
-                onClick={() => onNavigate('drones')}
-                sx={{ 
-                  py: { xs: 1.5, sm: 2 },
-                  px: { xs: 2, sm: 3 },
-                  fontSize: { xs: '0.875rem', sm: '1rem' },
-                  background: 'linear-gradient(45deg, #2e7d32, #4caf50)',
-                  borderRadius: 2,
-                  '&:hover': {
-                    background: 'linear-gradient(45deg, #1b5e20, #2e7d32)',
-                    transform: { xs: 'translateY(-1px)', sm: 'translateY(-2px)' }
-                  }
-                }}
-              >
-                Gérer Drones
-              </Button>
-              <Button
-                variant="contained"
-                startIcon={<LocalShipping />}
-                onClick={() => onNavigate('deliveries')}
-                sx={{ 
-                  py: { xs: 1.5, sm: 2 },
-                  px: { xs: 2, sm: 3 },
-                  fontSize: { xs: '0.875rem', sm: '1rem' },
-                  background: 'linear-gradient(45deg, #ed6c02, #ff9800)',
-                  borderRadius: 2,
-                  '&:hover': {
-                    background: 'linear-gradient(45deg, #e65100, #ed6c02)',
-                    transform: { xs: 'translateY(-1px)', sm: 'translateY(-2px)' }
-                  }
-                }}
-              >
-                Livraisons
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<LocalHospital />}
-                onClick={() => onNavigate('hospitals')}
-                sx={{ 
-                  py: { xs: 1.5, sm: 2 },
-                  px: { xs: 2, sm: 3 },
-                  fontSize: { xs: '0.875rem', sm: '1rem' },
-                  borderColor: '#9c27b0',
-                  color: '#9c27b0',
-                  borderWidth: 2,
-                  borderRadius: 2,
-                  '&:hover': {
-                    backgroundColor: '#9c27b020',
-                    borderColor: '#7b1fa2',
-                    transform: { xs: 'translateY(-1px)', sm: 'translateY(-2px)' }
-                  }
-                }}
-              >
-                Hôpitaux
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<Business />}
-                onClick={() => onNavigate('centers')}
-                sx={{ 
-                  py: { xs: 1.5, sm: 2 },
-                  px: { xs: 2, sm: 3 },
-                  fontSize: { xs: '0.875rem', sm: '1rem' },
-                  borderColor: '#d32f2f',
-                  color: '#d32f2f',
-                  borderWidth: 2,
-                  borderRadius: 2,
-                  '&:hover': {
-                    backgroundColor: '#d32f2f20',
-                    borderColor: '#c62828',
-                    transform: { xs: 'translateY(-1px)', sm: 'translateY(-2px)' }
-                  }
-                }}
-              >
-                Centres
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
       </Box>
 
       {/* Graphiques et statistiques détaillées */}

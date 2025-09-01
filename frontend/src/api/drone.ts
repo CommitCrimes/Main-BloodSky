@@ -3,7 +3,8 @@ const BASE = import.meta.env.VITE_API_URL ?? "http://localhost:3000/api";
 import type{
   Drone, DroneUpdate, DroneHistoryItem, DronesStatus,
   FlightInfo, DroneMission, CommandMode,
-  DeliveryMissionParams, CreateMissionResponse,DroneWaypoint
+  DeliveryMissionParams, CreateMissionResponse,DroneWaypoint,
+  MissionsList
 } from '@/types/drone';
 export type MissionCurrent = {
   count: number;
@@ -84,8 +85,11 @@ export const dronesApi = {
     ),
 
   /** PUT /drones/:id */
-  update: (id: number, patch: DroneUpdate) =>
-    fetchJson<string>(`/drones/${id}`, { method: "PUT", body: JSON.stringify(patch) }),
+  update: async (id: number, patch: DroneUpdate) => {
+    const res = await fetch(`${BASE}/drones/${id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(patch) });
+    if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+    return;
+  },
 
   /** DELETE /drones/:id */
   remove: (id: number) => fetchJson<string>(`/drones/${id}`, { method: "DELETE" }),
@@ -94,6 +98,26 @@ export const dronesApi = {
 
   /** POST /drones/:id/sync */
   sync: (id: number) => fetchJson<{ message: string }>(`/drones/${id}/sync`, { method: "POST" }),
+
+  /** GET /drones/missions */
+  listMissions: (params?: {
+    ext?: string;                 
+    recursive?: boolean;   
+    sort?: "name" | "size" | "mtime";
+    order?: "asc" | "desc";
+    limit?: number;
+  }) => {
+    const qs = params
+      ? `?${new URLSearchParams({
+          ...(params.ext ? { ext: params.ext } : {}),
+          ...(params.recursive !== undefined ? { recursive: String(params.recursive) } : {}),
+          ...(params.sort ? { sort: params.sort } : {}),
+          ...(params.order ? { order: params.order } : {}),
+          ...(params.limit !== undefined ? { limit: String(params.limit) } : {}),
+        }).toString()}`
+      : "";
+    return fetchJson<MissionsList>(`/drones/missions${qs}`);
+  },
 
   /** GET /drones/:id/flight_info */
   getFlightInfo: (id: number) => fetchJson<FlightInfo>(`/drones/${id}/flight_info`),

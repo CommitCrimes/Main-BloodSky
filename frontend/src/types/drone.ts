@@ -126,6 +126,16 @@ export type CreateMissionResponse = {
   offline?: boolean;
   age_sec?: { position?: number; heartbeat?: number };
 };
+export type MissionFile = {
+  name: string;
+  sizeBytes: number;
+  modifiedAt: string; // ISO
+};
+
+export type MissionsList = {
+  count: number;
+  files: MissionFile[];
+};
 
 /** /drones/status : schéma encore libre côté back */
 export type DronesStatus = unknown;

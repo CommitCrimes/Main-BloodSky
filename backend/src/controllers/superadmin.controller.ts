@@ -26,7 +26,8 @@ export const getAllAdmins = async (c: Context) => {
       })
       .from(users)
       .innerJoin(userDonationCenter, eq(users.userId, userDonationCenter.userId))
-      .innerJoin(donationCenters, eq(userDonationCenter.centerId, donationCenters.centerId));
+      .innerJoin(donationCenters, eq(userDonationCenter.centerId, donationCenters.centerId))
+      .where(eq(userDonationCenter.admin, true)); // filtre uniquement admin
 
     // recup des admin d'un hopital
     const hospitalAdmins = await db
@@ -46,7 +47,8 @@ export const getAllAdmins = async (c: Context) => {
       })
       .from(users)
       .innerJoin(userHospital, eq(users.userId, userHospital.userId))
-      .innerJoin(hospitals, eq(userHospital.hospitalId, hospitals.hospitalId));
+      .innerJoin(hospitals, eq(userHospital.hospitalId, hospitals.hospitalId))
+      .where(eq(userHospital.admin, true)); // filtre uniquement admin
 
     // Combiner les résultats
     const allAdmins = [...donationAdmins, ...hospitalAdmins];
@@ -60,6 +62,7 @@ export const getAllAdmins = async (c: Context) => {
     throw new HTTPException(500, { message: 'Échec de la récupération des admins' });
   }
 };
+
 
 export const getAdminById = async (c: Context) => {
   try {
@@ -272,12 +275,15 @@ export const getAllUsers = async (c: Context) => {
           info: user.centerInfo
         };
       } else if (user.hospitalId || user.centerId) {
-        roleType = user.hospitalId ? 'hospital_user' : 'center_user';
+        roleType = 'user';
         role = {
-          type: roleType,
+          type: 'user',
           hospitalId: user.hospitalId,
+          hospitalName: user.hospitalName,
           centerId: user.centerId,
-          admin: false
+          centerName: user.centerCity,
+          admin: false,
+          info: user.hospitalInfo || user.centerInfo
         };
       }
 
@@ -475,19 +481,18 @@ export const createHospital = async (c: Context) => {
       });
     }
 
-    const newHospital = await db
-      .insert(hospitals)
-      .values({
-        hospitalName: hospital_name,
-        hospitalCity: hospital_city,
-        hospitalPostal: hospital_postal,
-        hospitalAdress: hospital_adress,
-        hospitalLatitude: hospital_latitude || null,
-        hospitalLongitude: hospital_longitude || null,
-      })
-      .returning();
+    const maxIdResult = await db.execute(
+      sql`SELECT COALESCE(MAX(hospital_id), 0) + 1 as next_id FROM hospital`
+    );
+    const nextId = maxIdResult.rows[0].next_id;
 
-    return c.json(newHospital[0], 201);
+    const result = await db.execute(
+      sql`INSERT INTO hospital (hospital_id, hospital_name, hospital_city, hospital_postal, hospital_adress, hospital_latitude, hospital_longitude) 
+          VALUES (${nextId}, ${hospital_name}, ${hospital_city}, ${hospital_postal}, ${hospital_adress}, ${hospital_latitude ? String(hospital_latitude) : null}, ${hospital_longitude ? String(hospital_longitude) : null}) 
+          RETURNING *`
+    );
+
+    return c.json(result.rows[0], 201);
   } catch (error) {
     if (error instanceof HTTPException) {
       throw error;
@@ -685,18 +690,17 @@ export const createCenter = async (c: Context) => {
       });
     }
 
-    const newCenter = await db
-      .insert(donationCenters)
-      .values({
-        centerCity: center_city,
-        centerPostal: center_postal,
-        centerAdress: center_adress,
-        centerLatitude: center_latitude || null,
-        centerLongitude: center_longitude || null,
-      })
-      .returning();
+    const maxIdResult = await db.execute(
+      sql`SELECT COALESCE(MAX(center_id), 0) + 1 as next_id FROM donationcenter`
+    );
+    const nextId = maxIdResult.rows[0].next_id;
+    const result = await db.execute(
+      sql`INSERT INTO donationcenter (center_id, center_city, center_postal, center_adress, center_latitude, center_longitude) 
+          VALUES (${nextId}, ${center_city}, ${center_postal}, ${center_adress}, ${center_latitude ? String(center_latitude) : null}, ${center_longitude ? String(center_longitude) : null}) 
+          RETURNING *`
+    );
 
-    return c.json(newCenter[0], 201);
+    return c.json(result.rows[0], 201);
   } catch (error) {
     if (error instanceof HTTPException) {
       throw error;

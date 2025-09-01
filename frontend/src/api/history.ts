@@ -50,8 +50,8 @@ export interface Blood {
   deliveryId?: number;
 }
 
-// ⛔️ drones de test à ignorer
-const IGNORE_DRONE_IDS = new Set<number>([2]);
+// drones de test à ignorer
+const IGNORE_DRONE_IDS = new Set<number>([0]);
 
 const filterOutTestDrones = <T extends { droneId?: number | string }>(list: T[]): T[] =>
   list.filter(d => !IGNORE_DRONE_IDS.has(Number(d.droneId)));

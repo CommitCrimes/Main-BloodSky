@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { observer } from 'mobx-react-lite';
+import { Inventory2 } from '@mui/icons-material';
 import {
   Box,
   Paper,
@@ -59,6 +60,7 @@ import type {
 } from '../types/history';
 import { historyApi } from '../api/history';
 import { orderApi } from '../api/order';
+import type { UserRole, DonationCenterAdminRole, HospitalAdminRole, BasicUserRole } from '../types/users';
 
 const commonStyles = {
   fontFamily: 'Share Tech, monospace',
@@ -120,8 +122,35 @@ const HistoryManagement: React.FC = observer(() => {
   const [error, setError] = useState<string | null>(null);
   const [cancellingDelivery, setCancellingDelivery] = useState<number | null>(null);
 
-  const userType = auth.user?.role?.centerId ? 'donation_center' : 'hospital';
-  const userEntityId = auth.user?.role?.centerId || auth.user?.role?.hospitalId;
+function isDonationCenterAffiliated(
+  role: UserRole | undefined
+): role is DonationCenterAdminRole | (BasicUserRole & { centerId: number }) {
+  return !!role && (
+    (role.type === 'donation_center_admin' && typeof (role as DonationCenterAdminRole).centerId === 'number') ||
+    (role.type === 'user' && typeof (role as BasicUserRole).centerId === 'number')
+  );
+}
+
+function isHospitalAffiliated(
+  role: UserRole | undefined
+): role is HospitalAdminRole | (BasicUserRole & { hospitalId: number }) {
+  return !!role && (
+    (role.type === 'hospital_admin' && typeof (role as HospitalAdminRole).hospitalId === 'number') ||
+    (role.type === 'user' && typeof (role as BasicUserRole).hospitalId === 'number')
+  );
+}
+
+  const role = auth.user?.role;
+  let userType: 'donation_center' | 'hospital' = 'hospital';
+  let userEntityId: number | undefined = undefined;
+
+  if (isDonationCenterAffiliated(role)) {
+    userType = 'donation_center';
+    userEntityId = role.centerId;
+  } else if (isHospitalAffiliated(role)) {
+    userType = 'hospital';
+    userEntityId = role.hospitalId;
+  }
 
 
   const reloadHistoryData = useCallback(async () => {
@@ -157,6 +186,8 @@ const HistoryManagement: React.FC = observer(() => {
         return '#10b981';
       case 'in_transit':
         return '#f59e0b';
+      case "charged":
+        return '#3b82f6';
       case 'pending':
         return '#6b7280';
       case 'cancelled':
@@ -169,9 +200,11 @@ const HistoryManagement: React.FC = observer(() => {
   const getStatusLabel = (status: DeliveryHistory['deliveryStatus']) => {
     switch (status) {
       case 'delivered':
-        return 'Livré';
+        return 'Livrée';
       case 'in_transit':
         return 'En transit';
+      case "charged":
+        return 'Chargée';
       case 'pending':
         return 'En attente';
       case 'cancelled':
@@ -183,16 +216,12 @@ const HistoryManagement: React.FC = observer(() => {
 
   const getStatusIcon = (status: DeliveryHistory['deliveryStatus']) => {
     switch (status) {
-      case 'delivered':
-        return <CheckCircle />;
-      case 'in_transit':
-        return <DirectionsCar />;
-      case 'pending':
-        return <Pending />;
-      case 'cancelled':
-        return <Cancel />;
-      default:
-        return <Schedule />;
+      case 'delivered': return <CheckCircle />;
+      case 'in_transit': return <DirectionsCar />;
+      case 'charged': return <Inventory2 />;   
+      case 'pending': return <Pending />;
+      case 'cancelled': return <Cancel />;
+      default: return <Schedule />;
     }
   };
 
@@ -451,7 +480,7 @@ const HistoryManagement: React.FC = observer(() => {
                 <MenuItem value="">Tous</MenuItem>
                 <MenuItem value="pending">En attente</MenuItem>
                 <MenuItem value="in_transit">En transit</MenuItem>
-                <MenuItem value="delivered">Livré</MenuItem>
+                <MenuItem value="delivered">Livrée</MenuItem>
                 <MenuItem value="cancelled">Annulé</MenuItem>
               </Select>
             </FormControl>

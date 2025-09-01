@@ -1446,54 +1446,66 @@ const Weather: React.FC = () => {
                         borderWidth: 2,
                         backgroundColor: `${conditions.color}08`,
                         transition: 'all 0.3s ease',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        height: '180px',
                         '&:hover': {
                           boxShadow: `0 8px 25px ${conditions.color}40`,
                         }
                       }}
                     >
-                      <CardContent sx={{ p: { xs: 0.5, sm: 0.7 },height: '135px', textAlign: 'center' }}>
-                        <Typography 
-                          variant="subtitle2" 
-                          sx={{ fontFamily: 'Share Tech, monospace', fontWeight: 700, mb: 0.2, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
-                        >
-                          {hourFromDt(s.dt_txt)}
-                        </Typography>
-                        
-                        <Box sx={{ mb: 0.3 }}>
+                      <CardContent sx={{ 
+                        p: { xs: 0.5, sm: 0.7 }, 
+                        textAlign: 'center',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        height: '100%',
+                        justifyContent: 'space-between'
+                      }}>
+                        <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                           <Typography 
-                            variant="h4" 
-                            sx={{ 
-                              fontSize: { xs: '1.3rem', sm: '1.5rem' },
-                              mb: 0.2,
-                              filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
-                            }}
+                            variant="subtitle2" 
+                            sx={{ fontFamily: 'Share Tech, monospace', fontWeight: 700, mb: 0.2, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
                           >
-                            {getWeatherEmoji(weatherMain, s.dt_txt)}
+                            {hourFromDt(s.dt_txt)}
                           </Typography>
+                          
+                          <Box sx={{ mb: 0.3 }}>
+                            <Typography 
+                              variant="h4" 
+                              sx={{ 
+                                fontSize: { xs: '1.3rem', sm: '1.5rem' },
+                                mb: 0.2,
+                                filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.1))'
+                              }}
+                            >
+                              {getWeatherEmoji(weatherMain, s.dt_txt)}
+                            </Typography>
+                          </Box>
+                          
+                          <Typography 
+                            variant="h6" 
+                            sx={{ fontFamily: 'Share Tech, monospace', fontWeight: 800, color: conditions.color, mb: 0.3, fontSize: { xs: '0.85rem', sm: '1rem' } }}
+                          >
+                            {t}
+                          </Typography>
+                          
+                          <Typography 
+                            variant="body2" 
+                            sx={{ fontFamily: 'Share Tech, monospace', color: '#666', mb: 0.3, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
+                          >
+                            💨 {w}
+                          </Typography>
+                          
+                          {precipProb > 0 && (
+                            <Typography 
+                              variant="caption" 
+                              sx={{ fontFamily: 'Share Tech, monospace', color: '#3b82f6', display: 'block' }}
+                            >
+                              🌧️ {precipProb}%
+                            </Typography>
+                          )}
                         </Box>
-                        
-                        <Typography 
-                          variant="h6" 
-                          sx={{ fontFamily: 'Share Tech, monospace', fontWeight: 800, color: conditions.color, mb: 0.3, fontSize: { xs: '0.85rem', sm: '1rem' } }}
-                        >
-                          {t}
-                        </Typography>
-                        
-                        <Typography 
-                          variant="body2" 
-                          sx={{ fontFamily: 'Share Tech, monospace', color: '#666', mb: 0.3, fontSize: { xs: '0.7rem', sm: '0.75rem' } }}
-                        >
-                          💨 {w}
-                        </Typography>
-                        
-                        {precipProb > 0 && (
-                          <Typography 
-                            variant="caption" 
-                            sx={{ fontFamily: 'Share Tech, monospace', color: '#3b82f6', mb: 0.5, display: 'block' }}
-                          >
-                            🌧️ {precipProb}%
-                          </Typography>
-                        )}
                         
                         <Chip
                           label={conditions.message}
@@ -1503,7 +1515,7 @@ const Weather: React.FC = () => {
                             color: 'white',
                             fontFamily: 'Share Tech, monospace',
                             fontWeight: 600,
-                            fontSize: '0.5rem',
+                            fontSize: '0.5rem'
                           }}
                         />
                       </CardContent>

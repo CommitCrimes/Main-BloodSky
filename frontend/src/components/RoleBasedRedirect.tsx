@@ -30,8 +30,14 @@ const RoleBasedRedirect = observer(() => {
           targetPath = '/dronist';
           break;
         case 'user':
-          console.log('Utilisateur sans rôle spécialisé:', role);
-          targetPath = '/login';
+          if (role.hospitalId) {
+            targetPath = '/hospital';
+          } else if (role.centerId) {
+            targetPath = '/donation-center';
+          } else {
+            targetPath = '/dashboard';
+          }
+          console.log('Redirection utilisateur lambda vers:', targetPath);
           break;
         default:
           console.log('Role utilisateur non reconnu:', role);

@@ -20,7 +20,7 @@ import {
   CardContent,
   Fab
 } from '@mui/material';
-import { ArrowBack, PlayArrow, Home, Edit, Add, Refresh, LocationOn, Speed, Height, Navigation, } from '@mui/icons-material';
+import { ArrowBack, PlayArrow, Home, Edit, Add, Refresh, LocationOn, Speed, Height, Navigation, Send, } from '@mui/icons-material';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents, CircleMarker, Pane } from 'react-leaflet';
 import {
   patchLeafletDefaultIcons,
@@ -95,7 +95,12 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const targetStorageKey = useMemo(() => `drone:${droneId}:target`, [droneId]);
   const [currentMission, setCurrentMission] = useState<CurrentMission | null>(null);
   const [homeBusy, setHomeBusy] = useState(false);
-
+  const ALT_STORAGE_KEY = `drone:${droneId}:altitude`;
+  const [cruiseAlt, setCruiseAlt] = useState<number>(() => {
+    if (typeof window === 'undefined') return 50;
+    const v = Number(localStorage.getItem(ALT_STORAGE_KEY));
+    return Number.isFinite(v) && v > 0 ? v : 50;
+  });
 
   const withBusy = async <T,>(fn: () => Promise<T>) => {
     setMissionUploading(true);
@@ -108,7 +113,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
 
   const [missionData, setMissionData] = useState<Mission>({
     filename: `mission_drone_${droneId}_${Date.now()}.waypoints`,
-    altitude_takeoff: 30,
+    altitude_takeoff: cruiseAlt,
     mode: 'auto',
     waypoints: []
   });
@@ -130,6 +135,11 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const [target, setTarget] = useState<{ id: number; lat: number; lon: number } | null>(null);
   const missionIsLoaded = (currentMission?.count ?? 0) > 0;
   const canStart = missionIsLoaded && !missionRunning;
+  const [missionFiles, setMissionFiles] = useState<string[]>([]);
+  const [missionFilesLoading, setMissionFilesLoading] = useState(false);
+  const [sendDialogOpen, setSendDialogOpen] = useState(false);
+  const [sendFilename, setSendFilename] = useState('');
+  const [sendBusy, setSendBusy] = useState(false);
 
   const toNum = (s: string | number | null | undefined): number => {
     if (typeof s === 'number') return s;
@@ -201,8 +211,8 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
       await fetchFlightInfo();
     } catch (err) {
       console.error('Error returning home / creating center mission:', err);
-    }finally{
-          setHomeBusy(false);
+    } finally {
+      setHomeBusy(false);
     }
   };
 
@@ -210,15 +220,15 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
   const handleCreateMission = async () => {
     await withBusy(async () => {
       const payload: Mission = {
-  ...missionData,
-  ...(flightInfo
-    ? {
-        startlat: Number(flightInfo.latitude),
-        startlon: Number(flightInfo.longitude),
-        startalt: missionData.altitude_takeoff,
-      }
-    : {}),
-};
+        ...missionData,
+        ...(flightInfo
+          ? {
+            startlat: Number(flightInfo.latitude),
+            startlon: Number(flightInfo.longitude),
+            startalt: cruiseAlt || missionData.altitude_takeoff,
+          }
+          : {}),
+      };
 
 
       const res = await dronesApi.createMission(droneId, payload);
@@ -264,11 +274,7 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
 
 
   const addWaypoint = (lat: number, lon: number) => {
-    const newWaypoint: MissionWaypoint = {
-      lat,
-      lon,
-      alt: missionData.altitude_takeoff
-    };
+    const newWaypoint: MissionWaypoint = { lat, lon, alt: cruiseAlt || missionData.altitude_takeoff };
     setWaypoints([...waypoints, newWaypoint]);
     setMissionData({
       ...missionData,
@@ -362,15 +368,15 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     setWaypoints([]);
     setMissionData((prev: Mission) => ({ ...prev, waypoints: [] }));
 
-    const ALT = 50;
+    const ALT = cruiseAlt;
     const mission: Mission = {
       filename: `DEFAULT_Hopital_DroneID:${droneId}_HopitalID:${hospital.hospitalId}.waypoints`,
       altitude_takeoff: ALT,
       mode: 'auto',
       waypoints: [{ lat: deliveryLat, lon: deliveryLon, alt: ALT }],
-...(flightInfo
-  ? { startlat: Number(flightInfo.latitude), startlon: Number(flightInfo.longitude), startalt: ALT }
-  : {}),
+      ...(flightInfo
+        ? { startlat: Number(flightInfo.latitude), startlon: Number(flightInfo.longitude), startalt: ALT }
+        : {}),
     };
 
     const res = await dronesApi.createMission(droneId, mission);
@@ -397,15 +403,15 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
         return;
       }
 
-      const ALT = 50;
+      const ALT = cruiseAlt;
       const mission: Mission = {
         filename: `DEFAULT_ReturnCenter_DroneID:${droneId}_CenterID:${donationCenter.centerId}.waypoints`,
         altitude_takeoff: ALT,
         mode: 'auto',
         waypoints: [{ lat, lon, alt: ALT }],
-...(flightInfo
-  ? { startlat: Number(flightInfo.latitude), startlon: Number(flightInfo.longitude), startalt: ALT }
-  : {}),
+        ...(flightInfo
+          ? { startlat: Number(flightInfo.latitude), startlon: Number(flightInfo.longitude), startalt: ALT }
+          : {}),
       };
 
       const res = await dronesApi.createMission(droneId, mission);
@@ -420,35 +426,35 @@ const DroneDetailView: React.FC<DroneDetailViewProps> = ({ droneId, onBack }) =>
     arr.find(w => Number.isFinite(w?.lat) && Number.isFinite(w?.lon)) ?? null;
 
   // Lit la mission chargée et fixe le target selon le mode
-const refreshTargetFromCurrentMission = async () => {
-  try {
-    const mode = (flightInfo?.flight_mode || '').toUpperCase();
-    const isRTL = mode === 'RTL';
-    const isArmed = flightInfo?.is_armed === true;
+  const refreshTargetFromCurrentMission = async () => {
+    try {
+      const mode = (flightInfo?.flight_mode || '').toUpperCase();
+      const isRTL = mode === 'RTL';
+      const isArmed = flightInfo?.is_armed === true;
 
-    // ↩️ Ne rien modifier si pas RTL ou pas armé (on garde la target actuelle)
-    if (!isRTL || !isArmed) return;
+      // ↩️ Ne rien modifier si pas RTL ou pas armé (on garde la target actuelle)
+      if (!isRTL || !isArmed) return;
 
-    // (Optionnel) si tu veux aussi ignorer quand offline, décommente :
-    // if (flightInfo?.unavailable || flightInfo?.state === 'offline') return;
+      // (Optionnel) si tu veux aussi ignorer quand offline, décommente :
+      // if (flightInfo?.unavailable || flightInfo?.state === 'offline') return;
 
-    const cur = await dronesApi.getMissionCurrent(droneId);
-    const items = cur?.items ?? [];
-    if (!items.length) return; // rien à faire, on ne clear pas la target
+      const cur = await dronesApi.getMissionCurrent(droneId);
+      const items = cur?.items ?? [];
+      if (!items.length) return; // rien à faire, on ne clear pas la target
 
-    // En RTL + armé → prendre le premier WP valide (home/centre)
-    const chosen = firstValid(items);
-    if (!chosen) return;
+      // En RTL + armé → prendre le premier WP valide (home/centre)
+      const chosen = firstValid(items);
+      if (!chosen) return;
 
-    setTarget({
-      id: typeof chosen.seq === 'number' ? chosen.seq : 0,
-      lat: Number(chosen.lat),
-      lon: Number(chosen.lon),
-    });
-  } catch (e) {
-    console.warn('getMissionCurrent failed:', e);
-  }
-};
+      setTarget({
+        id: typeof chosen.seq === 'number' ? chosen.seq : 0,
+        lat: Number(chosen.lat),
+        lon: Number(chosen.lon),
+      });
+    } catch (e) {
+      console.warn('getMissionCurrent failed:', e);
+    }
+  };
 
   useEffect(() => {
     void refreshTargetFromCurrentMission();
@@ -476,35 +482,35 @@ const refreshTargetFromCurrentMission = async () => {
   }, [droneId]);
 
   useEffect(() => {
-  try {
-    if (typeof window === 'undefined') return;
-    const raw = localStorage.getItem(targetStorageKey);
-    if (!raw) return;
-    const parsed = JSON.parse(raw) as { id: number; lat: number; lon: number };
-    if (typeof parsed?.id === 'number' && Number.isFinite(parsed?.lat) && Number.isFinite(parsed?.lon)) {
-      setTarget(parsed);
+    try {
+      if (typeof window === 'undefined') return;
+      const raw = localStorage.getItem(targetStorageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as { id: number; lat: number; lon: number };
+      if (typeof parsed?.id === 'number' && Number.isFinite(parsed?.lat) && Number.isFinite(parsed?.lon)) {
+        setTarget(parsed);
+      }
+    } catch (e) {
+      console.warn('Error reading target from localStorage:', e);
     }
-  } catch (e) {
-    console.warn('Error reading target from localStorage:', e);
-  }
-}, [targetStorageKey]);
+  }, [targetStorageKey]);
 
-useEffect(() => {
-  if (!flightInfo) return;
-  if (!missionRunning) return;
+  useEffect(() => {
+    if (!flightInfo) return;
+    if (!missionRunning) return;
 
-  const mode = (flightInfo.flight_mode || '').toUpperCase();
-  const disarmed = flightInfo.is_armed === false;
-  const nearGround = Number(flightInfo.altitude_m ?? 0) < 2;
-  const still =
-    Math.abs(Number(flightInfo.horizontal_speed_m_s ?? 0)) < 0.3 &&
-    Math.abs(Number(flightInfo.vertical_speed_m_s ?? 0)) < 0.3;
-  const notAuto = mode !== 'AUTO';
+    const mode = (flightInfo.flight_mode || '').toUpperCase();
+    const disarmed = flightInfo.is_armed === false;
+    const nearGround = Number(flightInfo.altitude_m ?? 0) < 2;
+    const still =
+      Math.abs(Number(flightInfo.horizontal_speed_m_s ?? 0)) < 0.3 &&
+      Math.abs(Number(flightInfo.vertical_speed_m_s ?? 0)) < 0.3;
+    const notAuto = mode !== 'AUTO';
 
-  if (disarmed || (nearGround && still && notAuto)) {
-    setMissionRunning(false);
-  }
-}, [flightInfo, missionRunning]);
+    if (disarmed || (nearGround && still && notAuto)) {
+      setMissionRunning(false);
+    }
+  }, [flightInfo, missionRunning]);
 
 
   useEffect(() => {
@@ -534,52 +540,82 @@ useEffect(() => {
       else localStorage.removeItem(targetStorageKey);
     } catch (e) {
       console.warn('Error writing target to localStorage:', e);
-       }
+    }
   }, [targetStorageKey, target]);
   useEffect(() => {
-  const mode = (flightInfo?.flight_mode || '').toUpperCase();
-  const isRTL = mode === 'RTL';
-  const isArmed = flightInfo?.is_armed === true;
+    const mode = (flightInfo?.flight_mode || '').toUpperCase();
+    const isRTL = mode === 'RTL';
+    const isArmed = flightInfo?.is_armed === true;
 
-  // 🔒 Ne JAMAIS toucher la target si pas RTL ou pas armé
-  if (!isRTL || !isArmed) return;
+    // 🔒 Ne JAMAIS toucher la target si pas RTL ou pas armé
+    if (!isRTL || !isArmed) return;
 
-  const items = currentMission?.items ?? [];
-  if (!items.length) return;
+    const items = currentMission?.items ?? [];
+    if (!items.length) return;
 
-  const chosen = firstValid(items); // en RTL : premier WP (home/centre)
-  if (!chosen) return;
+    const chosen = firstValid(items); // en RTL : premier WP (home/centre)
+    if (!chosen) return;
 
-  setTarget({
-    id: typeof chosen.seq === 'number' ? chosen.seq : 0,
-    lat: Number(chosen.lat),
-    lon: Number(chosen.lon),
-  });
-  setMissionReady(true);
-}, [currentMission, flightInfo?.flight_mode, flightInfo?.is_armed]);
+    setTarget({
+      id: typeof chosen.seq === 'number' ? chosen.seq : 0,
+      lat: Number(chosen.lat),
+      lon: Number(chosen.lon),
+    });
+    setMissionReady(true);
+  }, [currentMission, flightInfo?.flight_mode, flightInfo?.is_armed]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(ALT_STORAGE_KEY, String(cruiseAlt));
+    }
+  }, [ALT_STORAGE_KEY, cruiseAlt]);
+
+  useEffect(() => {
+    if (!modifyDialogOpen && !sendDialogOpen) return;
+    (async () => {
+      setMissionFilesLoading(true);
+      try {
+        const res = await dronesApi.listMissions({ sort: 'mtime', order: 'desc' });
+        const names = (res.files ?? []).map(f => f.name);
+        setMissionFiles(names);
+        // reset s'il faut pour les 2 dialogs
+        setModifyData(md => (names.includes(md.filename) ? md : { ...md, filename: '' }));
+        setSendFilename(prev => (names.includes(prev) ? prev : ''));
+      } catch (e) {
+        console.warn('listMissions failed:', e);
+        setMissionFiles([]);
+        setModifyData(md => ({ ...md, filename: '' }));
+        setSendFilename('');
+      } finally {
+        setMissionFilesLoading(false);
+      }
+    })();
+  }, [modifyDialogOpen, sendDialogOpen]);
+
+
 
   return (
-    <Box sx={{ 
-      height: { xs: 'auto', sm: '100vh' }, 
+    <Box sx={{
+      height: { xs: 'auto', sm: '100vh' },
       minHeight: '100vh',
-      display: 'flex', 
+      display: 'flex',
       flexDirection: 'column',
       px: { xs: 1, sm: 2 },
       py: { xs: 1, sm: 0 }
     }}>
       {/* Header */}
-      <Paper sx={{ 
-        p: { xs: 1.5, sm: 2 }, 
-        mb: { xs: 1, sm: 2 }, 
-        display: 'flex', 
+      <Paper sx={{
+        p: { xs: 1.5, sm: 2 },
+        mb: { xs: 1, sm: 2 },
+        display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
-        alignItems: { xs: 'stretch', md: 'center' }, 
+        alignItems: { xs: 'stretch', md: 'center' },
         justifyContent: { xs: 'flex-start', md: 'space-between' },
         gap: { xs: 2, md: 0 }
       }}>
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
           gap: { xs: 1, sm: 2 },
           flexWrap: { xs: 'wrap', sm: 'nowrap' }
         }}>
@@ -587,7 +623,7 @@ useEffect(() => {
             variant="outlined"
             startIcon={<ArrowBack />}
             onClick={onBack}
-size="small"
+            size="small"
             sx={{
               fontSize: { xs: '0.75rem', sm: '0.875rem' },
               px: { xs: 1, sm: 2 },
@@ -596,9 +632,9 @@ size="small"
           >
             Retour
           </Button>
-          <Typography 
-            variant="h5" 
-            sx={{ 
+          <Typography
+            variant="h5"
+            sx={{
               fontFamily: 'Share Tech, monospace',
               fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' },
               fontWeight: 'bold'
@@ -607,17 +643,27 @@ size="small"
             Drone {droneId} - Détails
           </Typography>
         </Box>
-        <Box sx={{ 
-          display: 'flex', 
+        <Box sx={{
+          display: 'flex',
           gap: { xs: 0.5, sm: 1 },
           flexDirection: { xs: 'column', sm: 'row' },
           width: { xs: '100%', sm: 'auto' }
         }}>
+          <TextField
+            type="number"
+            label="Altitude (m)"
+            size="small"
+            value={cruiseAlt}
+            onChange={(e) => setCruiseAlt(Number(e.target.value || 0))}
+            onBlur={() => setCruiseAlt(Math.max(1, cruiseAlt))}
+            sx={{ width: 140 }}
+            inputProps={{ min: 1, step: 1 }}
+          />
           <Button
             variant="outlined"
             startIcon={<Refresh />}
             onClick={fetchFlightInfo}
-size="small"
+            size="small"
             sx={{
               fontSize: { xs: '0.75rem', sm: '0.875rem' },
               px: { xs: 1.5, sm: 2 },
@@ -629,9 +675,9 @@ size="small"
           <Button
             variant="contained"
             onClick={() => setHospitalsDialogOpen(true)}
-size="small"
-            sx={{ 
-              bgcolor: '#f44336', 
+            size="small"
+            sx={{
+              bgcolor: '#f44336',
               '&:hover': { bgcolor: '#d32f2f' },
               fontSize: { xs: '0.75rem', sm: '0.875rem' },
               px: { xs: 1.5, sm: 2 },
@@ -643,9 +689,9 @@ size="small"
           <Button
             variant="contained"
             onClick={() => setAssignOpen(true)}
-size="small"
-            sx={{ 
-              bgcolor: '#1976d2', 
+            size="small"
+            sx={{
+              bgcolor: '#1976d2',
               '&:hover': { bgcolor: '#125ea0' },
               fontSize: { xs: '0.75rem', sm: '0.875rem' },
               px: { xs: 1.5, sm: 2 },
@@ -665,12 +711,12 @@ size="small"
 
       {/* Flight Info Cards */}
       {flightInfo && (
-        <Paper sx={{ 
-          p: { xs: 1, sm: 1.5 }, 
-          mb: { xs: 1, sm: 1.5 } 
+        <Paper sx={{
+          p: { xs: 1, sm: 1.5 },
+          mb: { xs: 1, sm: 1.5 }
         }}>
-          <Typography 
-            variant="h6" 
+          <Typography
+            variant="h6"
             gutterBottom
             sx={{
               fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
@@ -679,38 +725,38 @@ size="small"
           >
             Informations de vol
           </Typography>
-          <Box sx={{ 
+          <Box sx={{
             display: 'grid',
-            gridTemplateColumns: { 
-              xs: '1fr', 
-              sm: 'repeat(2, 1fr)', 
-              md: 'repeat(4, 1fr)' 
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(4, 1fr)'
             },
             gap: { xs: 1.5, sm: 2 },
             mb: { xs: 1.5, sm: 2 }
           }}>
             <Card variant="outlined" sx={{ height: 'fit-content' }}>
-              <CardContent sx={{ 
+              <CardContent sx={{
                 textAlign: 'center',
                 p: { xs: 1.5, sm: 2 },
                 '&:last-child': { pb: { xs: 1.5, sm: 2 } }
               }}>
-                <LocationOn sx={{ 
-                  fontSize: { xs: 24, sm: 30 }, 
+                <LocationOn sx={{
+                  fontSize: { xs: 24, sm: 30 },
                   color: '#2196f3',
                   mb: { xs: 0.5, sm: 1 }
                 }} />
-                <Typography 
-                  variant="body2" 
+                <Typography
+                  variant="body2"
                   color="text.secondary"
-                  sx={{ 
+                  sx={{
                     fontSize: { xs: '0.75rem', sm: '0.875rem' },
                     mb: 0.5
                   }}
                 >
                   Position
                 </Typography>
-                <Typography 
+                <Typography
                   variant="body1"
                   sx={{
                     fontSize: { xs: '0.8rem', sm: '0.9rem', md: '1rem' },
@@ -722,29 +768,29 @@ size="small"
                 </Typography>
               </CardContent>
             </Card>
-            
+
             <Card variant="outlined" sx={{ height: 'fit-content' }}>
-              <CardContent sx={{ 
+              <CardContent sx={{
                 textAlign: 'center',
                 p: { xs: 1.5, sm: 2 },
                 '&:last-child': { pb: { xs: 1.5, sm: 2 } }
               }}>
-                <Height sx={{ 
-                  fontSize: { xs: 24, sm: 30 }, 
+                <Height sx={{
+                  fontSize: { xs: 24, sm: 30 },
                   color: '#4caf50',
                   mb: { xs: 0.5, sm: 1 }
                 }} />
-                <Typography 
-                  variant="body2" 
+                <Typography
+                  variant="body2"
                   color="text.secondary"
-                  sx={{ 
+                  sx={{
                     fontSize: { xs: '0.75rem', sm: '0.875rem' },
                     mb: 0.5
                   }}
                 >
                   Altitude
                 </Typography>
-                <Typography 
+                <Typography
                   variant="body1"
                   sx={{
                     fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
@@ -755,29 +801,29 @@ size="small"
                 </Typography>
               </CardContent>
             </Card>
-            
+
             <Card variant="outlined" sx={{ height: 'fit-content' }}>
-              <CardContent sx={{ 
+              <CardContent sx={{
                 textAlign: 'center',
                 p: { xs: 1.5, sm: 2 },
                 '&:last-child': { pb: { xs: 1.5, sm: 2 } }
               }}>
-                <Speed sx={{ 
-                  fontSize: { xs: 24, sm: 30 }, 
+                <Speed sx={{
+                  fontSize: { xs: 24, sm: 30 },
                   color: '#ff9800',
                   mb: { xs: 0.5, sm: 1 }
                 }} />
-                <Typography 
-                  variant="body2" 
+                <Typography
+                  variant="body2"
                   color="text.secondary"
-                  sx={{ 
+                  sx={{
                     fontSize: { xs: '0.75rem', sm: '0.875rem' },
                     mb: 0.5
                   }}
                 >
                   Vitesse
                 </Typography>
-                <Typography 
+                <Typography
                   variant="body1"
                   sx={{
                     fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
@@ -788,29 +834,29 @@ size="small"
                 </Typography>
               </CardContent>
             </Card>
-            
+
             <Card variant="outlined" sx={{ height: 'fit-content' }}>
-              <CardContent sx={{ 
+              <CardContent sx={{
                 textAlign: 'center',
                 p: { xs: 1.5, sm: 2 },
                 '&:last-child': { pb: { xs: 1.5, sm: 2 } }
               }}>
-                <Navigation sx={{ 
-                  fontSize: { xs: 24, sm: 30 }, 
+                <Navigation sx={{
+                  fontSize: { xs: 24, sm: 30 },
                   color: '#9c27b0',
                   mb: { xs: 0.5, sm: 1 }
                 }} />
-                <Typography 
-                  variant="body2" 
+                <Typography
+                  variant="body2"
                   color="text.secondary"
-                  sx={{ 
+                  sx={{
                     fontSize: { xs: '0.75rem', sm: '0.875rem' },
                     mb: 0.5
                   }}
                 >
                   Direction
                 </Typography>
-                <Typography 
+                <Typography
                   variant="body1"
                   sx={{
                     fontSize: { xs: '0.9rem', sm: '1rem', md: '1.1rem' },
@@ -822,17 +868,17 @@ size="small"
               </CardContent>
             </Card>
           </Box>
-          
-          <Box sx={{ 
-            display: 'flex', 
-            gap: { xs: 0.5, sm: 1 }, 
+
+          <Box sx={{
+            display: 'flex',
+            gap: { xs: 0.5, sm: 1 },
             flexWrap: 'wrap',
             justifyContent: { xs: 'center', sm: 'flex-start' }
           }}>
             <Chip
               label={flightInfo.is_armed ? 'ARMÉ' : 'DÉSARMÉ'}
               color={flightInfo.is_armed ? 'error' : 'default'}
-  size="small"
+              size="small"
               sx={{
                 fontSize: { xs: '0.7rem', sm: '0.8rem' },
                 fontWeight: 'bold'
@@ -841,7 +887,7 @@ size="small"
             <Chip
               label={flightInfo.flight_mode}
               color="info"
-  size="small"
+              size="small"
               sx={{
                 fontSize: { xs: '0.7rem', sm: '0.8rem' },
                 fontWeight: 'bold'
@@ -852,16 +898,16 @@ size="small"
       )}
 
       {/* Map */}
-      <Paper sx={{ 
-        flex: 1, 
-        p: { xs: 0.5, sm: 1 }, 
+      <Paper sx={{
+        flex: 1,
+        p: { xs: 0.5, sm: 1 },
         position: 'relative',
         minHeight: { xs: '60vh', sm: '50vh', md: '60vh' },
         height: { xs: 'auto', sm: 'auto' }
       }}>
         {flightInfo && (
           <MapContainer
-  center={[Number(flightInfo?.latitude ?? 0), Number(flightInfo?.longitude ?? 0)]}
+            center={[Number(flightInfo?.latitude ?? 0), Number(flightInfo?.longitude ?? 0)]}
             zoom={15}
             style={{ height: '100%', width: '100%', borderRadius: 20 }}
           >
@@ -911,21 +957,21 @@ size="small"
               );
             })}
             <Marker
-  position={[Number(flightInfo?.latitude ?? 0), Number(flightInfo?.longitude ?? 0)]}
+              position={[Number(flightInfo?.latitude ?? 0), Number(flightInfo?.longitude ?? 0)]}
               icon={droneIcon} zIndexOffset={1000}
             >
               <Popup>
                 <div>
                   <strong>Drone {droneId}</strong><br />
-Mode: {flightInfo?.flight_mode}<br />
-Altitude: {fixed(flightInfo?.altitude_m, 1)} m<br />
-Vitesse: {fixed(flightInfo?.horizontal_speed_m_s, 1)} m/s<br />
-Cap (heading): {fixed(flightInfo?.heading_deg, 0)}°<br />
-Déplacement: {fixed(flightInfo?.movement_track_deg, 0)}°<br />
-Batterie: {fixed(flightInfo?.battery_remaining_percent, 0)}%<br />
-{Number(flightInfo?.horizontal_speed_m_s ?? 0) > 0.1
-  ? <span style={{ color: '#00ff00' }}>🡹 En mouvement</span>
-  : <span style={{ color: '#999' }}>⏸ Stationnaire</span>}
+                  Mode: {flightInfo?.flight_mode}<br />
+                  Altitude: {fixed(flightInfo?.altitude_m, 1)} m<br />
+                  Vitesse: {fixed(flightInfo?.horizontal_speed_m_s, 1)} m/s<br />
+                  Cap (heading): {fixed(flightInfo?.heading_deg, 0)}°<br />
+                  Déplacement: {fixed(flightInfo?.movement_track_deg, 0)}°<br />
+                  Batterie: {fixed(flightInfo?.battery_remaining_percent, 0)}%<br />
+                  {Number(flightInfo?.horizontal_speed_m_s ?? 0) > 0.1
+                    ? <span style={{ color: '#00ff00' }}>🡹 En mouvement</span>
+                    : <span style={{ color: '#999' }}>⏸ Stationnaire</span>}
                 </div>
               </Popup>
             </Marker>
@@ -961,20 +1007,33 @@ Batterie: {fixed(flightInfo?.battery_remaining_percent, 0)}%<br />
           </MapContainer>
         )}
         {/* Control Buttons */}
-        <Box sx={{ 
-          position: 'absolute', 
-          bottom: { xs: 8, sm: 16 }, 
-          right: { xs: 8, sm: 16 }, 
-          display: 'flex', 
-          flexDirection: 'column', 
+        <Box sx={{
+          position: 'absolute',
+          bottom: { xs: 8, sm: 16 },
+          right: { xs: 8, sm: 16 },
+          display: 'flex',
+          flexDirection: 'column',
           gap: { xs: 0.5, sm: 1 },
           zIndex: 1000
         }}>
           <Fab
+            color="success"
+            onClick={() => setSendDialogOpen(true)}
+            size="small"
+            sx={{
+              width: { xs: 40, sm: 56 },
+              height: { xs: 40, sm: 56 },
+              boxShadow: 2
+            }}
+          >
+            <Send sx={{ fontSize: { xs: 20, sm: 24 } }} />
+          </Fab>
+
+          <Fab
             color="primary"
             onClick={() => setMissionDialogOpen(true)}
-size="small"
-            sx={{ 
+            size="small"
+            sx={{
               width: { xs: 40, sm: 56 },
               height: { xs: 40, sm: 56 },
               boxShadow: 2
@@ -985,9 +1044,9 @@ size="small"
           <Fab
             color="secondary"
             onClick={handleStartMission}
-size="small"
+            size="small"
             disabled={!canStart}
-            sx={{ 
+            sx={{
               width: { xs: 40, sm: 56 },
               height: { xs: 40, sm: 56 },
               boxShadow: 2
@@ -998,24 +1057,24 @@ size="small"
           <Fab
             color="default"
             onClick={handleReturnHome}
-size="small"
+            size="small"
             disabled={homeBusy}
-            sx={{ 
+            sx={{
               width: { xs: 40, sm: 56 },
               height: { xs: 40, sm: 56 },
               boxShadow: 2
             }}
           >
-            {homeBusy ? 
-              <CircularProgress size={20} /> : 
+            {homeBusy ?
+              <CircularProgress size={20} /> :
               <Home sx={{ fontSize: { xs: 20, sm: 24 } }} />
             }
           </Fab>
           <Fab
             color="inherit"
             onClick={() => setModifyDialogOpen(true)}
-size="small"
-            sx={{ 
+            size="small"
+            sx={{
               width: { xs: 40, sm: 56 },
               height: { xs: 40, sm: 56 },
               boxShadow: 2
@@ -1027,10 +1086,10 @@ size="small"
       </Paper>
 
       {/* Mission Creation Dialog */}
-      <Dialog 
-        open={missionDialogOpen} 
-        onClose={() => setMissionDialogOpen(false)} 
-        maxWidth="md" 
+      <Dialog
+        open={missionDialogOpen}
+        onClose={() => setMissionDialogOpen(false)}
+        maxWidth="md"
         fullWidth
         PaperProps={{
           sx: {
@@ -1040,7 +1099,7 @@ size="small"
           }
         }}
       >
-        <DialogTitle sx={{ 
+        <DialogTitle sx={{
           fontSize: { xs: '1.1rem', sm: '1.25rem' },
           px: { xs: 2, sm: 3 },
           py: { xs: 1.5, sm: 2 }
@@ -1052,18 +1111,18 @@ size="small"
           pb: { xs: 1, sm: 2 },
           overflow: 'auto'
         }}>
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: { xs: 2, sm: 2.5 }, 
-            pt: { xs: 1, sm: 2 } 
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: { xs: 2, sm: 2.5 },
+            pt: { xs: 1, sm: 2 }
           }}>
             <TextField
               label="Nom du fichier"
               value={missionData.filename}
               onChange={(e) => setMissionData({ ...missionData, filename: e.target.value })}
               fullWidth
-  size="small"
+              size="small"
               sx={{
                 '& .MuiInputBase-input': {
                   fontSize: { xs: '0.875rem', sm: '1rem' }
@@ -1079,7 +1138,7 @@ size="small"
               value={missionData.altitude_takeoff}
               onChange={(e) => setMissionData({ ...missionData, altitude_takeoff: Number(e.target.value) })}
               fullWidth
-  size="small"
+              size="small"
               sx={{
                 '& .MuiInputBase-input': {
                   fontSize: { xs: '0.875rem', sm: '1rem' }
@@ -1109,7 +1168,7 @@ size="small"
               </Select>
             </FormControl>
 
-            <Typography 
+            <Typography
               variant="subtitle2"
               sx={{
                 fontSize: { xs: '0.9rem', sm: '1rem' },
@@ -1118,20 +1177,20 @@ size="small"
             >
               Waypoints ({waypoints.length})
             </Typography>
-            <Box sx={{ 
-              maxHeight: { xs: '200px', sm: '300px' }, 
+            <Box sx={{
+              maxHeight: { xs: '200px', sm: '300px' },
               overflow: 'auto',
               border: waypoints.length > 3 ? '1px solid #e0e0e0' : 'none',
               borderRadius: waypoints.length > 3 ? 1 : 0,
               p: waypoints.length > 3 ? 1 : 0
             }}>
               {waypoints.map((wp, index) => (
-                <Box 
-                  key={index} 
-                  sx={{ 
-                    display: 'flex', 
+                <Box
+                  key={index}
+                  sx={{
+                    display: 'flex',
                     flexDirection: { xs: 'column', sm: 'row' },
-                    gap: { xs: 1, sm: 1 }, 
+                    gap: { xs: 1, sm: 1 },
                     alignItems: { xs: 'stretch', sm: 'center' },
                     mb: { xs: 2, sm: 1.5 },
                     p: { xs: 1, sm: 0 },
@@ -1150,7 +1209,7 @@ size="small"
                       setMissionData({ ...missionData, waypoints: newWaypoints });
                     }}
                     size="small"
-                    sx={{ 
+                    sx={{
                       flex: { xs: 'none', sm: 1 },
                       '& .MuiInputBase-input': {
                         fontSize: { xs: '0.8rem', sm: '0.875rem' }
@@ -1171,7 +1230,7 @@ size="small"
                       setMissionData({ ...missionData, waypoints: newWaypoints });
                     }}
                     size="small"
-                    sx={{ 
+                    sx={{
                       flex: { xs: 'none', sm: 1 },
                       '& .MuiInputBase-input': {
                         fontSize: { xs: '0.8rem', sm: '0.875rem' }
@@ -1192,7 +1251,7 @@ size="small"
                       setMissionData({ ...missionData, waypoints: newWaypoints });
                     }}
                     size="small"
-                    sx={{ 
+                    sx={{
                       flex: { xs: 'none', sm: 1 },
                       '& .MuiInputBase-input': {
                         fontSize: { xs: '0.8rem', sm: '0.875rem' }
@@ -1202,11 +1261,11 @@ size="small"
                       }
                     }}
                   />
-                  <Button 
-                    onClick={() => removeWaypoint(index)} 
+                  <Button
+                    onClick={() => removeWaypoint(index)}
                     color="error"
                     size="small"
-variant="outlined"
+                    variant="outlined"
                     sx={{
                       fontSize: { xs: '0.75rem', sm: '0.8rem' },
                       px: { xs: 2, sm: 1 },
@@ -1249,14 +1308,14 @@ variant="outlined"
             py: { xs: 1, sm: 0.75 }
           }
         }}>
-          <Button 
+          <Button
             onClick={() => setMissionDialogOpen(false)}
             sx={{ order: { xs: 2, sm: 1 } }}
           >
             Annuler
           </Button>
-          <Button 
-            onClick={handleCreateMission} 
+          <Button
+            onClick={handleCreateMission}
             variant="contained"
             sx={{ order: { xs: 1, sm: 2 } }}
           >
@@ -1265,21 +1324,92 @@ variant="outlined"
         </DialogActions>
       </Dialog>
 
-      {/* Mission Modification Dialog */}
-      <Dialog 
-        open={modifyDialogOpen} 
-        onClose={() => setModifyDialogOpen(false)} 
-        maxWidth="sm" 
-        fullWidth
+      {/* Mission Send Dialog */}
+      <Dialog
+        open={sendDialogOpen}
+        onClose={() => setSendDialogOpen(false)}
+        maxWidth={false}
         PaperProps={{
           sx: {
+            width: 520,
+            maxWidth: 'calc(100vw - 32px)',
             m: { xs: 1, sm: 2 },
             maxHeight: { xs: 'calc(100vh - 16px)', sm: 'calc(100vh - 64px)' },
-            width: { xs: 'calc(100vw - 16px)', sm: 'auto' }
-          }
+          },
         }}
       >
-        <DialogTitle sx={{ 
+        <DialogTitle
+          sx={{
+            fontSize: { xs: '1.1rem', sm: '1.25rem' },
+            px: { xs: 2, sm: 3 },
+            py: { xs: 1.5, sm: 2 }
+          }}
+        >
+          Envoyer une mission au drone
+        </DialogTitle>
+
+        <DialogContent sx={{ px: { xs: 2, sm: 3 }, pb: { xs: 1, sm: 2 } }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Fichier de mission</InputLabel>
+              <Select
+                label="Fichier de mission"
+                value={sendFilename}
+                onChange={(e) => setSendFilename(String(e.target.value))}
+                disabled={missionFilesLoading || missionFiles.length === 0}
+              >
+                <MenuItem value="">
+                  {missionFilesLoading ? 'Chargement…' : missionFiles.length === 0 ? 'Aucun fichier' : '— Sélectionner —'}
+                </MenuItem>
+                {missionFiles.map((name) => (
+                  <MenuItem key={name} value={name}>{name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Box>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setSendDialogOpen(false)}>Annuler</Button>
+          <Button
+            variant="contained"
+            disabled={!sendFilename || sendBusy || missionFilesLoading}
+            onClick={async () => {
+              try {
+                setSendBusy(true);
+                await dronesApi.sendMissionFile(droneId, sendFilename);
+                setSendDialogOpen(false);
+                // (optionnel) rafraîchir l’info de vol et la mission courante
+                await fetchFlightInfo();
+                await fetchCurrentMission();
+              } catch (e) {
+                console.error('sendMissionFile failed:', e);
+              } finally {
+                setSendBusy(false);
+              }
+            }}
+          >
+            {sendBusy ? <CircularProgress size={18} sx={{ mr: 1 }} /> : null}
+            Envoyer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Mission Modification Dialog */}
+      <Dialog
+        open={modifyDialogOpen}
+        onClose={() => setModifyDialogOpen(false)}
+        maxWidth={false}
+        PaperProps={{
+          sx: {
+            width: 760,                         // ta largeur
+            maxWidth: 'calc(100vw - 32px)',     // pour ne pas déborder l’écran
+            m: { xs: 1, sm: 2 },
+            maxHeight: { xs: 'calc(100vh - 16px)', sm: 'calc(100vh - 64px)' },
+          },
+        }}
+      >
+        <DialogTitle sx={{
           fontSize: { xs: '1.1rem', sm: '1.25rem' },
           px: { xs: 2, sm: 3 },
           py: { xs: 1.5, sm: 2 }
@@ -1290,19 +1420,28 @@ variant="outlined"
           px: { xs: 2, sm: 3 },
           pb: { xs: 1, sm: 2 }
         }}>
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: { xs: 2, sm: 2.5 }, 
-            pt: { xs: 1, sm: 2 } 
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: { xs: 2, sm: 2.5 },
+            pt: { xs: 1, sm: 2 }
           }}>
-            <TextField
-              label="Nom du fichier de mission"
-              placeholder="missions/mission_auto.waypoints"
-              value={modifyData.filename}
-              onChange={(e) => setModifyData({ ...modifyData, filename: e.target.value })}
-              fullWidth
-            />
+            <FormControl fullWidth size="small">
+              <InputLabel>Fichier de mission</InputLabel>
+              <Select
+                label="Fichier de mission"
+                value={modifyData.filename}
+                onChange={(e) => setModifyData({ ...modifyData, filename: String(e.target.value) })}
+                disabled={missionFilesLoading || missionFiles.length === 0}
+              >
+                <MenuItem value="">
+                  {missionFilesLoading ? 'Chargement…' : missionFiles.length === 0 ? 'Aucun fichier' : '— Sélectionner —'}
+                </MenuItem>
+                {missionFiles.map((name) => (
+                  <MenuItem key={name} value={name}>{name}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <TextField
               label="Numéro de séquence à modifier"
               type="number"
@@ -1345,10 +1484,10 @@ variant="outlined"
       </Dialog>
 
       {/* Hospitals Dialog */}
-      <Dialog 
-        open={hospitalsDialogOpen} 
-        onClose={() => setHospitalsDialogOpen(false)} 
-        maxWidth="md" 
+      <Dialog
+        open={hospitalsDialogOpen}
+        onClose={() => setHospitalsDialogOpen(false)}
+        maxWidth="md"
         fullWidth
         PaperProps={{
           sx: {
@@ -1358,7 +1497,7 @@ variant="outlined"
           }
         }}
       >
-        <DialogTitle sx={{ 
+        <DialogTitle sx={{
           fontSize: { xs: '1.1rem', sm: '1.25rem' },
           px: { xs: 2, sm: 3 },
           py: { xs: 1.5, sm: 2 }
@@ -1370,11 +1509,11 @@ variant="outlined"
           pb: { xs: 1, sm: 2 },
           overflow: 'auto'
         }}>
-          <Box sx={{ 
-            display: 'flex', 
-            flexDirection: 'column', 
-            gap: { xs: 1.5, sm: 2 }, 
-            pt: { xs: 1, sm: 2 } 
+          <Box sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: { xs: 1.5, sm: 2 },
+            pt: { xs: 1, sm: 2 }
           }}>
             {hospitals.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -1407,38 +1546,38 @@ variant="outlined"
                       }
                     }}
                   >
-                    <Box sx={{ 
-                      display: 'flex', 
+                    <Box sx={{
+                      display: 'flex',
                       flexDirection: { xs: 'column', sm: 'row' },
-                      justifyContent: { xs: 'flex-start', sm: 'space-between' }, 
+                      justifyContent: { xs: 'flex-start', sm: 'space-between' },
                       alignItems: { xs: 'stretch', sm: 'center' },
                       gap: { xs: 1.5, sm: 0 }
                     }}>
                       <Box sx={{ flex: 1 }}>
-                        <Typography 
-                          variant="h6" 
-                          sx={{ 
-                            fontWeight: 'bold', 
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 'bold',
                             color: '#f44336',
                             fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' }
                           }}
                         >
                           {hospital.hospitalName}
                         </Typography>
-                        <Typography 
-                          variant="body2" 
+                        <Typography
+                          variant="body2"
                           color="text.secondary"
-                          sx={{ 
+                          sx={{
                             fontSize: { xs: '0.8rem', sm: '0.875rem' },
                             mb: { xs: 0.5, sm: 0 }
                           }}
                         >
                           {hospital.hospitalAdress}, {hospital.hospitalCity} - {hospital.hospitalPostal}
                         </Typography>
-                        <Typography 
-                          variant="caption" 
+                        <Typography
+                          variant="caption"
                           color="text.secondary"
-                          sx={{ 
+                          sx={{
                             fontSize: { xs: '0.7rem', sm: '0.75rem' },
                             display: 'block',
                             wordBreak: 'break-all'
@@ -1448,19 +1587,19 @@ variant="outlined"
                         </Typography>
                       </Box>
 
-                      <Box sx={{ 
-                        textAlign: { xs: 'center', sm: 'right' }, 
-                        display: 'flex', 
+                      <Box sx={{
+                        textAlign: { xs: 'center', sm: 'right' },
+                        display: 'flex',
                         flexDirection: { xs: 'row', sm: 'row' },
-                        alignItems: 'center', 
+                        alignItems: 'center',
                         justifyContent: { xs: 'center', sm: 'flex-end' },
                         gap: 1,
                         mt: { xs: 1, sm: 0 }
                       }}>
-                        <Typography 
-                          variant="body2" 
+                        <Typography
+                          variant="body2"
                           color="primary"
-                          sx={{ 
+                          sx={{
                             fontSize: { xs: '0.8rem', sm: '0.875rem' },
                             textAlign: 'center'
                           }}
@@ -1487,7 +1626,8 @@ variant="outlined"
         onClose={() => setAssignOpen(false)}
         centerId={donationCenter?.centerId ?? null}
         droneId={droneId}
-        statusFilter="pending"
+        statusFilter={['pending', 'charged']}
+        defaultAltitude={cruiseAlt}
         onMissionReady={async ({ deliveryId, hospitalId, lat, lon }) => {
           setAssignOpen(false);
           setMissionReady(true);

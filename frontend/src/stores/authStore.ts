@@ -81,7 +81,7 @@ export class AuthStore {
       this.user = user;
       this.isAuthenticated = true;
       console.log('AuthStore - isAuthenticated défini à true');
-      alert('LOGIN RÉUSSI - Rôle: ' + JSON.stringify(user.role));
+      //alert('LOGIN RÉUSSI - Rôle: ' + JSON.stringify(user.role));
       
       localStorage.setItem('user', JSON.stringify(user));
       // Reset de la vue active pour forcer le retour au dashboard principal
@@ -138,6 +138,7 @@ export class AuthStore {
     
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    localStorage.removeItem('bloodsky-active-view');
     
     console.log('AuthStore - Redirection vers /login');
     window.location.href = '/login';

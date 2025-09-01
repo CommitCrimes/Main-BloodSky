@@ -104,9 +104,8 @@ export class NotificationService {
 
       if (deliveryId) {
         dronistUsers = await db
-          .select({ userId: deliveryParticipations.userId })
-          .from(deliveryParticipations)
-          .where(eq(deliveryParticipations.deliveryId, deliveryId));
+          .select({ userId: userDronists.userId })
+          .from(userDronists)
 
         // If no dronists have yet participated in this delivery,
         // fall back to notifying all dronists.
@@ -216,6 +215,11 @@ export class NotificationService {
         case "in_transit":
           title = "Livraison en cours";
           message = `La livraison #${deliveryId} est maintenant en transit vers l'hôpital.`;
+          priority = "high";
+          break;
+        case "charged":
+          title = "Livraison chargée";
+          message = `La livraison #${deliveryId} Peut maintenant décoler.`;
           priority = "high";
           break;
         case "delivered":

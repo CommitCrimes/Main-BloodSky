@@ -36,20 +36,26 @@ export const getUserRole = async (c: Context) => {
 
     const userIdToCheck = userRecord.userId;
     
+    console.log(`DEBUG getUserRole - Checking roles for userId: ${userIdToCheck}, email: ${userRecord.email}`);
+    
     // Verif dans user_hospital
     const hospitalRole = await db
       .select()
       .from(userHospital)
       .where(eq(userHospital.userId, userIdToCheck))
       .limit(1);
+    
+    console.log(`DEBUG getUserRole - Hospital role found:`, hospitalRole.length > 0 ? hospitalRole[0] : 'none');
       
     if (hospitalRole.length > 0) {
-      return c.json({
-        type: 'hospital_admin',
+      const response = {
+        type: hospitalRole[0].admin === true ? 'hospital_admin' : 'user',
         hospitalId: hospitalRole[0].hospitalId,
         admin: hospitalRole[0].admin,
         info: hospitalRole[0].info
-      });
+      };
+      console.log(`DEBUG getUserRole - Returning hospital role:`, response);
+      return c.json(response);
     }
     
     // Verif dans user_donation_center
@@ -58,14 +64,18 @@ export const getUserRole = async (c: Context) => {
       .from(userDonationCenter)
       .where(eq(userDonationCenter.userId, userIdToCheck))
       .limit(1);
+    
+    console.log(`DEBUG getUserRole - Donation center role found:`, donationCenterRole.length > 0 ? donationCenterRole[0] : 'none');
       
     if (donationCenterRole.length > 0) {
-      return c.json({
-        type: 'donation_center_admin',
+      const response = {
+        type: donationCenterRole[0].admin === true ? 'donation_center_admin' : 'user',
         centerId: donationCenterRole[0].centerId,
         admin: donationCenterRole[0].admin,
         info: donationCenterRole[0].info
-      });
+      };
+      console.log(`DEBUG getUserRole - Returning donation center role:`, response);
+      return c.json(response);
     }
     
     // Verif dans user_dronist

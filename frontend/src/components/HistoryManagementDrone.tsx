@@ -47,6 +47,7 @@ import {
   Numbers,
   ArrowUpward,
   ArrowDownward,
+  Inventory2,
 } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import type {
@@ -62,6 +63,7 @@ import EditStatusDeliveryPopup from './EditStatusDeliveryPopup';
 import { deliveryApi } from '@/api/delivery';
 import { dronesApi } from '@/api/drone';
 import type { Drone } from '@/types';
+import type { UserRole, DonationCenterAdminRole, HospitalAdminRole } from '../types/users';
 
 
 const commonStyles = {
@@ -102,7 +104,14 @@ const commonStyles = {
     px: 3,
     py: 1.5,
     textTransform: 'none' as const
-  }
+  },
+  clickableHeaderBlue: {
+    color: '#008EFF',
+    cursor: 'pointer',
+    '&:hover': { color: '#0066cc', textDecoration: 'underline' },
+    '&:focus-visible': { outline: '2px solid #008EFF', outlineOffset: 2 }
+  },
+
 };
 
 const HistoryManagementDrone: React.FC = observer(() => {
@@ -129,8 +138,24 @@ const HistoryManagementDrone: React.FC = observer(() => {
   const [deliveryToEdit, setDeliveryToEdit] = useState<DeliveryHistory | null>(null);
 
 
-  const userType = auth.user?.role?.centerId ? 'donation_center' : 'hospital';
-  const userEntityId = auth.user?.role?.centerId || auth.user?.role?.hospitalId;
+  // Type guards for role
+  function isDonationCenterRole(role: UserRole | undefined): role is DonationCenterAdminRole {
+    return role?.type === 'donation_center_admin';
+  }
+  function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
+    return role?.type === 'hospital_admin';
+  }
+
+  let userType: 'donation_center' | 'hospital' | undefined;
+  let userEntityId: number | undefined;
+
+  if (isDonationCenterRole(auth.user?.role)) {
+    userType = 'donation_center';
+    userEntityId = auth.user?.role.centerId;
+  } else if (isHospitalRole(auth.user?.role)) {
+    userType = 'hospital';
+    userEntityId = auth.user?.role.hospitalId;
+  }
 
   const [droneMenuAnchor, setDroneMenuAnchor] = useState<null | HTMLElement>(null);
   const [droneMenuDeliveryId, setDroneMenuDeliveryId] = useState<number | null>(null);
@@ -140,33 +165,33 @@ const HistoryManagementDrone: React.FC = observer(() => {
 
 
   const openDroneMenu = async (e: React.MouseEvent<HTMLElement>, delivery: DeliveryHistory) => {
-  setDroneMenuAnchor(e.currentTarget);
-  setDroneMenuDeliveryId(delivery.deliveryId);
-  setDroneAssignedOnRow(delivery.droneId ?? null);
-  setDroneMenuLoading(true);
+    setDroneMenuAnchor(e.currentTarget);
+    setDroneMenuDeliveryId(delivery.deliveryId);
+    setDroneAssignedOnRow(delivery.droneId ?? null);
+    setDroneMenuLoading(true);
 
-  try {
-    const centerId =
-      delivery.type === 'delivery'
-        ? delivery.sourceDonationCenter?.centerId
-        : delivery.sourceDonationCenter?.centerId;
+    try {
+      const centerId =
+        delivery.type === 'delivery'
+          ? delivery.sourceDonationCenter?.centerId
+          : delivery.sourceDonationCenter?.centerId;
 
-    if (!centerId) {
+      if (!centerId) {
+        setDroneOptions([]);
+        setError("Impossible de déterminer le centre associé à cette livraison.");
+        return;
+      }
+
+      const id = typeof centerId === 'object' ? centerId.centerId : centerId;
+      const list = await dronesApi.getByCenter(id);
+      setDroneOptions(list);
+    } catch (err) {
+      console.error('load drones error', err);
       setDroneOptions([]);
-      setError("Impossible de déterminer le centre associé à cette livraison.");
-      return;
+    } finally {
+      setDroneMenuLoading(false);
     }
-
-    const id = typeof centerId === 'object' ? centerId.centerId : centerId;
-    const list = await dronesApi.getByCenter(id);
-    setDroneOptions(list);
-  } catch (err) {
-    console.error('load drones error', err);
-    setDroneOptions([]);
-  } finally {
-    setDroneMenuLoading(false);
-  }
-};
+  };
 
 
 
@@ -177,7 +202,7 @@ const HistoryManagementDrone: React.FC = observer(() => {
   };
 
   const assignDrone = async (droneId: number | null) => {
-    if (!droneMenuDeliveryId) return;
+    if (droneMenuDeliveryId == null) return;
     try {
       await deliveryApi.update(droneMenuDeliveryId, { droneId });
       await reloadHistoryData();
@@ -228,23 +253,27 @@ const HistoryManagementDrone: React.FC = observer(() => {
   const SortableHeader: React.FC<{ label: string; field: DroneHistorySortConfig['field'] }> = ({ label, field }) => {
     const active = sortConfig.field === field;
     const dir = sortConfig.direction;
+    const onActivate = () => handleSort(field);
+
     return (
       <Box
         sx={{
           display: 'inline-flex',
           alignItems: 'center',
           gap: 0.5,
-          cursor: 'pointer',
-          userSelect: 'none'
+          userSelect: 'none',
+          ...commonStyles.clickableHeaderBlue, // 👈 bleu
         }}
-        onClick={() => handleSort(field)}
         role="button"
+        tabIndex={0}
+        onClick={onActivate}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onActivate(); }}
         aria-label={`Trier par ${label}`}
         aria-sort={active ? (dir === 'asc' ? 'ascending' : 'descending') : 'none'}
         title={`Trier par ${label} (${active ? (dir === 'asc' ? 'asc' : 'desc') : 'asc'})`}
       >
-        <Typography sx={commonStyles.techFontBold}>{label}</Typography>
-        {active ? (dir === 'asc' ? <ArrowUpward fontSize="small" /> : <ArrowDownward fontSize="small" />) : null}
+        <Typography sx={{ ...commonStyles.techFontBold, color: 'inherit' }}>{label}</Typography>
+        {active ? (dir === 'asc' ? <ArrowUpward fontSize="small" sx={{ color: 'inherit' }} /> : <ArrowDownward fontSize="small" sx={{ color: 'inherit' }} />) : null}
       </Box>
     );
   };
@@ -296,6 +325,8 @@ const HistoryManagementDrone: React.FC = observer(() => {
         return '#10b981';
       case 'in_transit':
         return '#f59e0b';
+      case 'charged':
+        return '#3b82f6';
       case 'pending':
         return '#6b7280';
       case 'cancelled':
@@ -308,9 +339,11 @@ const HistoryManagementDrone: React.FC = observer(() => {
   const getStatusLabel = (status: DeliveryHistory['deliveryStatus']) => {
     switch (status) {
       case 'delivered':
-        return 'Livré';
+        return 'Livrée';
       case 'in_transit':
         return 'En transit';
+      case 'charged':
+        return 'Chargée';
       case 'pending':
         return 'En attente';
       case 'cancelled':
@@ -326,6 +359,8 @@ const HistoryManagementDrone: React.FC = observer(() => {
         return <CheckCircle />;
       case 'in_transit':
         return <DirectionsCar />;
+      case 'charged':
+        return <Inventory2 />;
       case 'pending':
         return <Pending />;
       case 'cancelled':
@@ -343,6 +378,9 @@ const HistoryManagementDrone: React.FC = observer(() => {
     }
     if (filters.isUrgent !== undefined) {
       result = result.filter(item => item.isUrgent === filters.isUrgent);
+    }
+    if (filters.centerId !== undefined) {
+      result = result.filter(item => item.sourceDonationCenter?.centerId === filters.centerId);
     }
 
     if (searchConfig.searchTerm) {
@@ -419,6 +457,22 @@ const HistoryManagementDrone: React.FC = observer(() => {
 
     return result;
   }, [history, filters, sortConfig, searchConfig]);
+
+  const centerOptions = useMemo(
+    () => {
+      const m = new Map<number, { id: number; label: string }>();
+      history.forEach(h => {
+        const c = h.sourceDonationCenter;
+        if (c?.centerId != null) {
+          // label: ville + adresse (adapte si tu veux)
+          m.set(c.centerId, { id: c.centerId, label: `${c.centerCity} — ${c.centerAddress}` });
+        }
+      });
+      return Array.from(m.values()).sort((a, b) => a.label.localeCompare(b.label, 'fr'));
+    },
+    [history]
+  );
+
 
   const handleCloseDetail = () => {
     setSelectedDelivery(null);
@@ -555,6 +609,28 @@ const HistoryManagementDrone: React.FC = observer(() => {
               }}
             />
 
+            {/* …dans le bloc des filtres (juste après "Urgent") … */}
+            <FormControl sx={{ minWidth: { xs: '100%', md: 260 } }}>
+              <InputLabel sx={{ ...commonStyles.techFont, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                Centre de Don
+              </InputLabel >
+              <Select
+                label="Centre de Don"
+                value={filters.centerId ?? 'all'}
+                onChange={(e) =>
+                  setFilters(prev => ({
+                    ...prev,
+                    centerId: e.target.value === 'all' ? undefined : Number(e.target.value)
+                  }))
+                }
+                sx={{ borderRadius: commonStyles.borderRadius, ...commonStyles.techFont }}
+              >
+                <MenuItem value="all">Tous</MenuItem>
+                {centerOptions.map(c => (
+                  <MenuItem key={c.id} value={c.id}>{c.label}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
             <FormControl sx={{ minWidth: { xs: '100%', md: 150 } }}>
               <InputLabel sx={{ ...commonStyles.techFont, fontSize: { xs: '0.9rem', sm: '1rem' } }}>Statut</InputLabel>
@@ -570,7 +646,8 @@ const HistoryManagementDrone: React.FC = observer(() => {
                 <MenuItem value="">Tous</MenuItem>
                 <MenuItem value="pending">En attente</MenuItem>
                 <MenuItem value="in_transit">En transit</MenuItem>
-                <MenuItem value="delivered">Livré</MenuItem>
+                <MenuItem value="charged">Chargée</MenuItem>
+                <MenuItem value="delivered">Livrée</MenuItem>
                 <MenuItem value="cancelled">Annulé</MenuItem>
               </Select>
             </FormControl>
@@ -612,6 +689,9 @@ const HistoryManagementDrone: React.FC = observer(() => {
             <Table>
               <TableHead>
                 <TableRow sx={{ backgroundColor: 'rgba(0, 142, 255, 0.05)' }}>
+                  <TableCell sx={commonStyles.techFontBold}>
+                      <SortableHeader label="N° Livraison" field="deliveryId" />
+                  </TableCell>                  
                   <TableCell sx={commonStyles.techFontBold}>Nom du Drone</TableCell>
                   <TableCell sx={commonStyles.techFontBold}>Centre de Don</TableCell>
                   <TableCell sx={commonStyles.techFontBold}>Hôpital de Destination</TableCell>
@@ -631,6 +711,10 @@ const HistoryManagementDrone: React.FC = observer(() => {
                   .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                   .map((item) => (
                     <TableRow key={item.deliveryId}>
+                      <TableCell sx={commonStyles.techFont}>
+                        #{item.deliveryId}
+                      </TableCell>
+
                       <TableCell sx={commonStyles.techFont}>
                         <Button
                           size="small"
@@ -715,12 +799,12 @@ const HistoryManagementDrone: React.FC = observer(() => {
             {filteredAndSortedData
               .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
               .map((delivery) => (
-                <Card 
+                <Card
                   key={delivery.id}
                   sx={{
                     ...commonStyles.glassmorphism,
                     p: 2,
-                    '&:hover': { 
+                    '&:hover': {
                       transform: 'translateY(-2px)',
                       boxShadow: '0 8px 25px rgba(0, 0, 0, 0.15)',
                       transition: 'all 0.2s ease'
@@ -730,15 +814,24 @@ const HistoryManagementDrone: React.FC = observer(() => {
                   <CardContent sx={{ p: 0 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
                       <Box>
-                        <Typography 
-                          variant="h6" 
-                          sx={{ 
+                        <Typography
+                          variant="h6"
+                          sx={{
                             ...commonStyles.techFontBold,
-                            fontSize: '1rem',
+                            fontSize: '1.1rem',
                             color: '#008EFF'
                           }}
                         >
-                          {delivery.droneName || 'Non assigné'}
+                          #{delivery.deliveryId}
+                          {delivery.droneName && (
+                            <Typography
+                              variant="body2"
+                              sx={{ ...commonStyles.techFont, color: 'text.secondary', mt: 0.25 }}
+                            >
+                              {delivery.droneName}
+                            </Typography>
+                          )}
+
                         </Typography>
                         <Chip
                           icon={getStatusIcon(delivery.deliveryStatus)}
@@ -762,7 +855,7 @@ const HistoryManagementDrone: React.FC = observer(() => {
                         />
                       )}
                     </Box>
-                    
+
                     <Stack spacing={1.5}>
                       <Box>
                         <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
@@ -772,7 +865,7 @@ const HistoryManagementDrone: React.FC = observer(() => {
                           {delivery.sourceDonationCenter?.centerCity || 'N/A'} → {delivery.destinationHospital?.hospitalName || 'N/A'}
                         </Typography>
                       </Box>
-                      
+
                       <Box sx={{ display: 'flex', gap: 2 }}>
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
@@ -781,8 +874,8 @@ const HistoryManagementDrone: React.FC = observer(() => {
                           <Chip
                             label={delivery.bloodType || 'N/A'}
                             size="small"
-                            sx={{ 
-                              ...commonStyles.techFont, 
+                            sx={{
+                              ...commonStyles.techFont,
                               backgroundColor: '#f0f4f8',
                               fontSize: '0.7rem',
                               height: '22px'
@@ -798,7 +891,7 @@ const HistoryManagementDrone: React.FC = observer(() => {
                           </Typography>
                         </Box>
                       </Box>
-                      
+
                       <Box sx={{ display: 'flex', gap: 2 }}>
                         <Box sx={{ flex: 1 }}>
                           <Typography variant="caption" color="textSecondary" sx={commonStyles.techFont}>
@@ -818,7 +911,7 @@ const HistoryManagementDrone: React.FC = observer(() => {
                         </Box>
                       </Box>
                     </Stack>
-                    
+
                     <Box sx={{ display: 'flex', gap: 1, mt: 2, pt: 2, borderTop: '1px solid rgba(0,0,0,0.1)' }}>
                       <Button
                         onClick={(e) => openDroneMenu(e, delivery)}
@@ -851,7 +944,7 @@ const HistoryManagementDrone: React.FC = observer(() => {
                 </Card>
               ))}
           </Stack>
-          
+
           {/* Pagination mobile */}
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
             <TablePagination

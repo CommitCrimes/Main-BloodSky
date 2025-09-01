@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { observer } from 'mobx-react-lite';
+
 import {
   Box,
   Paper,
@@ -37,6 +38,7 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../hooks/useAuth';
 import { orderApi } from '../api/order';
+import { hospitalApi } from '../api/hospital';
 import type { 
   BloodStock, 
   DonationCenter, 
@@ -44,6 +46,8 @@ import type {
   OrderFilters
 } from '../types/order';
 import { BLOOD_TYPES } from '../types/order';
+import type { UserRole, HospitalAdminRole } from '../types/users';
+
 
 const commonStyles = {
   fontFamily: 'Share Tech, monospace',
@@ -105,32 +109,52 @@ const OrderBlood: React.FC = observer(() => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState('');
+  const hospitalId = isHospitalRole(auth.user?.role) ? auth.user.role.hospitalId : undefined;
+  const [hospitalCity, setHospitalCity] = useState<string | null>(null);
 
+  function isHospitalRole(role: UserRole | undefined): role is HospitalAdminRole {
+    return role?.type === 'hospital_admin';
+  }
 
   useEffect(() => {
     const loadData = async () => {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const [centers, stock] = await Promise.all([
-          orderApi.getDonationCenters(),
-          orderApi.getAvailableBloodStock()
-        ]);
-        
-        setDonationCenters(centers);
-        setBloodStock(stock);
-        
-        if (centers.length > 0) {
-          setFilters(prev => ({ ...prev, centerId: centers[0].centerId }));
-        }
-      } catch (err) {
-        console.error('Erreur lors du chargement des données:', err);
-        setError('Impossible de charger les données');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  setIsLoading(true);
+  setError(null);
+
+  try {
+    const [centers, stock, hospital] = await Promise.all([
+      orderApi.getDonationCenters(),
+      orderApi.getAvailableBloodStock(),
+      hospitalId ? hospitalApi.getById(hospitalId) : Promise.resolve(null)
+    ]);
+
+    setDonationCenters(centers);
+    setBloodStock(stock);
+
+    // mémorise la ville hôpital (si dispo)
+    const hCity = hospital?.hospitalCity ?? null;
+    setHospitalCity(hCity);
+
+    // pré-sélection du centre sur la même ville (fallback: premier centre)
+    if (centers.length > 0) {
+      const norm = (s?: string | null) => (s ?? '').trim().toLowerCase();
+      const match = hCity
+        ? centers.find(c => norm(c.centerCity) === norm(hCity))
+        : undefined;
+
+      setFilters(prev => ({
+        ...prev,
+        centerId: (match?.centerId ?? centers[0].centerId)
+      }));
+    }
+  } catch (err) {
+    console.error('Erreur lors du chargement des données:', err);
+    setError('Impossible de charger les données');
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
     loadData();
   }, []);
@@ -171,7 +195,7 @@ const OrderBlood: React.FC = observer(() => {
       return;
     }
 
-    if (!auth.user?.role?.hospitalId) {
+    if (!hospitalId ) {
       setError('Impossible de déterminer votre hôpital');
       return;
     }
@@ -180,16 +204,22 @@ const OrderBlood: React.FC = observer(() => {
     setError(null);
 
     try {
-      const orders: OrderRequest[] = Array.from(selectedItems.entries()).map(([bloodType, quantity]) => ({
-        hospitalId: auth.user!.role!.hospitalId!,
-        centerId: filters.centerId || donationCenters[0].centerId,
-        bloodType,
-        quantity,
-        isUrgent,
-        notes: orderNotes
-      }));
+        const norm = (s?: string | null) => (s ?? '').trim().toLowerCase();
+    const matchedCenterId =
+      filters.centerId
+      ?? donationCenters.find(c => hospitalCity && norm(c.centerCity) === norm(hospitalCity))?.centerId
+      ?? donationCenters[0].centerId;
 
+    const orders: OrderRequest[] = Array.from(selectedItems.entries()).map(([bloodType, quantity]) => ({
+      hospitalId: hospitalId!,
+      centerId: matchedCenterId,           // <<--- ICI la nouvelle assignation
+      bloodType,
+      quantity,
+      isUrgent,
+      notes: orderNotes
+    }));
       const results = await Promise.all(orders.map(order => orderApi.createOrder(order)));
+
       
       console.log('Commandes créées:', results);
       
@@ -374,7 +404,7 @@ const OrderBlood: React.FC = observer(() => {
       <Fade in timeout={1200}>
         <Grid container spacing={3}>
           {filteredStock.map((stock) => (
-            <Grid item xs={12} sm={6} md={4} lg={3} key={stock.bloodType}>
+          <Grid xs={12} sm={6} md={4} lg={3} key={stock.bloodType}>
               <Card 
                 elevation={0}
                 sx={{

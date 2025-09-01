@@ -43,11 +43,12 @@ interface EditStatusPopupProps {
 const STATUS_LABEL: Record<DeliveryStatus, string> = {
   pending: 'Programmer',
   in_transit: 'En transit',
-  delivered: 'Livré',
+  charged: 'Chargée',
+  delivered: 'Livrée',
   cancelled: 'Annuler',
 };
 
-const ALL_STATUSES: DeliveryStatus[] = ['pending', 'in_transit', 'delivered', 'cancelled'];
+const ALL_STATUSES: DeliveryStatus[] = ['pending', 'in_transit','charged', 'delivered', 'cancelled'];
 
 const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
   open,
@@ -71,57 +72,58 @@ const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
   useEffect(() => {
     if (!open) return;
     setStatus(currentStatus);
-    setNewDate(currentStatus === 'pending' && currentDate ? format(currentDate, 'yyyy-MM-dd') : '');
+
+    if (currentStatus === 'pending' && currentDate) {
+      setNewDate(format(currentDate, 'yyyy-MM-dd'));
+    } else if (currentStatus === 'cancelled') {
+      setNewDate(format(new Date(), 'yyyy-MM-dd')); // aujourd'hui
+    } else {
+      setNewDate('');
+    }
   }, [open, currentStatus, currentDate]);
 
   const isDateRequired = status === 'pending';
   const isSaveDisabled = isDateRequired && !newDate;
 
-  // météo :
-  // - Programmer (pending) -> météo au "newDate"
-  // - Annuler (cancelled) -> météo au "currentDate"
-  useEffect(() => {
-    const fetchWeather = async () => {
-      if (!coordinates) {
-        setForecastData([]);
-        return;
-      }
+useEffect(() => {
+  const fetchWeather = async () => {
+    if (!coordinates) {
+      setForecastData([]);
+      return;
+    }
 
-      const isPendingWithDate = status === 'pending' && !!newDate;
-      const isCancelWithCurrent = status === 'cancelled' && !!currentDate;
-
-      if (!isPendingWithDate && !isCancelWithCurrent) {
-        setForecastData([]);
-        return;
-      }
-
-      const dateToUse = isPendingWithDate
+    const dateToUse =
+      status === 'pending' && !!newDate
         ? new Date(newDate)
-        : (isCancelWithCurrent ? currentDate! : null);
+        : (() => {
+            const d = new Date();
+            if (d.getHours() >= 21) d.setDate(d.getDate() + 1);
+            return d;
+          })();
 
-      if (!dateToUse) {
-        setForecastData([]);
-        return;
-      }
+    setLoadingWeather(true);
+    try {
+      const list = await getForecastByDate(coordinates.lat, coordinates.lon, dateToUse);
+      setForecastData(list);
+    } catch (err) {
+      console.error('Erreur chargement météo:', err);
+      setForecastData([]);
+    } finally {
+      setLoadingWeather(false);
+    }
+  };
 
-      setLoadingWeather(true);
-      try {
-        const list = await getForecastByDate(coordinates.lat, coordinates.lon, dateToUse);
-        setForecastData(list);
-      } catch (err) {
-        console.error('Erreur chargement météo:', err);
-        setForecastData([]);
-      } finally {
-        setLoadingWeather(false);
-      }
-    };
-
-    void fetchWeather();
-  }, [status, newDate, currentDate, coordinates?.lat, coordinates?.lon]);
+  if (open) void fetchWeather();
+}, [open, status, newDate, coordinates?.lat, coordinates?.lon]);
 
   const handleSave = async () => {
-    const dateToSend =
-      status === 'pending' && newDate ? new Date(newDate) : undefined;
+    let dateToSend: Date | undefined = undefined;
+
+    if (status === 'pending' && newDate) {
+      dateToSend = new Date(newDate);
+    } else if (status === 'cancelled') {
+      dateToSend = new Date();
+    }
 
     await onSave(status, dateToSend);
     if (onUpdate) await onUpdate();
@@ -181,7 +183,7 @@ const EditStatusDeliveryPopup: React.FC<EditStatusPopupProps> = ({
               <TableContainer component={Paper} sx={{ maxHeight: 300 }}>
                 <Table size="small" stickyHeader>
                   <TableHead>
-                    <TableRow >
+                    <TableRow>
                       <TableCell sx={{ fontFamily: 'Share Tech, monospace' }}>Heure</TableCell>
                       <TableCell sx={{ fontFamily: 'Share Tech, monospace' }}>Icône</TableCell>
                       <TableCell sx={{ fontFamily: 'Share Tech, monospace' }}>Vent (m/s)</TableCell>

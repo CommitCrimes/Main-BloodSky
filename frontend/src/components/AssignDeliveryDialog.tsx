@@ -4,7 +4,7 @@ import {
   Button, Paper, Box, Typography, Chip, CircularProgress, Alert,
   Checkbox, FormControlLabel
 } from '@mui/material';
-import { PriorityHigh, CheckCircle, DirectionsCar, Pending, Cancel } from '@mui/icons-material';
+import { PriorityHigh, CheckCircle, DirectionsCar, Pending, Cancel, Inventory2  } from '@mui/icons-material';
 
 import { deliveryApi } from '@/api/delivery';
 import { donationCenterApi } from '@/api/donation_center';
@@ -21,10 +21,12 @@ type Props = {
   onClose: () => void;
   centerId?: number | null;
   droneId: number;
-  statusFilter?: DeliveryStatus;
+  statusFilter?: DeliveryStatus[];
   onAssigned?: (deliveryId: number) => void;
   onMissionReady?: (payload: { deliveryId: number; filename: string; hospitalId: number; lat: number; lon: number }) => void;
+  defaultAltitude?: number;
 };
+
 
 // ----------------- Helpers -----------------
 const parseDate = (s?: string | null) => (s ? new Date(s) : null);
@@ -56,6 +58,7 @@ const getStatusColor = (status: DeliveryStatus) => {
   switch (status) {
     case 'delivered':  return '#10b981';
     case 'in_transit': return '#f59e0b';
+    case 'charged': return '#3b82f6';
     case 'pending':    return '#6b7280';
     case 'cancelled':  return '#ef4444';
     default:           return '#6b7280';
@@ -63,8 +66,9 @@ const getStatusColor = (status: DeliveryStatus) => {
 };
 const getStatusLabel = (status: DeliveryStatus) => {
   switch (status) {
-    case 'delivered':  return 'Livré';
+    case 'delivered':  return 'Livrée';
     case 'in_transit': return 'En transit';
+    case 'charged': return 'Chargée';
     case 'pending':    return 'En attente';
     case 'cancelled':  return 'Annulé';
     default:           return 'Inconnu';
@@ -74,6 +78,7 @@ const getStatusIcon = (status: DeliveryStatus) => {
   switch (status) {
     case 'delivered':  return <CheckCircle />;
     case 'in_transit': return <DirectionsCar />;
+    case 'charged':    return <Inventory2 />;   
     case 'pending':    return <Pending />;
     case 'cancelled':  return <Cancel />;
     default:           return <Pending />;
@@ -91,7 +96,7 @@ const toNum = (s?: string | null) => Number(String(s ?? '').trim().replace(',', 
 
 // ----------------- Component -----------------
 const AssignDeliveryDialog: React.FC<Props> = ({
-  open, onClose, centerId, droneId, statusFilter = 'pending', onAssigned, onMissionReady
+  open, onClose, centerId, droneId, statusFilter = ['pending', 'charged'], onAssigned, onMissionReady,defaultAltitude = 50
 }) => {
   const [loading, setLoading] = useState(false);
   const [error,   setError]   = useState<string | null>(null);
@@ -103,7 +108,6 @@ const AssignDeliveryDialog: React.FC<Props> = ({
   // Caches libellés
   const [centerMap, setCenterMap] = useState<Record<number, string>>({});
   const [hospitalMap, setHospitalMap] = useState<Record<number, string>>({});
-
   const resolveLabels = async (list: DeliveryWithParticipants[]) => {
     const missingCenterIds = Array.from(
       new Set(list.map(d => d.centerId).filter((id): id is number => id != null && !(id in centerMap)))
@@ -168,13 +172,13 @@ const AssignDeliveryDialog: React.FC<Props> = ({
 
   useEffect(() => { if (open) { void load(); } }, [open, centerId]);
 
-  const items = useMemo(() => {
-    return all
-      .filter(d => d.deliveryStatus === statusFilter)
-      .filter(d => includeUnassigned ? (d.droneId === droneId || d.droneId == null) : d.droneId === droneId)
-      .slice()
-      .sort(compareByPlannedDateThenUrgency);
-  }, [all, statusFilter, includeUnassigned, droneId]);
+const items = useMemo(() => {
+  return all
+    .filter(d => statusFilter.includes(d.deliveryStatus))
+    .filter(d => includeUnassigned ? (d.droneId === droneId || d.droneId == null) : d.droneId === droneId)
+    .slice()
+    .sort(compareByPlannedDateThenUrgency);
+}, [all, statusFilter, includeUnassigned, droneId]);
 
 const handleLoadMission = async (d: DeliveryWithParticipants) => {
   try {
@@ -196,7 +200,7 @@ const handleLoadMission = async (d: DeliveryWithParticipants) => {
       throw new Error('Coordonnées hôpital invalides');
     }
 
-    const ALT = 50;
+    const ALT = defaultAltitude ?? 50;
     const filename = `DEFAULT_Delivery_DroneID_${droneId}_HopitalID:${d.hospitalId}.waypoints`;
 
     const fi = await dronesApi.getFlightInfo(droneId).catch(() => null);
