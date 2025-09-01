@@ -354,28 +354,30 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
   };
 
   const renderDashboardContent = () => (
-    <Box sx={{ 
-      backgroundColor: '#e3f8fe', 
-      minHeight: '100vh', 
+    <Box sx={{
+      backgroundColor: '#e3f8fe',
+      height: '100vh',
       p: { xs: 1, sm: 2, md: 3 },
-      position: 'relative'
+      position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
     }}>
-      <Box sx={{ mb: { xs: 2, md: 4 }, textAlign: 'center' }}>
-        <Typography 
-          variant="h1" 
-          sx={{ 
-            fontSize: { xs: '1.8rem', sm: '2.2rem', md: '3rem' }, 
-            color: '#981A0E', 
+      <Box sx={{ mb: { xs: 2, md: 4 }, textAlign: 'center', zIndex: 5, position: 'inherit' }}>
+        <Typography
+          variant="h1"
+          sx={{
+            fontSize: { xs: '1.8rem', sm: '2.2rem', md: '3rem' },
+            color: '#981A0E',
             fontFamily: 'Iceland, cursive',
-            mb: 1 
+            mb: 1
           }}
         >
           {config.title}
         </Typography>
-        <Typography 
-          variant="h6" 
-          sx={{ 
-            color: 'text.primary', 
+        <Typography
+          variant="h6"
+          sx={{
+            color: 'text.primary',
             fontFamily: 'Share Tech, monospace',
             fontSize: { xs: '0.9rem', sm: '1rem', md: '1.25rem' }
           }}
@@ -384,35 +386,125 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
         </Typography>
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1, md: 2 }, px: { xs: 0, md: 2 }, py: 1 }}>
-        
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', lg: 'row' },
-          gap: { xs: 2, md: 4, lg: 6 }, 
-          width: '100%', 
-          justifyContent: { lg: 'space-between' },
-          alignItems: { xs: 'center', lg: 'stretch' }
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 2, xl: 5 }, px: { xs: 0, md: 2 }, py: 1, paddingBottom:{xs:1, md:10}, flexGrow:1, position: 'relative' }}>
+
+        {/* Image (logo) du dashboard */}
+        <Box sx={{
+          flex: { lg: '0 0 300px' },
+          display: { xs: 'none', md: 'flex', lg: 'flex' },
+          justifyContent: 'center',
+          alignItems: 'center',
+          width: { xs: '100%', lg: '300px', xl: '800px' },
+          order: { xs: -1, lg: 0 },
+          position: { xs: 'static', lg: 'absolute' },
+          top: { lg: '50%' },
+          left: { lg: '50%' },
+          transform: { lg: 'translate(-50%, -50%)' },
+          zIndex: 5,
+
         }}>
-          
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '380px',
+              width: '100%',
+              position: 'relative'
+            }}
+          >
+
+
+            {/* Cercle blur*/}
+            <Box
+              className="heart-blur"
+              sx={{
+                position: 'absolute',
+                width: { xs: '75px', md: '300px', lg: '350px' },
+                height: { xs: '100px', md: '350px', lg: '400px' },
+                borderRadius: '50%',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                filter: 'blur(60px)',
+                zIndex: 5,
+                transition: 'all 0.3s ease-in-out',
+              }}
+            />
+
+            <Box sx={{ position: 'relative', display: 'inline-flex', justifyContent: 'center' }}>
+              {/* Image */}
+              <Box
+                component="img"
+                src={config.centerImage}
+                alt={config.centerImageAlt}
+                sx={{
+                  maxWidth: '95%',
+                  maxHeight: { sm: '300px', lg: '600px', xl: '700px' },
+                  objectFit: 'contain',
+                  opacity: 0.95,
+                  zIndex: 5,
+                  position: 'relative',
+                  transition: 'all 0.3s ease-in-out',
+                  filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3))',
+                }}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+
+              {/* Ombre */}
+              <Box
+                className="heart-shadow"
+                sx={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: '50%',
+                  transform: 'translateX(-50%) scale(0.6)',
+                  width: '70%',
+                  height: '90px',
+                  borderRadius: '50%',
+                  backgroundColor: 'rgba(94, 141, 156, 0.4)',
+                  filter: 'blur(20px)',
+                  zIndex: 1,
+                  transition: 'all 0.3s ease-in-out',
+                }}
+              />
+            </Box>
+
+          </Box>
+        </Box>
+
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', lg: 'row' },
+          gap: { xs: 2, md: 4, lg: 60 },
+          width: '100%',
+          height: '75%',
+          justifyContent: { lg: 'space-between' },
+          alignItems: { xs: 'center', lg: 'stretch' },
+          zIndex: 2,
+        }}>
+
           {/* Card Livraisons à venir - Gauche */}
-          <Box sx={{ 
-            flex: { lg: '1 1 400px' }, 
-            maxWidth: { xs: '100%', sm: '400px', lg: '450px' },
-            width: { xs: '100%', lg: 'auto' }
+          <Box sx={{
+            flex: { lg: '1 1 400px' },
+            maxWidth: { xs: '100%', sm: '400px', lg: '100%' },
+            width: { xs: '100%', lg: 'auto' },
+            height: { xs: 'auto', md: '100%'}
           }}>
-            <Paper 
+            <Paper
               elevation={0}
-              sx={{ 
-                p: { xs: 2, md: 3 }, 
-                height: { xs: '250px', md: '300px' },
+              sx={{
+                p: { xs: 2, md: 3 },
+                height: { xs: '250px', md: '100%' },
                 width: '100%',
                 cursor: 'pointer',
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
                 borderRadius: '20px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)'
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)',
+                display: 'flex',
+    flexDirection: 'column'
               }}
               onClick={handleHistoryClick}
             >
@@ -422,24 +514,24 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                 </Typography>
                 <HistoryOutlined sx={{ color: '#008EFF' }} />
               </Box>
-              <Box sx={{ height: { xs: '150px', md: '200px' }, width: '100%' }}>
+              <Box sx={{ flexGrow:1, width: '100%' }}>
                 {isLoadingStats ? (
                   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                     <CircularProgress />
                   </Box>
                 ) : deliveryStats.length === 0 || deliveryStats.every(d => d.livraisons === 0) ? (
-                  <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
+                  <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                     height: '100%',
                     textAlign: 'center'
                   }}>
                     <HistoryOutlined sx={{ fontSize: 48, color: 'rgba(92, 127, 155, 0.5)', mb: 1 }} />
-                    <Typography sx={{ 
-                      fontFamily: 'Share Tech, monospace', 
-                      fontSize: '0.9rem', 
+                    <Typography sx={{
+                      fontFamily: 'Share Tech, monospace',
+                      fontSize: '0.9rem',
                       color: 'rgba(92, 127, 155, 0.7)'
                     }}>
                       Aucune livraison cette semaine
@@ -450,12 +542,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                     <LineChart data={deliveryStats}>
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="name" />
-                      <YAxis />
+                      <YAxis allowDecimals={false} />
                       <Tooltip />
-                      <Line 
-                        type="monotone" 
-                        dataKey="livraisons" 
-                        stroke="#008EFF" 
+                      <Line
+                        type="monotone"
+                        dataKey="livraisons"
+                        stroke="#008EFF"
                         strokeWidth={3}
                         name="Livraisons"
                       />
@@ -466,93 +558,27 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
             </Paper>
           </Box>
 
-          <Box sx={{ 
-            flex: { lg: '0 0 300px' }, 
-            display: { xs: 'none', md: 'flex', lg: 'flex' }, 
-            justifyContent: 'center', 
-            alignItems: 'center',
-            width: { xs: '100%', lg: '300px' },
-            order: { xs: -1, lg: 0 }
-          }}>
-            <Box 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                height: '380px',
-                width: '100%',
-                position: 'relative'
-              }}
-            >
-              {/* Ombre */}
-              <Box
-                className="heart-shadow"
-                sx={{
-                  position: 'absolute',
-                  width: '300px',
-                  height: '90px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(94, 141, 156, 0.4)',
-                  filter: 'blur(20px)',
-                  transform: 'translateY(190px) scale(0.6)',
-                  zIndex: 1,
-                  transition: 'all 0.3s ease-in-out',
-                }}
-              />
 
-              {/* Cercle blur*/}
-              <Box
-                className="heart-blur"
-                sx={{
-                  position: 'absolute',
-                  width: '1000px',
-                  height: '1000px',
-                  borderRadius: '50%',
-                  backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                  filter: 'blur(120px)',
-                  zIndex: -1,
-                  transition: 'all 0.3s ease-in-out',
-                }}
-              />
-              
-              <Box
-                component="img"
-                src={config.centerImage}
-                alt={config.centerImageAlt}
-                sx={{
-                  maxWidth: '95%',
-                  maxHeight: '500px',
-                  objectFit: 'contain',
-                  opacity: 0.95,
-                  zIndex: 2,
-                  position: 'relative',
-                  transition: 'all 0.3s ease-in-out',
-                  filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3))',
-                }}
-                onError={(e) => {
-                  (e.target as HTMLImageElement).style.display = 'none';
-                }}
-              />
-            </Box>
-          </Box>
 
           {/* Card Statuts des livraisons - Droite */}
-          <Box sx={{ 
-            flex: { lg: '1 1 400px' }, 
-            maxWidth: { xs: '100%', sm: '400px', lg: '450px' },
+          <Box sx={{
+            flex: { lg: '1 1 400px' },
+            maxWidth: { xs: '100%', sm: '400px', lg: '100%' },
             width: { xs: '100%', lg: 'auto' }
           }}>
-            <Paper 
+            <Paper
               elevation={0}
-              sx={{ 
-                p: { xs: 2, md: 3 }, 
-                height: { xs: '250px', md: '300px' },
+              sx={{
+                p: { xs: 2, md: 3 },
+                height: { xs: '250px', md: '100%' },
                 width: '100%',
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
                 borderRadius: '20px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)'
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -560,24 +586,24 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                   Statuts des livraisons
                 </Typography>
               </Box>
-              <Box sx={{ height: { xs: '120px', md: '160px' }, width: '100%'}}>
+              <Box sx={{ height: { xs: '120px', md: '160px',lg: '200px' }, width: '100%' }}>
                 {isLoadingStats ? (
                   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                     <CircularProgress />
                   </Box>
                 ) : statusStats.length === 0 ? (
-                  <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
+                  <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                     height: '100%',
                     textAlign: 'center'
                   }}>
                     <LocalShippingOutlined sx={{ fontSize: 48, color: 'rgba(92, 127, 155, 0.5)', mb: 1 }} />
-                    <Typography sx={{ 
-                      fontFamily: 'Share Tech, monospace', 
-                      fontSize: '0.9rem', 
+                    <Typography sx={{
+                      fontFamily: 'Share Tech, monospace',
+                      fontSize: '0.9rem',
                       color: 'rgba(92, 127, 155, 0.7)'
                     }}>
                       Aucune livraison enregistrée
@@ -587,18 +613,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                   <ResponsiveContainer width="115%" height="100%" style={{ marginLeft: '-45px' }}>
                     <BarChart data={statusStats} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(92, 127, 155, 0.2)" />
-                      <XAxis 
-                        dataKey="name" 
+                      <XAxis
+                        dataKey="name"
                         axisLine={false}
                         tickLine={false}
                         tick={{ fill: '#5C7F9B', fontFamily: 'Share Tech, monospace', fontSize: 12 }}
                       />
-                      <YAxis 
+                      <YAxis
                         axisLine={false}
                         tickLine={false}
                         tick={{ fill: '#5C7F9B', fontFamily: 'Share Tech, monospace', fontSize: 12 }}
                       />
-                      <Tooltip 
+                      <Tooltip
                         contentStyle={{
                           backgroundColor: 'rgba(255, 255, 255, 0.95)',
                           border: '1px solid rgba(92, 127, 155, 0.2)',
@@ -615,11 +641,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                   </ResponsiveContainer>
                 )}
               </Box>
-              <Box sx={{ 
-                display: 'flex', 
-                justifyContent: 'center', 
-                flexWrap: 'wrap', 
-                gap: { xs: 0.5, md: 1 }, 
+              <Box sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+                gap: { xs: 0.5, md: 1 },
                 mt: { xs: 1, md: 2 },
                 px: { xs: 1, md: 0 }
               }}>
@@ -628,7 +654,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                     key={entry.name}
                     label={`${entry.name}: ${entry.value}`}
                     size="small"
-                    sx={{ 
+                    sx={{
                       backgroundColor: entry.color,
                       color: 'white',
                       fontSize: { xs: '0.6rem', md: '0.7rem' },
@@ -645,94 +671,135 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
           </Box>
         </Box>
 
-        <Box sx={{ 
-          display: 'flex', 
-          flexDirection: { xs: 'column', lg: 'row' },
-          gap: { xs: 2, md: 4, lg: 6 }, 
-          width: '100%', 
-          justifyContent: { lg: 'space-between' },
-          alignItems: { xs: 'center', lg: 'stretch' }
-        }}>
-          
-          {/* Carte Leaflet - Gauche */}
-          <Box sx={{ 
-            flex: { lg: '1 1 500px' }, 
-            maxWidth: { xs: '100%', sm: '500px', lg: '550px' },
-            width: { xs: '100%', lg: 'auto' }
-          }}>
-            <Paper 
-              elevation={0}
-              sx={{ 
-                p: { xs: 2, md: 3 }, 
-                width: '100%',
-                height: { xs: '280px', md: '320px' },
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '20px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)'
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6" sx={{ fontFamily: 'Share Tech, monospace', color: '#5C7F9B' }}>
-                  Localisation
-                </Typography>
-                <LocationOnOutlined sx={{ color: '#10b981' }} />
-              </Box>
-              <Box sx={{ 
-  height: { xs: '185px', md: '225px' }, 
-  width: '100%', 
-  borderRadius: 2, 
-  overflow: 'hidden' 
-}}>
-  {isLoadingMap ? (
-    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-      <CircularProgress />
-    </Box>
-  ) : (
-    <MapContainer
-      center={mapPosition}
-      zoom={13}
-      style={{ height: '100%', width: '100%' }}
-      key={`${mapPosition[0]}-${mapPosition[1]}`} // force refresh si la position change
+        <Box
+  sx={{
+    display: 'flex',
+    flexDirection: { xs: 'column', lg: 'row' },
+    gap: { xs: 2, md: 4, lg: 45 },
+    width: '100%',
+    height: '100%', 
+    justifyContent: { lg: 'space-between' },
+    alignItems: { xs: 'center', lg: 'stretch' },
+    flexGrow: 1, 
+  }}
+>
+  {/* Carte Leaflet - Gauche */}
+  <Box
+    sx={{
+      flex: 1,
+      maxWidth: { xs: '100%', sm: '500px', lg: '50%' },
+      width: '100%',
+      height: '100%',
+      display: 'flex', 
+    }}
+  >
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2, md: 3 },
+        width: '100%',
+        height: {xs:'300px', md:'100%'}, 
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        borderRadius: '20px',
+        boxShadow:
+          '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
     >
-      <TileLayer
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      />
-      <Marker position={mapPosition}>
-        <Popup>
-          {mapLabel === 'center' && <>Votre centre de don<br />Point d’envoi</>}
-          {mapLabel === 'hospital' && <>Votre hôpital<br />Centre de soins principal</>}
-          {mapLabel === 'unknown' && <>Position par défaut</>}
-        </Popup>
-      </Marker>
-    </MapContainer>
-  )}
-</Box>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: 2,
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{ fontFamily: 'Share Tech, monospace', color: '#5C7F9B' }}
+        >
+          Localisation
+        </Typography>
+        <LocationOnOutlined sx={{ color: '#10b981' }} />
+      </Box>
 
-            </Paper>
+      
+      <Box
+        sx={{
+          flexGrow: 1, 
+          width: '100%',
+          borderRadius: 2,
+          overflow: 'hidden',
+        }}
+      >
+        {isLoadingMap ? (
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%',
+            }}
+          >
+            <CircularProgress />
           </Box>
+        ) : (
+          <MapContainer
+            center={mapPosition}
+            zoom={13}
+            style={{ height:'100%', width: '100%' }}
+            key={`${mapPosition[0]}-${mapPosition[1]}`}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+            <Marker position={mapPosition}>
+              <Popup>
+                {mapLabel === 'center' && (
+                  <>Votre centre de don<br />Point d’envoi</>
+                )}
+                {mapLabel === 'hospital' && (
+                  <>Votre hôpital<br />Centre de soins principal</>
+                )}
+                {mapLabel === 'unknown' && <>Position par défaut</>}
+              </Popup>
+            </Marker>
+          </MapContainer>
+        )}
+      </Box>
+    </Paper>
+  </Box>
 
-          {/* Notifications récentes - Droite */}
-          <Box sx={{ 
-            flex: { lg: '1 1 500px' }, 
-            maxWidth: { xs: '100%', sm: '500px', lg: '550px' },
-            width: { xs: '100%', lg: 'auto' }
-          }}>
-            <Paper 
-              elevation={0}
-              sx={{ 
-                p: { xs: 2, md: 3 }, 
-                height: { xs: '280px', md: '320px' },
-                width: '100%',
-                cursor: 'pointer',
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '20px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)'
-              }}
+  {/* Notifications - Droite */}
+  <Box
+    sx={{
+      flex: 1, 
+      maxWidth: { xs: '100%', sm: '500px', lg: '100%' },
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+    }}
+  >
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2, md: 3 },
+        width: '100%',
+        height: '100%', 
+        cursor: 'pointer',
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        borderRadius: '20px',
+        boxShadow:
+          '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)',
+      }}
+    
+
               onClick={() => setActiveView('notifications')}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -741,8 +808,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                 </Typography>
                 <NotificationsOutlined sx={{ color: '#008EFF' }} />
               </Box>
-              <List dense sx={{ 
-                height: { xs: '200px', md: '240px' }, 
+              <List dense sx={{
+                height: { xs: '200px', md: '100%' },
                 overflow: 'auto',
                 '&::-webkit-scrollbar': {
                   width: '4px',
@@ -760,18 +827,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                     <CircularProgress />
                   </Box>
                 ) : recentNotifications.length === 0 ? (
-                  <Box sx={{ 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    justifyContent: 'center', 
-                    alignItems: 'center', 
+                  <Box sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'center',
+                    alignItems: 'center',
                     height: '100%',
                     textAlign: 'center'
                   }}>
                     <NotificationsNone sx={{ fontSize: 48, color: 'rgba(92, 127, 155, 0.5)', mb: 1 }} />
-                    <Typography sx={{ 
-                      fontFamily: 'Share Tech, monospace', 
-                      fontSize: '0.9rem', 
+                    <Typography sx={{
+                      fontFamily: 'Share Tech, monospace',
+                      fontSize: '0.9rem',
                       color: 'rgba(92, 127, 155, 0.7)'
                     }}>
                       Aucune notification récente
@@ -779,9 +846,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                   </Box>
                 ) : (
                   recentNotifications.map((notif) => (
-                    <ListItem 
+                    <ListItem
                       key={notif.notificationId}
-                      sx={{ 
+                      sx={{
                         borderLeft: `4px solid ${getPriorityColor(notif.priority)}`,
                         backgroundColor: notif.isRead ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.4)',
                         borderRadius: 1,
@@ -791,9 +858,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                     >
                       <ListItemText
                         primary={
-                          <Typography sx={{ 
-                            fontFamily: 'Share Tech, monospace', 
-                            fontSize: { xs: '0.75rem', md: '0.9rem' }, 
+                          <Typography sx={{
+                            fontFamily: 'Share Tech, monospace',
+                            fontSize: { xs: '0.75rem', md: '0.9rem' },
                             color: '#5C7F9B',
                             lineHeight: 1.2,
                             fontWeight: notif.isRead ? 'normal' : 'bold'
@@ -802,22 +869,22 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                           </Typography>
                         }
                         secondary={
-                          <Typography sx={{ 
-                            fontFamily: 'Share Tech, monospace', 
-                            fontSize: { xs: '0.6rem', md: '0.7rem' }, 
-                            color: '#5C7F9B', 
-                            opacity: 0.7 
+                          <Typography sx={{
+                            fontFamily: 'Share Tech, monospace',
+                            fontSize: { xs: '0.6rem', md: '0.7rem' },
+                            color: '#5C7F9B',
+                            opacity: 0.7
                           }}>
                             {formatTimeAgo(notif.createdAt)}
                           </Typography>
                         }
                       />
                       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
-                        <Chip 
+                        <Chip
                           label={getPriorityLabel(notif.priority)}
                           size="small"
-                          sx={{ 
-                            fontFamily: 'Share Tech, monospace', 
+                          sx={{
+                            fontFamily: 'Share Tech, monospace',
                             fontSize: '0.6rem',
                             backgroundColor: getPriorityColor(notif.priority),
                             color: 'white',
