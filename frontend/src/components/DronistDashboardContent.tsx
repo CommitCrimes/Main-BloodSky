@@ -376,11 +376,13 @@ useEffect(() => {
   return (
     <Box sx={{
       backgroundColor: '#e3f8fe',
-      minHeight: '100vh',
+      height: '100vh',
       p: { xs: 1, sm: 2, md: 3 },
-      position: 'relative'
+      position: 'relative',
+       display: 'flex',
+    flexDirection: 'column',
     }}>
-      <Box sx={{ mb: { xs: 2, md: 4 }, textAlign: 'center' }}>
+      <Box sx={{ mb: { xs: 2, md: 4 }, textAlign: 'center' , zIndex: 2 , position: 'inherit'}}>
         <Typography
           variant="h1"
           sx={{
@@ -404,70 +406,20 @@ useEffect(() => {
         </Typography>
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 3 }, px: { xs: 1, md: 3 }, py: 1 }}>
-
-        {/* 1ere rangé - Historique des vols et logo */}
-        <Box sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', lg: 'row' },
-          gap: { xs: 2, md: 4, lg: 6 },
-          width: '100%',
-          justifyContent: { lg: 'space-between' },
-          alignItems: { xs: 'center', lg: 'stretch' }
-        }}>
-          {/* Card Historique des vols - Gauche */}
-          <Box sx={{
-            flex: { lg: '1 1 350px' },
-            maxWidth: { xs: '100%', sm: '400px', lg: '420px' },
-            width: { xs: '100%', lg: 'auto' }
-          }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: { xs: 2, md: 3 },
-                height: { xs: '250px', md: '300px' },
-                width: '100%',
-                cursor: 'pointer',
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '20px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)'
-              }}
-              onClick={() => onNavigate('historique')}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6" sx={{ fontFamily: 'Share Tech, monospace', color: '#5C7F9B' }}>
-                  Livraisons effectués
-                </Typography>
-                <HistoryOutlined sx={{ color: '#008EFF' }} />
-              </Box>
-              <Box sx={{ height: { xs: '150px', md: '200px' }, width: '100%' }}>
-                <ResponsiveContainer width="110%" height="100%" style={{ marginLeft: '-45px' }}>
-                  <LineChart data={deliveryStats}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="name" />
-                    <YAxis
-                      allowDecimals={false}
-                      domain={[0, yMax]}
-                      ticks={yTicks}
-                    />
-                    <Tooltip formatter={(v: number) => Math.round(v)} />
-                    <Line type="monotone" dataKey="vols" stroke="#008EFF" strokeWidth={3} name="Livraisons terminées" />
-                    <Line type="monotone" dataKey="echecs" stroke="#ef4444" strokeWidth={2} name="Livraisons annulées" />
-                  </LineChart>
-                </ResponsiveContainer>
-              </Box>
-            </Paper>
-          </Box>
-          {/* logo */}
+      <Box sx={{ display: 'flex', height : {lg: '80%', xl: '80%'}, flexDirection: 'column', gap: { xs: 2, md: 3, xl: 5 }, paddingBottom: 10 , px: { xs: 1, md: 3 }, py: 1 , position: 'relative'}}>
+        {/* logo */}
           <Box sx={{
             flex: { lg: '0 0 300px' },
             display: { xs: 'none', md: 'flex', lg: 'flex' },
             justifyContent: 'center',
             alignItems: 'center',
             width: { xs: '100%', lg: '300px' },
-            order: { xs: -1, lg: 0 }
+            order: { xs: -1, lg: 0 },
+            position: { xs: 'static', lg: 'absolute' },            
+            top: { lg: '50%' },                         
+            left: { lg: '50%' },                        
+            transform: { lg: 'translate(-50%, -50%)' },
+            zIndex: 2,
           }}>
             <Box
               sx={{
@@ -498,8 +450,8 @@ useEffect(() => {
               <Box
                 sx={{
                   position: 'absolute',
-                  width: '1000px',
-                  height: '1000px',
+                  width: {xs : '200px' , lg : '500px'},
+                  height: {xs : '200px' , lg : '450px'},
                   borderRadius: '50%',
                   backgroundColor: 'rgba(255, 255, 255, 0.8)',
                   filter: 'blur(120px)',
@@ -515,9 +467,10 @@ useEffect(() => {
                 sx={{
                   maxWidth: '130%',
                   maxHeight: '600px',
+                  height: {xs : '250px' , lg : '600px'},
                   objectFit: 'contain',
                   opacity: 0.95,
-                  zIndex: 2,
+                  zIndex: 5,
                   position: 'relative',
                   transition: 'all 0.3s ease-in-out',
                   filter: 'drop-shadow(0 8px 16px rgba(0,0,0,0.3))',
@@ -526,17 +479,78 @@ useEffect(() => {
             </Box>
           </Box>
 
-          {/* Card Statut des drones - Droite */}
+        {/* 1ere rangé - Historique des vols et logo */}
+        <Box sx={{
+          display: 'flex',
+          flexDirection: { xs: 'column', lg: 'row' },
+          gap: { xs: 2, md: 4, lg: 50 },
+          width: '100%',
+          height: {xs: '100%', md:'50%'},
+          justifyContent: { lg: 'space-between' },
+          alignItems: { xs: 'center', lg: 'stretch' }
+        }}>
+          {/* Card Historique des vols - Gauche */}
           <Box sx={{
             flex: { lg: '1 1 350px' },
-            maxWidth: { xs: '100%', sm: '400px', lg: '420px' },
-            width: { xs: '100%', lg: 'auto' }
+            maxWidth: { xs: '100%', sm: '400px', lg: '100%' },
+            width: { xs: '100%', lg: 'auto' },
+            height: { md:'100%', xl: '100%'}
           }}>
             <Paper
               elevation={0}
               sx={{
                 p: { xs: 2, md: 3 },
-                height: { xs: '250px', md: '300px' },
+                height: { xs: '300px', md: '300px', lg: '100%' },
+                width: '100%',
+                cursor: 'pointer',
+                backgroundColor: 'rgba(255, 255, 255, 0.8)',
+                backdropFilter: 'blur(10px)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '20px',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)',
+                display: 'flex',
+                flexDirection: 'column',
+              }}
+              onClick={() => onNavigate('historique')}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="h6" sx={{ fontFamily: 'Share Tech, monospace', color: '#5C7F9B' }}>
+                  Livraisons effectués
+                </Typography>
+                <HistoryOutlined sx={{ color: '#008EFF' }} />
+              </Box>
+              <Box sx={{ height: { xs: '100%', md: '100%' }, width: '95%' }}>
+                <ResponsiveContainer width="110%" height="100%" style={{ marginLeft: '-45px' }}>
+                  <LineChart data={deliveryStats}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis
+                      allowDecimals={false}
+                      domain={[0, yMax]}
+                      ticks={yTicks}
+                    />
+                    <Tooltip formatter={(v: number) => Math.round(v)} />
+                    <Line type="monotone" dataKey="vols" stroke="#008EFF" strokeWidth={3} name="Livraisons terminées" />
+                    <Line type="monotone" dataKey="echecs" stroke="#ef4444" strokeWidth={2} name="Livraisons annulées" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </Box>
+            </Paper>
+          </Box>
+          
+
+          {/* Card Statut des drones - Droite */}
+          <Box sx={{
+            flex: { lg: '1 1 350px' },
+            maxWidth: { xs: '100%', sm: '400px', lg: '100%' },
+            width: { xs: '100%', lg: '100%' },
+            height: {xs: '100%', md: '100%'}
+          }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: { xs: 2, md: 3 },
+                height: { xs: '250px', md: '100%' },
                 width: '100%',
                 cursor: 'pointer',
                 overflow: 'hidden',
@@ -554,7 +568,7 @@ useEffect(() => {
                 </Typography>
                 <FlightTakeoffOutlined sx={{ color: '#10b981' }} />
               </Box>
-              <Box sx={{ height: { xs: '120px', md: '160px' }, width: '100%', display: 'flex', justifyContent: 'center' }}>
+              <Box sx={{ height: { xs: '120px', md: '250px', xl: '250px'}, width: '100%', display: 'flex', justifyContent: 'center' }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -562,9 +576,8 @@ useEffect(() => {
                       cx="50%"
                       cy="50%"
                       outerRadius={80}
-                      dataKey="value"
-                      label={false}      //label={({ name, value }) => `${name}: ${value}`}
-                        labelLine={false}                      >
+                      dataKey="value" 
+                    >
                       {droneStatusData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
@@ -603,30 +616,33 @@ useEffect(() => {
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', lg: 'row' },
-          gap: { xs: 2, md: 4, lg: 6 },
+          gap: { xs: 2, md: 4, lg: 40 },
           width: '100%',
+          height: {xs:'100%', md:'50%'},
           justifyContent: { lg: 'space-between' },
           alignItems: { xs: 'center', lg: 'stretch' }
         }}>
 
           {/* Carte météo - Gauche */}
           <Box sx={{
-            flex: { lg: '1.5 1 450px' },
-            maxWidth: { xs: '100%', sm: '500px', lg: '600px' },
-            width: { xs: '100%', lg: 'auto' }
+            flex: { lg: '1' },
+            maxWidth: { xs: '100%', sm: '500px', lg: '100%' },
+            height: '100%',
+            width: { xs: '100%', lg: '100%' }
           }}>
             <Paper
               elevation={0}
               sx={{
                 p: { xs: 2, md: 3 },
                 width: '100%',
-                height: { xs: '320px', md: '360px' },
+                height: { xs: '320px', md: '100%' },
                 cursor: 'pointer',
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
                 borderRadius: '20px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)'
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)',
+                overflow: 'hidden',
               }}
               onClick={() => onNavigate('meteo')}
             >
@@ -642,7 +658,7 @@ useEffect(() => {
                   <CircularProgress />
                 </Box>
               ) : (
-                <Box sx={{ height: { xs: '240px', md: '300px' }, width: '100%' }}>
+                <Box sx={{ height: { xs: '240px', md: '100%' }, width: '100%'}}>
                   {/* Météo actuelle */}
                   {weatherData && (
                     <Box sx={{
@@ -691,7 +707,7 @@ useEffect(() => {
                     <Box sx={{
                       display: 'flex',
                       flexDirection: 'column',
-                      height: { xs: '160px', md: '210px' },
+                      height: { xs: '160px', md: '100%' },
                       overflow: 'auto',
                       '&::-webkit-scrollbar': {
                         width: '4px',
@@ -756,15 +772,16 @@ useEffect(() => {
 
           {/* Notifications récentes - Droite */}
           <Box sx={{
-            flex: { lg: '1 1 350px' },
-            maxWidth: { xs: '100%', sm: '400px', lg: '450px' },
-            width: { xs: '100%', lg: 'auto' }
+            flex: { lg: '1' },
+            maxWidth: { xs: '100%', sm: '400px', lg: '100%' },
+            width: { xs: '100%', lg: '100%' },  
           }}>
             <Paper
               elevation={0}
               sx={{
                 p: { xs: 2, md: 3 },
-                height: { xs: 320, md: 320 },
+                height: { xs: 320, md: 400, lg: '100%' },
+                width: '100%',
                 display: 'flex',
                 flexDirection: 'column',
                 overflow: 'hidden', 
