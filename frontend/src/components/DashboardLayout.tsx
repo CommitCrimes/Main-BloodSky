@@ -349,9 +349,11 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
   const renderDashboardContent = () => (
     <Box sx={{
       backgroundColor: '#e3f8fe',
-      minHeight: '100vh',
+      height: '100vh',
       p: { xs: 1, sm: 2, md: 3 },
-      position: 'relative'
+      position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
     }}>
       <Box sx={{ mb: { xs: 2, md: 4 }, textAlign: 'center', zIndex: 5, position: 'inherit' }}>
         <Typography
@@ -377,7 +379,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
         </Typography>
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1, md: 2 }, px: { xs: 0, md: 2 }, py: 1, height: '100%', position: 'relative' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1, md: 2, xl: 5 }, px: { xs: 0, md: 2 }, py: 1, paddingBottom:10, flexGrow:1, position: 'relative' }}>
 
         {/* Image (logo) du dashboard */}
         <Box sx={{
@@ -429,7 +431,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                 alt={config.centerImageAlt}
                 sx={{
                   maxWidth: '95%',
-                  maxHeight: { sm: '300px', lg: '600px', '4xl': '800px' },
+                  maxHeight: { sm: '300px', lg: '600px', xl: '700px' },
                   objectFit: 'contain',
                   opacity: 0.95,
                   zIndex: 5,
@@ -467,8 +469,9 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
         <Box sx={{
           display: 'flex',
           flexDirection: { xs: 'column', lg: 'row' },
-          gap: { xs: 2, md: 4, lg: 50 },
+          gap: { xs: 2, md: 4, lg: 60 },
           width: '100%',
+          height: '75%',
           justifyContent: { lg: 'space-between' },
           alignItems: { xs: 'center', lg: 'stretch' },
           zIndex: 2,
@@ -477,21 +480,24 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
           {/* Card Livraisons à venir - Gauche */}
           <Box sx={{
             flex: { lg: '1 1 400px' },
-            maxWidth: { xs: '100%', sm: '400px', lg: '450px' },
-            width: { xs: '100%', lg: 'auto' }
+            maxWidth: { xs: '100%', sm: '400px', lg: '100%' },
+            width: { xs: '100%', lg: 'auto' },
+            height: { xs: 'auto', md: '100%'}
           }}>
             <Paper
               elevation={0}
               sx={{
                 p: { xs: 2, md: 3 },
-                height: { xs: '250px', md: '300px' },
+                height: { xs: '250px', md: '100%' },
                 width: '100%',
                 cursor: 'pointer',
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
                 borderRadius: '20px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)'
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)',
+                display: 'flex',
+    flexDirection: 'column'
               }}
               onClick={handleHistoryClick}
             >
@@ -501,7 +507,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                 </Typography>
                 <HistoryOutlined sx={{ color: '#008EFF' }} />
               </Box>
-              <Box sx={{ height: { xs: '150px', md: '200px' }, width: '100%' }}>
+              <Box sx={{ flexGrow:1, width: '100%' }}>
                 {isLoadingStats ? (
                   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                     <CircularProgress />
@@ -550,20 +556,22 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
           {/* Card Statuts des livraisons - Droite */}
           <Box sx={{
             flex: { lg: '1 1 400px' },
-            maxWidth: { xs: '100%', sm: '400px', lg: '450px' },
+            maxWidth: { xs: '100%', sm: '400px', lg: '100%' },
             width: { xs: '100%', lg: 'auto' }
           }}>
             <Paper
               elevation={0}
               sx={{
                 p: { xs: 2, md: 3 },
-                height: { xs: '250px', md: '300px' },
+                height: { xs: '250px', md: '100%' },
                 width: '100%',
                 backgroundColor: 'rgba(255, 255, 255, 0.8)',
                 backdropFilter: 'blur(10px)',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
                 borderRadius: '20px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)'
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)',
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -571,7 +579,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                   Statuts des livraisons
                 </Typography>
               </Box>
-              <Box sx={{ height: { xs: '120px', md: '160px' }, width: '100%' }}>
+              <Box sx={{ height: { xs: '120px', md: '160px',lg: '200px' }, width: '100%' }}>
                 {isLoadingStats ? (
                   <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
                     <CircularProgress />
@@ -656,94 +664,135 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
           </Box>
         </Box>
 
-        <Box sx={{
+        <Box
+  sx={{
+    display: 'flex',
+    flexDirection: { xs: 'column', lg: 'row' },
+    gap: { xs: 2, md: 4, lg: 45 },
+    width: '100%',
+    height: '100%', 
+    justifyContent: { lg: 'space-between' },
+    alignItems: { xs: 'center', lg: 'stretch' },
+    flexGrow: 1, 
+  }}
+>
+  {/* Carte Leaflet - Gauche */}
+  <Box
+    sx={{
+      flex: 1,
+      maxWidth: { xs: '100%', sm: '500px', lg: '50%' },
+      width: '100%',
+      height: '100%',
+      display: 'flex', 
+    }}
+  >
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2, md: 3 },
+        width: '100%',
+        height: '100%', 
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        borderRadius: '20px',
+        boxShadow:
+          '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)',
+        display: 'flex',
+        flexDirection: 'column',
+      }}
+    >
+      <Box
+        sx={{
           display: 'flex',
-          flexDirection: { xs: 'column', lg: 'row' },
-          gap: { xs: 2, md: 4, lg: 40 },
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          mb: 2,
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{ fontFamily: 'Share Tech, monospace', color: '#5C7F9B' }}
+        >
+          Localisation
+        </Typography>
+        <LocationOnOutlined sx={{ color: '#10b981' }} />
+      </Box>
+
+      
+      <Box
+        sx={{
+          flexGrow: 1, 
           width: '100%',
-          justifyContent: { lg: 'space-between' },
-          alignItems: { xs: 'center', lg: 'stretch' }
-        }}>
-
-          {/* Carte Leaflet - Gauche */}
-          <Box sx={{
-            flex: { lg: '1 1 500px' },
-            maxWidth: { xs: '100%', sm: '500px', lg: '550px' },
-            width: { xs: '100%', lg: 'auto' }
-          }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: { xs: 2, md: 3 },
-                width: '100%',
-                height: { xs: '280px', md: '320px' },
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '20px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)'
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6" sx={{ fontFamily: 'Share Tech, monospace', color: '#5C7F9B' }}>
-                  Localisation
-                </Typography>
-                <LocationOnOutlined sx={{ color: '#10b981' }} />
-              </Box>
-              <Box sx={{
-                height: { xs: '185px', md: '225px' },
-                width: '100%',
-                borderRadius: 2,
-                overflow: 'hidden'
-              }}>
-                {isLoadingMap ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
-                    <CircularProgress />
-                  </Box>
-                ) : (
-                  <MapContainer
-                    center={mapPosition}
-                    zoom={13}
-                    style={{ height: '100%', width: '100%' }}
-                    key={`${mapPosition[0]}-${mapPosition[1]}`} // force refresh si la position change
-                  >
-                    <TileLayer
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                    />
-                    <Marker position={mapPosition}>
-                      <Popup>
-                        {mapLabel === 'center' && <>Votre centre de don<br />Point d’envoi</>}
-                        {mapLabel === 'hospital' && <>Votre hôpital<br />Centre de soins principal</>}
-                        {mapLabel === 'unknown' && <>Position par défaut</>}
-                      </Popup>
-                    </Marker>
-                  </MapContainer>
-                )}
-              </Box>
-
-            </Paper>
+          borderRadius: 2,
+          overflow: 'hidden',
+        }}
+      >
+        {isLoadingMap ? (
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100%',
+            }}
+          >
+            <CircularProgress />
           </Box>
+        ) : (
+          <MapContainer
+            center={mapPosition}
+            zoom={13}
+            style={{ height: '100%', width: '100%' }}
+            key={`${mapPosition[0]}-${mapPosition[1]}`}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+            <Marker position={mapPosition}>
+              <Popup>
+                {mapLabel === 'center' && (
+                  <>Votre centre de don<br />Point d’envoi</>
+                )}
+                {mapLabel === 'hospital' && (
+                  <>Votre hôpital<br />Centre de soins principal</>
+                )}
+                {mapLabel === 'unknown' && <>Position par défaut</>}
+              </Popup>
+            </Marker>
+          </MapContainer>
+        )}
+      </Box>
+    </Paper>
+  </Box>
 
-          {/* Notifications récentes - Droite */}
-          <Box sx={{
-            flex: { lg: '1 1 500px' },
-            maxWidth: { xs: '100%', sm: '500px', lg: '550px' },
-            width: { xs: '100%', lg: 'auto' }
-          }}>
-            <Paper
-              elevation={0}
-              sx={{
-                p: { xs: 2, md: 3 },
-                height: { xs: '280px', md: '320px' },
-                width: '100%',
-                cursor: 'pointer',
-                backgroundColor: 'rgba(255, 255, 255, 0.8)',
-                backdropFilter: 'blur(10px)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '20px',
-                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)'
-              }}
+  {/* Notifications - Droite */}
+  <Box
+    sx={{
+      flex: 1, 
+      maxWidth: { xs: '100%', sm: '500px', lg: '100%' },
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+    }}
+  >
+    <Paper
+      elevation={0}
+      sx={{
+        p: { xs: 2, md: 3 },
+        width: '100%',
+        height: '100%', 
+        cursor: 'pointer',
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(10px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        borderRadius: '20px',
+        boxShadow:
+          '0 8px 32px rgba(0, 0, 0, 0.12), 0 2px 16px rgba(0, 0, 0, 0.08)',
+      }}
+    
+
               onClick={() => setActiveView('notifications')}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -753,7 +802,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
                 <NotificationsOutlined sx={{ color: '#008EFF' }} />
               </Box>
               <List dense sx={{
-                height: { xs: '200px', md: '240px' },
+                height: { xs: '200px', md: '100%' },
                 overflow: 'auto',
                 '&::-webkit-scrollbar': {
                   width: '4px',
