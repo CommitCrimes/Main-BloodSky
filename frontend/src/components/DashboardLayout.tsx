@@ -379,7 +379,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
         </Typography>
       </Box>
 
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 1, md: 2, xl: 5 }, px: { xs: 0, md: 2 }, py: 1, paddingBottom:10, flexGrow:1, position: 'relative' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 2, md: 2, xl: 5 }, px: { xs: 0, md: 2 }, py: 1, paddingBottom:{xs:1, md:10}, flexGrow:1, position: 'relative' }}>
 
         {/* Image (logo) du dashboard */}
         <Box sx={{
@@ -691,7 +691,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
       sx={{
         p: { xs: 2, md: 3 },
         width: '100%',
-        height: '100%', 
+        height: {xs:'300px', md:'100%'}, 
         backgroundColor: 'rgba(255, 255, 255, 0.8)',
         backdropFilter: 'blur(10px)',
         border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -743,7 +743,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({ config }) => {
           <MapContainer
             center={mapPosition}
             zoom={13}
-            style={{ height: '100%', width: '100%' }}
+            style={{ height:'100%', width: '100%' }}
             key={`${mapPosition[0]}-${mapPosition[1]}`}
           >
             <TileLayer

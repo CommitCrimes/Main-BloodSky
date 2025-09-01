@@ -588,7 +588,7 @@ const DronistDashboardContent: React.FC<DronistDashboardContentProps> = ({ onNav
           flexDirection: { xs: 'column', lg: 'row' },
           gap: { xs: 2, md: 4, lg: 40 },
           width: '100%',
-          height: '50%',
+          height: {xs:'100%', md:'50%'},
           justifyContent: { lg: 'space-between' },
           alignItems: { xs: 'center', lg: 'stretch' }
         }}>
