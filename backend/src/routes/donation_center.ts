@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { donationCenters } from "../schemas/donation_center";
+import { notifications } from "../schemas/notification";
 import { db } from "../utils/db";
 import { eq, ilike } from "drizzle-orm";
 
@@ -47,6 +48,14 @@ donationCenterRouter.delete("/:id", async (c) => {
   const id = Number(c.req.param("id"));
   if (isNaN(id)) return c.text("Invalid ID", 400);
   await db.delete(donationCenters).where(eq(donationCenters.centerId, id));
+  return c.text("Deleted");
+});
+
+// DELETE all notifications associated to a donation center
+donationCenterRouter.delete("/:id/notifications", async (c) => {
+  const id = Number(c.req.param("id"));
+  if (isNaN(id)) return c.text("Invalid ID", 400);
+  await db.delete(notifications).where(eq(notifications.centerId, id));
   return c.text("Deleted");
 });
 

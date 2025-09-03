@@ -183,6 +183,37 @@ export const hospitalSwagger: Record<string, any> = {
         },
       },
     },
+    "/hospitals/{hospitalId}/notifications": {
+      delete: {
+        summary: "Delete notifications by Hospital ID",
+        tags: ["Hospital"],
+        parameters: [
+          {
+            name: "hospitalId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+            example: 1,
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Notifications deleted for the hospital",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Deleted" }
+                  }
+                }
+              }
+            }
+          },
+          "400": { description: "Invalid ID" }
+        }
+      }
+    },
     "/hospitals/postal/{hospital_postal}": {
       get: {
         summary: "Get hospital by postal code",

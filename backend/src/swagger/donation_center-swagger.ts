@@ -195,6 +195,37 @@ export const donation_centerSwagger: Record<string, any> = {
         },
       },
     },
+    "/donation-centers/{centerId}/notifications": {
+      delete: {
+        summary: "Delete notifications by Donation-center ID",
+        tags: ["Donation-center"],
+        parameters: [
+          {
+            name: "centerId",
+            in: "path",
+            required: true,
+            schema: { type: "integer" },
+            example: 1,
+          },
+        ],
+        responses: {
+          "200": {
+            description: "Notifications deleted for the donation center",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: {
+                    message: { type: "string", example: "Deleted" },
+                  },
+                },
+              },
+            },
+          },
+          "400": { description: "Invalid ID" }
+        },
+      },
+    },
     "/donation-centers/postal/{center_postal}": {
       get: {
         summary: "Get center by postal code",

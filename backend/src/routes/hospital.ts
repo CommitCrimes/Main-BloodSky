@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { hospitals } from "../schemas/hospital";
+import { notifications } from "../schemas/notification";
 import { db } from "../utils/db";
 import { eq, ilike  } from "drizzle-orm";
 
@@ -32,6 +33,14 @@ hospitalRouter.delete("/:id", async (c) => {
   const id = Number(c.req.param("id"));
   if (isNaN(id)) return c.text("Invalid ID", 400);
   await db.delete(hospitals).where(eq(hospitals.hospitalId, id));
+  return c.text("Deleted");
+});
+
+// DELETE all notifications associated to a hospital
+hospitalRouter.delete("/:id/notifications", async (c) => {
+  const id = Number(c.req.param("id"));
+  if (isNaN(id)) return c.text("Invalid ID", 400);
+  await db.delete(notifications).where(eq(notifications.hospitalId, id));
   return c.text("Deleted");
 });
 

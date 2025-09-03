@@ -375,17 +375,27 @@ test("CRUD delivery", async () => {
     const resDeleteUserDronist = await request("DELETE", "users", `/${userIdDrone}`);
     expect(resDeleteUserDronist.status).toBe(200);
 
-    // 28. DELETE: Supprimer le donation center
+    // 28. DELETE: Supprimer les notifications liées au donation center
+    console.log("[TEST] DELETE donation center notifications");
+    const resDeleteDonationCenterNotifications = await request("DELETE", "donation-centers", `/${centerId}/notifications`);
+    expect(resDeleteDonationCenterNotifications.status).toBe(200);
+
+    // 29. DELETE: Supprimer le donation center
     console.log("[TEST] DELETE donation center");
     const resDeleteDonationCenter = await request("DELETE", "donation-centers", `/${centerId}`);
     expect(resDeleteDonationCenter.status).toBe(200);
+    
+    // 30. DELETE: Supprimer les notifications liées à l'hospital
+    console.log("[TEST] DELETE hospital notifications");
+    const resDeleteHospitalNotifications = await request("DELETE", "hospitals", `/${hospitalId}/notifications`);
+    expect(resDeleteHospitalNotifications.status).toBe(200);
 
-    // 29. DELETE: Supprimer l'hospital
+    // 31. DELETE: Supprimer l'hospital
     console.log("[TEST] DELETE hospital");
     const resDeleteHospital = await request("DELETE", "hospitals", `/${hospitalId}`);
     expect(resDeleteHospital.status).toBe(200);
-
-    // 30. DELETE: Supprimer le blood
+    
+    // 32. DELETE: Supprimer le blood
     console.log("[TEST] DELETE blood sample");
     const resDeleteBlood = await request("DELETE", "blood", `/${bloodId}`);
     expect(resDeleteBlood.status).toBe(200);
